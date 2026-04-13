@@ -1,0 +1,208 @@
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Cita, Venta, Compra, Cotizacion
+from .forms import CitaForm, VentaForm, CompraForm, CotizacionForm
+
+
+def _paginate(queryset, request):
+    paginator = Paginator(queryset, 10)
+    page = request.GET.get('page')
+    try:
+        return paginator.page(page)
+    except PageNotAnInteger:
+        return paginator.page(1)
+    except EmptyPage:
+        return paginator.page(paginator.num_pages)
+
+
+# --- Citas ---
+
+@login_required
+def cita_list(request):
+    qs = Cita.objects.select_related('cliente', 'empleado', 'servicio')
+    return render(request, 'operaciones/cita_list.html', {'citas': _paginate(qs, request)})
+
+
+@login_required
+def cita_create(request):
+    if request.method == 'POST':
+        form = CitaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('operaciones:cita_list')
+    else:
+        form = CitaForm()
+    return render(request, 'operaciones/cita_form.html', {'titulo': 'Nueva Cita', 'form': form})
+
+
+@login_required
+def cita_detail(request, pk):
+    cita = get_object_or_404(Cita.objects.select_related('cliente', 'empleado', 'servicio'), pk=pk)
+    return render(request, 'operaciones/cita_detail.html', {'cita': cita})
+
+
+@login_required
+def cita_update(request, pk):
+    cita = get_object_or_404(Cita, pk=pk)
+    if request.method == 'POST':
+        form = CitaForm(request.POST, instance=cita)
+        if form.is_valid():
+            form.save()
+            return redirect('operaciones:cita_list')
+    else:
+        form = CitaForm(instance=cita)
+    return render(request, 'operaciones/cita_form.html', {'titulo': 'Editar Cita', 'form': form})
+
+
+@login_required
+def cita_delete(request, pk):
+    cita = get_object_or_404(Cita, pk=pk)
+    if request.method == 'POST':
+        cita.delete()
+        return redirect('operaciones:cita_list')
+    return render(request, 'operaciones/cita_confirm_delete.html', {'cita': cita})
+
+
+# --- Ventas ---
+
+@login_required
+def venta_list(request):
+    qs = Venta.objects.select_related('cliente', 'empleado', 'producto')
+    return render(request, 'operaciones/venta_list.html', {'ventas': _paginate(qs, request)})
+
+
+@login_required
+def venta_create(request):
+    if request.method == 'POST':
+        form = VentaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('operaciones:venta_list')
+    else:
+        form = VentaForm()
+    return render(request, 'operaciones/venta_form.html', {'titulo': 'Nueva Venta', 'form': form})
+
+
+@login_required
+def venta_detail(request, pk):
+    venta = get_object_or_404(Venta.objects.select_related('cliente', 'empleado', 'producto'), pk=pk)
+    return render(request, 'operaciones/venta_detail.html', {'venta': venta})
+
+
+@login_required
+def venta_update(request, pk):
+    venta = get_object_or_404(Venta, pk=pk)
+    if request.method == 'POST':
+        form = VentaForm(request.POST, instance=venta)
+        if form.is_valid():
+            form.save()
+            return redirect('operaciones:venta_list')
+    else:
+        form = VentaForm(instance=venta)
+    return render(request, 'operaciones/venta_form.html', {'titulo': 'Editar Venta', 'form': form})
+
+
+@login_required
+def venta_delete(request, pk):
+    venta = get_object_or_404(Venta, pk=pk)
+    if request.method == 'POST':
+        venta.delete()
+        return redirect('operaciones:venta_list')
+    return render(request, 'operaciones/venta_confirm_delete.html', {'venta': venta})
+
+
+# --- Compras ---
+
+@login_required
+def compra_list(request):
+    qs = Compra.objects.select_related('empleado')
+    return render(request, 'operaciones/compra_list.html', {'compras': _paginate(qs, request)})
+
+
+@login_required
+def compra_create(request):
+    if request.method == 'POST':
+        form = CompraForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('operaciones:compra_list')
+    else:
+        form = CompraForm()
+    return render(request, 'operaciones/compra_form.html', {'titulo': 'Nueva Compra', 'form': form})
+
+
+@login_required
+def compra_detail(request, pk):
+    compra = get_object_or_404(Compra.objects.select_related('empleado'), pk=pk)
+    return render(request, 'operaciones/compra_detail.html', {'compra': compra})
+
+
+@login_required
+def compra_update(request, pk):
+    compra = get_object_or_404(Compra, pk=pk)
+    if request.method == 'POST':
+        form = CompraForm(request.POST, instance=compra)
+        if form.is_valid():
+            form.save()
+            return redirect('operaciones:compra_list')
+    else:
+        form = CompraForm(instance=compra)
+    return render(request, 'operaciones/compra_form.html', {'titulo': 'Editar Compra', 'form': form})
+
+
+@login_required
+def compra_delete(request, pk):
+    compra = get_object_or_404(Compra, pk=pk)
+    if request.method == 'POST':
+        compra.delete()
+        return redirect('operaciones:compra_list')
+    return render(request, 'operaciones/compra_confirm_delete.html', {'compra': compra})
+
+
+# --- Cotizaciones ---
+
+@login_required
+def cotizacion_list(request):
+    qs = Cotizacion.objects.select_related('cliente', 'servicio', 'producto')
+    return render(request, 'operaciones/cotizacion_list.html', {'cotizaciones': _paginate(qs, request)})
+
+
+@login_required
+def cotizacion_create(request):
+    if request.method == 'POST':
+        form = CotizacionForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('operaciones:cotizacion_list')
+    else:
+        form = CotizacionForm()
+    return render(request, 'operaciones/cotizacion_form.html', {'titulo': 'Nueva Cotización', 'form': form})
+
+
+@login_required
+def cotizacion_detail(request, pk):
+    cotizacion = get_object_or_404(Cotizacion.objects.select_related('cliente', 'servicio', 'producto'), pk=pk)
+    return render(request, 'operaciones/cotizacion_detail.html', {'cotizacion': cotizacion})
+
+
+@login_required
+def cotizacion_update(request, pk):
+    cotizacion = get_object_or_404(Cotizacion, pk=pk)
+    if request.method == 'POST':
+        form = CotizacionForm(request.POST, instance=cotizacion)
+        if form.is_valid():
+            form.save()
+            return redirect('operaciones:cotizacion_list')
+    else:
+        form = CotizacionForm(instance=cotizacion)
+    return render(request, 'operaciones/cotizacion_form.html', {'titulo': 'Editar Cotización', 'form': form})
+
+
+@login_required
+def cotizacion_delete(request, pk):
+    cotizacion = get_object_or_404(Cotizacion, pk=pk)
+    if request.method == 'POST':
+        cotizacion.delete()
+        return redirect('operaciones:cotizacion_list')
+    return render(request, 'operaciones/cotizacion_confirm_delete.html', {'cotizacion': cotizacion})

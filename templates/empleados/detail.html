@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ empleado.nombre }} — Estética{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="mb-0"><i class="bi bi-person-badge me-2" style="color:#7b2d8b"></i>{{ empleado.nombre }}</h4>
+  <div>
+    <a href="{% url 'empleados:update' empleado.pk %}" class="btn btn-primary btn-sm me-2"><i class="bi bi-pencil me-1"></i>Editar</a>
+    <a href="{% url 'empleados:list' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Volver</a>
+  </div>
+</div>
+<div class="card shadow-sm" style="max-width:480px">
+  <div class="card-body">
+    <dl class="row mb-0">
+      <dt class="col-sm-4">Teléfono</dt><dd class="col-sm-8">{{ empleado.telefono }}</dd>
+      <dt class="col-sm-4">Rol</dt><dd class="col-sm-8">{{ empleado.get_rol_display }}</dd>
+      <dt class="col-sm-4">Ingreso</dt><dd class="col-sm-8">{{ empleado.fecha_ingreso|date:"d/m/Y" }}</dd>
+    </dl>
+  </div>
+</div>
+{% endblock %}
