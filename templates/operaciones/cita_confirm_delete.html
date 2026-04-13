@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Eliminar cita — Estética{% endblock %}
+{% block content %}
+<div class="card shadow-sm" style="max-width:420px">
+  <div class="card-body">
+    <h5 class="text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Eliminar cita</h5>
+    <p>¿Confirmas eliminar la cita <strong>#{{ cita.pk }}</strong> de {{ cita.cliente }}?</p>
+    <form method="post">{% csrf_token %}
+      <a href="{% url 'operaciones:cita_list' %}" class="btn btn-outline-secondary me-2">Cancelar</a>
+      <button type="submit" class="btn btn-danger">Eliminar</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Cotizaciones — Estética{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="mb-0"><i class="bi bi-file-text me-2" style="color:#7b2d8b"></i>Cotizaciones</h4>
+  <a href="{% url 'operaciones:cotizacion_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Nueva cotización</a>
+</div>
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr><th>Cliente</th><th>Servicio / Producto</th><th>Fecha</th><th>Vigencia</th><th>Estado</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for q in cotizaciones %}
+        <tr>
+          <td>{{ q.cliente }}</td>
+          <td>{{ q.servicio|default:q.producto|default:"—" }}</td>
+          <td>{{ q.fecha|date:"d/m/Y" }}</td>
+          <td>{{ q.vigencia|date:"d/m/Y" }}</td>
+          <td><span class="badge badge-{{ q.estado }}">{{ q.get_estado_display }}</span></td>
+          <td class="text-end">
+            <a href="{% url 'operaciones:cotizacion_detail' q.pk %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-eye"></i></a>
+            <a href="{% url 'operaciones:cotizacion_update' q.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'operaciones:cotizacion_delete' q.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-4">Sin cotizaciones registradas.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
