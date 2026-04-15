@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
+from .views import dashboard
 
 urlpatterns = [
     path('administ/', admin.site.urls),
@@ -9,5 +10,6 @@ urlpatterns = [
     path('empleados/', include('apps.empleados.urls')),
     path('servicios/', include('apps.servicios.urls')),
     path('operaciones/', include('apps.operaciones.urls')),
-    path('', RedirectView.as_view(url='/clientes/', permanent=False)),
+   
+    path('', dashboard, name='dashboard'),
 ]

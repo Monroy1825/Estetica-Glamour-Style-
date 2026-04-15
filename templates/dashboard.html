@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Dashboard</h2>
+
+<div class="row mb-4">
+  <div class="col-md-4">
+    <div class="card p-3 text-center">
+      <h5>Clientes</h5>
+      <h2>{{ total_clientes }}</h2>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card p-3 text-center">
+      <h5>Citas hoy</h5>
+      <h2>{{ citas_hoy }}</h2>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card p-3 text-center">
+      <h5>Ventas del mes</h5>
+      <h2>{{ ventas_mes }}</h2>
+    </div>
+  </div>
+</div>
+
+<!-- 🔥 GRÁFICA -->
+<div class="card p-4">
+  <h5>Ventas por mes</h5>
+  <canvas id="ventasChart"></canvas>
+</div>
+
+<!-- 🔥 DATOS SEGUROS -->
+{{ labels|json_script:"labels-data" }}
+{{ data|json_script:"data-data" }}
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const labels = JSON.parse(document.getElementById('labels-data').textContent);
+const data = JSON.parse(document.getElementById('data-data').textContent);
+
+const ctx = document.getElementById('ventasChart');
+
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: 'Ventas',
+            data: data,
+        }]
+    },
+});
+</script>
+
+{% endblock %}
