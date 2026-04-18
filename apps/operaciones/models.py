@@ -18,6 +18,7 @@ class Cita(models.Model):
     fecha_inicio = models.DateTimeField()
     fecha_fin = models.DateTimeField()
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    activo = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = 'Cita'
@@ -54,6 +55,7 @@ class Venta(models.Model):
     estatus = models.CharField(max_length=20, choices=ESTATUS_CHOICES, default='pendiente')
     vigencia_hasta = models.DateField(null=True, blank=True)
     total = models.FloatField()
+    activo = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = 'Venta'
@@ -69,6 +71,7 @@ class Compra(models.Model):
     proveedor = models.CharField(max_length=50)
     fecha = models.DateTimeField(auto_now_add=True)
     total = models.DecimalField(max_digits=10, decimal_places=2)
+    activo = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = 'Compra'
@@ -93,6 +96,7 @@ class Cotizacion(models.Model):
     fecha = models.DateTimeField(auto_now_add=True)
     vigencia = models.DateField()
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='vigente')
+    activo = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = 'Cotización'

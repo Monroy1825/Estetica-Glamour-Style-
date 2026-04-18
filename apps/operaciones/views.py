@@ -20,7 +20,7 @@ def _paginate(queryset, request):
 
 @login_required
 def cita_list(request):
-    qs = Cita.objects.select_related('cliente', 'empleado', 'servicio')
+    qs = Cita.objects.filter(activo=True).select_related('cliente', 'empleado', 'servicio')
     return render(request, 'operaciones/cita_list.html', {'citas': _paginate(qs, request)})
 
 
@@ -61,7 +61,8 @@ def cita_update(request, pk):
 def cita_delete(request, pk):
     cita = get_object_or_404(Cita, pk=pk)
     if request.method == 'POST':
-        cita.delete()
+        cita.activo = False
+        cita.save()
         messages.success(request, 'La cita ha sido eliminada del sistema.')
         return redirect('operaciones:cita_list')
     return render(request, 'operaciones/cita_confirm_delete.html', {'cita': cita})
@@ -71,7 +72,7 @@ def cita_delete(request, pk):
 
 @login_required
 def venta_list(request):
-    qs = Venta.objects.select_related('cliente', 'empleado', 'producto')
+    qs = Venta.objects.filter(activo=True).select_related('cliente', 'empleado', 'producto')
     return render(request, 'operaciones/venta_list.html', {'ventas': _paginate(qs, request)})
 
 
@@ -112,7 +113,8 @@ def venta_update(request, pk):
 def venta_delete(request, pk):
     venta = get_object_or_404(Venta, pk=pk)
     if request.method == 'POST':
-        venta.delete()
+        venta.activo = False
+        venta.save()
         messages.success(request, 'El registro de venta ha sido eliminado.')
         return redirect('operaciones:venta_list')
     return render(request, 'operaciones/venta_confirm_delete.html', {'venta': venta})
@@ -122,7 +124,7 @@ def venta_delete(request, pk):
 
 @login_required
 def compra_list(request):
-    qs = Compra.objects.select_related('empleado')
+    qs = Compra.objects.filter(activo=True).select_related('empleado')
     return render(request, 'operaciones/compra_list.html', {'compras': _paginate(qs, request)})
 
 
@@ -163,7 +165,8 @@ def compra_update(request, pk):
 def compra_delete(request, pk):
     compra = get_object_or_404(Compra, pk=pk)
     if request.method == 'POST':
-        compra.delete()
+        compra.activo = False
+        compra.save()
         messages.success(request, 'Registro de compra eliminado.')
         return redirect('operaciones:compra_list')
     return render(request, 'operaciones/compra_confirm_delete.html', {'compra': compra})
@@ -173,7 +176,7 @@ def compra_delete(request, pk):
 
 @login_required
 def cotizacion_list(request):
-    qs = Cotizacion.objects.select_related('cliente', 'servicio', 'producto')
+    qs = Cotizacion.objects.filter(activo=True).select_related('cliente', 'servicio', 'producto')
     return render(request, 'operaciones/cotizacion_list.html', {'cotizaciones': _paginate(qs, request)})
 
 
@@ -214,7 +217,12 @@ def cotizacion_update(request, pk):
 def cotizacion_delete(request, pk):
     cotizacion = get_object_or_404(Cotizacion, pk=pk)
     if request.method == 'POST':
+<<<<<<< HEAD
         cotizacion.delete()
         messages.success(request, 'Cotización eliminada.')
+=======
+        cotizacion.activo = False
+        cotizacion.save()
+>>>>>>> ee316ab (Implementa borrado lógico en todos los modelos)
         return redirect('operaciones:cotizacion_list')
     return render(request, 'operaciones/cotizacion_confirm_delete.html', {'cotizacion': cotizacion})

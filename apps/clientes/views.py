@@ -11,7 +11,7 @@ from .forms import ClienteForm
 def cliente_list(request):
     query = request.GET.get('q')
 
-    queryset = Cliente.objects.all()
+    queryset = Cliente.objects.filter(activo=True)
 
     if query:
         queryset = queryset.filter(nombre__icontains=query)
@@ -69,7 +69,8 @@ def cliente_update(request, pk):
 def cliente_delete(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
     if request.method == 'POST':
-        cliente.delete()
+        cliente.activo = False
+        cliente.save()
         messages.success(request, 'Cliente eliminado correctamente')
         return redirect('clientes:list')
     return render(request, 'clientes/confirm_delete.html', {'cliente': cliente})

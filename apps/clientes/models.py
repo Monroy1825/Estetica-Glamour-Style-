@@ -6,6 +6,7 @@ class Cliente(models.Model):
     telefono = models.CharField(max_length=50)
     email = models.CharField(max_length=100, blank=True)
     fecha_registro = models.DateTimeField(auto_now_add=True)
+    activo = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = 'Cliente'

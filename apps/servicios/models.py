@@ -14,6 +14,7 @@ class Servicio(models.Model):
     nombre = models.CharField(max_length=50)
     categoria = models.CharField(max_length=50, choices=CATEGORIA_CHOICES)
     precio_base = models.DecimalField(max_digits=10, decimal_places=2)
+    activo = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = 'Servicio'
@@ -31,6 +32,7 @@ class Producto(models.Model):
     precio_venta = models.FloatField()
     stock_actual = models.IntegerField()
     stock_minimo = models.IntegerField()
+    activo = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = 'Producto'

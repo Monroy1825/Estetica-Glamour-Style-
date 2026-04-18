@@ -14,6 +14,7 @@ class Empleado(models.Model):
     telefono = models.CharField(max_length=50)
     rol = models.CharField(max_length=50, choices=ROL_CHOICES)
     fecha_ingreso = models.DateField()
+    activo = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = 'Empleado'

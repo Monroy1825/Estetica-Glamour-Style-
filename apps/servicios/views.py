@@ -7,7 +7,7 @@ from .forms import ServicioForm, ProductoForm
 
 @login_required
 def servicio_list(request):
-    queryset = Servicio.objects.all()
+    queryset = Servicio.objects.filter(activo=True)
     paginator = Paginator(queryset, 10)
     page = request.GET.get('page')
     try:
@@ -54,14 +54,15 @@ def servicio_update(request, pk):
 def servicio_delete(request, pk):
     servicio = get_object_or_404(Servicio, pk=pk)
     if request.method == 'POST':
-        servicio.delete()
+        servicio.activo = False
+        servicio.save()
         return redirect('servicios:servicio_list')
     return render(request, 'servicios/servicio_confirm_delete.html', {'servicio': servicio})
 
 
 @login_required
 def producto_list(request):
-    queryset = Producto.objects.all()
+    queryset = Producto.objects.filter(activo=True)
     paginator = Paginator(queryset, 10)
     page = request.GET.get('page')
     try:
@@ -108,6 +109,7 @@ def producto_update(request, pk):
 def producto_delete(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
     if request.method == 'POST':
-        producto.delete()
+        producto.activo = False
+        producto.save()
         return redirect('servicios:producto_list')
     return render(request, 'servicios/producto_confirm_delete.html', {'producto': producto})

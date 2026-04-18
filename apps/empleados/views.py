@@ -7,7 +7,7 @@ from .forms import EmpleadoForm
 
 @login_required
 def empleado_list(request):
-    queryset = Empleado.objects.all()
+    queryset = Empleado.objects.filter(activo=True)
     paginator = Paginator(queryset, 10)
     page = request.GET.get('page')
     try:
@@ -54,6 +54,7 @@ def empleado_update(request, pk):
 def empleado_delete(request, pk):
     empleado = get_object_or_404(Empleado, pk=pk)
     if request.method == 'POST':
-        empleado.delete()
+        empleado.activo = False
+        empleado.save()
         return redirect('empleados:list')
     return render(request, 'empleados/confirm_delete.html', {'empleado': empleado})
