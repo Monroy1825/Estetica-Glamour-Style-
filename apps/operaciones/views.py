@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Cita, Venta, Compra, Cotizacion
 from .forms import CitaForm, VentaForm, CompraForm, CotizacionForm
@@ -29,6 +30,18 @@ def cita_create(request):
     if request.method == 'POST':
         form = CitaForm(request.POST)
         if form.is_valid():
+            empleado_id = form.cleaned_data['empleado'].id
+            fecha_inicio = form.cleaned_data['fecha_inicio']
+            fecha_fin = form.cleaned_data['fecha_fin']
+            citas_conflicto = Cita.objects.filter(
+                empleado_id=empleado_id,
+                activo=True,
+            ).filter(
+                Q(fecha_inicio__lt=fecha_fin) & Q(fecha_fin__gt=fecha_inicio)
+            )
+            if citas_conflicto.exists():
+                messages.error(request, 'El empleado ya tiene una cita en ese horario.')
+                return render(request, 'operaciones/cita_form.html', {'titulo': 'Nueva Cita', 'form': form})
             form.save()
             messages.success(request, '¡La cita se ha creado exitosamente!')
             return redirect('operaciones:cita_list')
@@ -49,6 +62,18 @@ def cita_update(request, pk):
     if request.method == 'POST':
         form = CitaForm(request.POST, instance=cita)
         if form.is_valid():
+            empleado_id = form.cleaned_data['empleado'].id
+            fecha_inicio = form.cleaned_data['fecha_inicio']
+            fecha_fin = form.cleaned_data['fecha_fin']
+            citas_conflicto = Cita.objects.filter(
+                empleado_id=empleado_id,
+                activo=True,
+            ).filter(
+                Q(fecha_inicio__lt=fecha_fin) & Q(fecha_fin__gt=fecha_inicio)
+            ).exclude(pk=cita.pk)
+            if citas_conflicto.exists():
+                messages.error(request, 'El empleado ya tiene una cita en ese horario.')
+                return render(request, 'operaciones/cita_form.html', {'titulo': 'Editar Cita', 'form': form})
             form.save()
             messages.success(request, '¡Cita actualizada correctamente!')
             return redirect('operaciones:cita_list')
@@ -81,9 +106,20 @@ def venta_create(request):
     if request.method == 'POST':
         form = VentaForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, '¡Venta registrada con éxito!')
-            return redirect('operaciones:venta_list')
+            producto = form.cleaned_data.get('producto')
+            if producto is not None:
+                if producto.stock_actual <= 0:
+                    messages.error(request, f'Sin stock disponible para "{producto}". No se pudo registrar la venta.')
+                else:
+                    venta = form.save()
+                    producto.stock_actual -= 1
+                    producto.save()
+                    messages.success(request, '¡Venta registrada con éxito!')
+                    return redirect('operaciones:venta_list')
+            else:
+                form.save()
+                messages.success(request, '¡Venta registrada con éxito!')
+                return redirect('operaciones:venta_list')
     else:
         form = VentaForm()
     return render(request, 'operaciones/venta_form.html', {'titulo': 'Nueva Venta', 'form': form})
@@ -133,7 +169,11 @@ def compra_create(request):
     if request.method == 'POST':
         form = CompraForm(request.POST)
         if form.is_valid():
+            producto = form.cleaned_data['producto']
+            cantidad = form.cleaned_data['cantidad']
             form.save()
+            producto.stock_actual += cantidad
+            producto.save()
             messages.success(request, '¡Compra registrada correctamente!')
             return redirect('operaciones:compra_list')
     else:
@@ -217,12 +257,8 @@ def cotizacion_update(request, pk):
 def cotizacion_delete(request, pk):
     cotizacion = get_object_or_404(Cotizacion, pk=pk)
     if request.method == 'POST':
-<<<<<<< HEAD
-        cotizacion.delete()
-        messages.success(request, 'Cotización eliminada.')
-=======
         cotizacion.activo = False
         cotizacion.save()
->>>>>>> ee316ab (Implementa borrado lógico en todos los modelos)
+        messages.success(request, 'Cotización eliminada.')
         return redirect('operaciones:cotizacion_list')
     return render(request, 'operaciones/cotizacion_confirm_delete.html', {'cotizacion': cotizacion})
