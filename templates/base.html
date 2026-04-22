@@ -179,6 +179,29 @@
       </a>
     </li>
 
+    <div class="sidebar-header mt-1"><i class="bi bi-bar-chart-line me-2"></i>Reportes</div>
+
+    <li class="nav-item">
+      <a class="nav-link {% if request.resolver_match.url_name == 'reporte_ventas' %}active{% endif %}"
+         href="{% url 'reporte_ventas' %}">
+        <i class="bi bi-receipt"></i> Ventas
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link {% if request.resolver_match.url_name == 'reporte_citas' %}active{% endif %}"
+         href="{% url 'reporte_citas' %}">
+        <i class="bi bi-calendar-check"></i> Citas
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link {% if request.resolver_match.url_name == 'reporte_stock' %}active{% endif %}"
+         href="{% url 'reporte_stock' %}">
+        <i class="bi bi-boxes"></i> Stock
+      </a>
+    </li>
+
   </ul>
 </nav>
 {% endif %}

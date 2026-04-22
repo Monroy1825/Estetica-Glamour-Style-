@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Reporte de Stock — Estética{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="mb-0"><i class="bi bi-boxes me-2" style="color:#7b2d8b"></i>Reporte de Stock</h4>
+</div>
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-striped mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Producto</th>
+            <th>Marca</th>
+            <th>Stock actual</th>
+            <th>Stock mínimo</th>
+            <th>Precio venta</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for producto in productos %}
+          <tr {% if producto.stock_bajo %}class="table-danger"{% endif %}>
+            <td>{{ producto.nombre }}</td>
+            <td>{{ producto.marca }}</td>
+            <td>
+              <strong {% if producto.stock_bajo %}style="color:#dc3545"{% endif %}>
+                {{ producto.stock_actual }}
+              </strong>
+            </td>
+            <td>{{ producto.stock_minimo }}</td>
+            <td>${{ producto.precio_venta }}</td>
+            <td>
+              {% if producto.stock_bajo %}
+                <span class="badge bg-danger">Stock bajo</span>
+              {% else %}
+                <span class="badge bg-success">OK</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="text-center text-muted py-4">No hay productos registrados.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

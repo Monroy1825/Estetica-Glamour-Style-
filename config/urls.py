@@ -10,6 +10,7 @@ urlpatterns = [
     path('empleados/', include('apps.empleados.urls')),
     path('servicios/', include('apps.servicios.urls')),
     path('operaciones/', include('apps.operaciones.urls')),
-   
+    path('reportes/', include('apps.operaciones.urls_reportes')),
+
     path('', dashboard, name='dashboard'),
 ]
