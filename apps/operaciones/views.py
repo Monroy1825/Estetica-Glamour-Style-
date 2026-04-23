@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, redirect
+from django.db.models import Sum, Count # Importante para los totales
 from .models import Cita, Venta, Compra, Cotizacion
 from .forms import CitaForm, VentaForm, CompraForm, CotizacionForm
 
@@ -262,3 +263,14 @@ def cotizacion_delete(request, pk):
         messages.success(request, 'Cotización eliminada.')
         return redirect('operaciones:cotizacion_list')
     return render(request, 'operaciones/cotizacion_confirm_delete.html', {'cotizacion': cotizacion})
+
+
+# --- Proveedores (Catálogo Agrupado) ---
+
+@login_required
+def proveedor_list(request):
+    proveedores = Compra.objects.values('proveedor').annotate(
+        total_compras=Count('id'),
+        inversion_total=Sum('total')
+    ).order_by('-inversion_total')
+    return render(request, 'operaciones/proveedor_list.html', {'proveedores': proveedores})
