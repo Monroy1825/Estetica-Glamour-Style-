@@ -21,6 +21,11 @@ class Servicio(models.Model):
         verbose_name_plural = 'Servicios'
         ordering = ['categoria', 'nombre']
 
+    def save(self, *args, **kwargs):
+        if self.nombre:
+            self.nombre = self.nombre.title()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f'{self.nombre} - ${self.precio_base}'
 
@@ -38,6 +43,11 @@ class Producto(models.Model):
         verbose_name = 'Producto'
         verbose_name_plural = 'Productos'
         ordering = ['nombre']
+
+    def save(self, *args, **kwargs):
+        if self.nombre:
+            self.nombre = self.nombre.title()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f'{self.nombre} ({self.marca})'
