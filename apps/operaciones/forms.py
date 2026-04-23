@@ -3,25 +3,75 @@ from .models import Cita, Venta, Compra, Cotizacion
 from apps.servicios.models import Producto
 
 
+from django import forms
+from .models import Cita
+from datetime import datetime
+from apps.servicios.models import Producto
+
+
+
+
+# =========================
+# CITAS
+# =========================
 class CitaForm(forms.ModelForm):
+
+    # 🔥 HORARIOS FIJOS
+    HORARIOS = [
+        ("10:00-11:00", "10:00 AM - 11:00 AM"),
+        ("11:00-12:00", "11:00 AM - 12:00 PM"),
+        ("12:00-13:00", "12:00 PM - 1:00 PM"),
+        ("13:00-14:00", "1:00 PM - 2:00 PM"),
+        ("17:00-18:00", "5:00 PM - 6:00 PM"),
+        ("18:00-19:00", "6:00 PM - 7:00 PM"),
+        ("19:00-20:00", "7:00 PM - 8:00 PM"),
+        ("20:00-21:00", "8:00 PM - 9:00 PM"),
+    ]
+
+    # 👇 SELECT DE HORARIOS
+    horario = forms.ChoiceField(
+        choices=HORARIOS,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
     class Meta:
         model = Cita
-        fields = ['cliente', 'empleado', 'servicio', 'fecha_inicio', 'fecha_fin', 'estado']
+        fields = ['cliente', 'empleado', 'servicio', 'fecha_inicio', 'horario', 'estado']
         widgets = {
             'cliente': forms.Select(attrs={'class': 'form-select'}),
             'empleado': forms.Select(attrs={'class': 'form-select'}),
             'servicio': forms.Select(attrs={'class': 'form-select'}),
-            'fecha_inicio': forms.DateTimeInput(
-                attrs={'class': 'form-control', 'type': 'datetime-local'},
-                format='%Y-%m-%dT%H:%M',
+
+            # 🔥 SOLO FECHA
+            'fecha_inicio': forms.DateInput(
+                attrs={'class': 'form-control', 'type': 'date'}
             ),
-            'fecha_fin': forms.DateTimeInput(
-                attrs={'class': 'form-control', 'type': 'datetime-local'},
-                format='%Y-%m-%dT%H:%M',
-            ),
+
             'estado': forms.Select(attrs={'class': 'form-select'}),
         }
 
+    def clean(self):
+        cleaned_data = super().clean()
+        fecha = cleaned_data.get('fecha_inicio')
+        rango = cleaned_data.get('horario')
+
+        if not fecha or not rango:
+            return cleaned_data
+
+        # 🔥 separar horas
+        inicio_str, fin_str = rango.split('-')
+
+        # 🔥 convertir fecha a string limpio
+        fecha_str = fecha.strftime("%Y-%m-%d")
+
+        # 🔥 crear datetime correctamente
+        fecha_inicio = datetime.strptime(f"{fecha_str} {inicio_str}", "%Y-%m-%d %H:%M")
+        fecha_fin = datetime.strptime(f"{fecha_str} {fin_str}", "%Y-%m-%d %H:%M")
+
+        cleaned_data['fecha_inicio'] = fecha_inicio
+        cleaned_data['fecha_fin'] = fecha_fin
+
+        return cleaned_data
 
 class VentaForm(forms.ModelForm):
     producto = forms.ModelChoiceField(

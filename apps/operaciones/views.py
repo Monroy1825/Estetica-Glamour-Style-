@@ -31,24 +31,42 @@ def cita_create(request):
     if request.method == 'POST':
         form = CitaForm(request.POST)
         if form.is_valid():
+
             empleado_id = form.cleaned_data['empleado'].id
             fecha_inicio = form.cleaned_data['fecha_inicio']
             fecha_fin = form.cleaned_data['fecha_fin']
+
+            # 🔴 VALIDAR CRUCE DE HORARIOS
             citas_conflicto = Cita.objects.filter(
                 empleado_id=empleado_id,
                 activo=True,
             ).filter(
                 Q(fecha_inicio__lt=fecha_fin) & Q(fecha_fin__gt=fecha_inicio)
             )
+
             if citas_conflicto.exists():
                 messages.error(request, 'El empleado ya tiene una cita en ese horario.')
-                return render(request, 'operaciones/cita_form.html', {'titulo': 'Nueva Cita', 'form': form})
-            form.save()
+                return render(request, 'operaciones/cita_form.html', {
+                    'titulo': 'Nueva Cita',
+                    'form': form
+                })
+
+            # 🔥 GUARDAR BIEN (AQUI ESTA LA CLAVE)
+            cita = form.save(commit=False)
+            cita.fecha_inicio = fecha_inicio
+            cita.fecha_fin = fecha_fin
+            cita.save()
+
             messages.success(request, '¡La cita se ha creado exitosamente!')
             return redirect('operaciones:cita_list')
+
     else:
         form = CitaForm()
-    return render(request, 'operaciones/cita_form.html', {'titulo': 'Nueva Cita', 'form': form})
+
+    return render(request, 'operaciones/cita_form.html', {
+        'titulo': 'Nueva Cita',
+        'form': form
+    })
 
 
 @login_required
@@ -60,27 +78,46 @@ def cita_detail(request, pk):
 @login_required
 def cita_update(request, pk):
     cita = get_object_or_404(Cita, pk=pk)
+
     if request.method == 'POST':
         form = CitaForm(request.POST, instance=cita)
         if form.is_valid():
+
             empleado_id = form.cleaned_data['empleado'].id
             fecha_inicio = form.cleaned_data['fecha_inicio']
-            fecha_fin = form.cleaned_data['fecha_fin']
+            fecha_fin = form.cleaned_data['fecha_fin']  # 👈 ya viene del form limpio
+
+            # 🔴 VALIDAR CRUCE DE HORARIOS
             citas_conflicto = Cita.objects.filter(
                 empleado_id=empleado_id,
                 activo=True,
             ).filter(
                 Q(fecha_inicio__lt=fecha_fin) & Q(fecha_fin__gt=fecha_inicio)
             ).exclude(pk=cita.pk)
+
             if citas_conflicto.exists():
                 messages.error(request, 'El empleado ya tiene una cita en ese horario.')
-                return render(request, 'operaciones/cita_form.html', {'titulo': 'Editar Cita', 'form': form})
-            form.save()
+                return render(request, 'operaciones/cita_form.html', {
+                    'titulo': 'Editar Cita',
+                    'form': form
+                })
+
+            # 🔥 FORZAR ACTUALIZACIÓN CORRECTA
+            cita = form.save(commit=False)
+            cita.fecha_inicio = fecha_inicio
+            cita.fecha_fin = fecha_fin  # 👈 ESTA ES LA CLAVE
+            cita.save()
+
             messages.success(request, '¡Cita actualizada correctamente!')
             return redirect('operaciones:cita_list')
+
     else:
         form = CitaForm(instance=cita)
-    return render(request, 'operaciones/cita_form.html', {'titulo': 'Editar Cita', 'form': form})
+
+    return render(request, 'operaciones/cita_form.html', {
+        'titulo': 'Editar Cita',
+        'form': form
+    })
 
 
 @login_required
