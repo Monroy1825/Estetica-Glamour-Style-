@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import render, get_object_or_404, redirect
+from django.db.models import Sum, Count # Importante para los totales
 from .models import Cita, Venta, Compra, Cotizacion
 from .forms import CitaForm, VentaForm, CompraForm, CotizacionForm
 
@@ -218,3 +219,28 @@ def cotizacion_delete(request, pk):
         messages.success(request, 'Cotización eliminada.')
         return redirect('operaciones:cotizacion_list')
     return render(request, 'operaciones/cotizacion_confirm_delete.html', {'cotizacion': cotizacion})
+
+
+# --- Proveedores (Catálogo Agrupado) ---
+
+@login_required
+def proveedor_list(request):
+    # Agrupamos por el nombre del proveedor y sumamos sus totales de compra
+    qs = Compra.objects.values('proveedor').annotate(
+        total_acumulado=Sum('total'),
+        cantidad_compras=Count('id')
+    ).order_by('proveedor')
+    
+    return render(request, 'operaciones/proveedor_list.html', {'proveedores': qs})
+    
+@login_required
+def proveedor_list(request):
+    # Obtenemos los proveedores con el conteo de compras y la suma total
+    proveedores = Compra.objects.values('proveedor').annotate(
+        total_compras=Count('id'),
+        inversion_total=Sum('total')
+    ).order_by('-inversion_total')
+    
+    return render(request, 'operaciones/proveedor_list.html', {
+        'proveedores': proveedores
+    })
