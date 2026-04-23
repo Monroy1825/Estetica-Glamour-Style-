@@ -18,7 +18,7 @@ class VentaAdmin(admin.ModelAdmin):
 
 @admin.register(Compra)
 class CompraAdmin(admin.ModelAdmin):
-    list_display = ('proveedor', 'empleado', 'fecha', 'total', 'activo')
+    list_display = ('proveedor', 'empleado', 'fecha', 'precio_unitario', 'activo')
     search_fields = ('proveedor', 'empleado__nombre')
     list_filter = ('fecha', 'activo')
 

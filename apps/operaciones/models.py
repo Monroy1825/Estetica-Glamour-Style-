@@ -70,8 +70,13 @@ class Compra(models.Model):
     empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE, related_name='compras')
     proveedor = models.CharField(max_length=50)
     fecha = models.DateTimeField(auto_now_add=True)
-    total = models.DecimalField(max_digits=10, decimal_places=2)
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    cantidad = models.PositiveIntegerField(default=1)
     activo = models.BooleanField(default=True)
+
+    @property
+    def total_compra(self):
+        return self.precio_unitario * self.cantidad
 
     class Meta:
         verbose_name = 'Compra'
@@ -79,7 +84,7 @@ class Compra(models.Model):
         ordering = ['-fecha']
 
     def __str__(self):
-        return f'Compra #{self.pk} - {self.proveedor} (${self.total})'
+        return f'Compra #{self.pk} - {self.proveedor} (${self.precio_unitario})'
 
 
 class Cotizacion(models.Model):

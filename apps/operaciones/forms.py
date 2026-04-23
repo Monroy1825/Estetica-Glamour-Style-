@@ -111,11 +111,11 @@ class CompraForm(forms.ModelForm):
 
     class Meta:
         model = Compra
-        fields = ['empleado', 'proveedor', 'total']
+        fields = ['empleado', 'proveedor', 'precio_unitario']
         widgets = {
             'empleado': forms.Select(attrs={'class': 'form-select'}),
             'proveedor': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del proveedor'}),
-            'total': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
+            'precio_unitario': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
         }
 
 

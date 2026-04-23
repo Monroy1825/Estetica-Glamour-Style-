@@ -209,7 +209,9 @@ def compra_create(request):
         if form.is_valid():
             producto = form.cleaned_data['producto']
             cantidad = form.cleaned_data['cantidad']
-            form.save()
+            compra = form.save(commit=False)
+            compra.cantidad = cantidad
+            compra.save()
             producto.stock_actual += cantidad
             producto.save()
             messages.success(request, '¡Compra registrada correctamente!')
@@ -231,7 +233,9 @@ def compra_update(request, pk):
     if request.method == 'POST':
         form = CompraForm(request.POST, instance=compra)
         if form.is_valid():
-            form.save()
+            compra = form.save(commit=False)
+            compra.cantidad = form.cleaned_data['cantidad']
+            compra.save()
             messages.success(request, 'Compra actualizada.')
             return redirect('operaciones:compra_list')
     else:
@@ -308,6 +312,6 @@ def cotizacion_delete(request, pk):
 def proveedor_list(request):
     proveedores = Compra.objects.values('proveedor').annotate(
         total_compras=Count('id'),
-        inversion_total=Sum('total')
+        inversion_total=Sum('precio_unitario')
     ).order_by('-inversion_total')
     return render(request, 'operaciones/proveedor_list.html', {'proveedores': proveedores})

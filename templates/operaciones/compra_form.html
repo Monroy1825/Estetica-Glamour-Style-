@@ -11,12 +11,21 @@
       {% csrf_token %}
       {% for field in form %}
         <div class="mb-3">
-          <label for="{{ field.id_for_label }}" class="form-label fw-semibold">{{ field.label }}</label>
+          <label for="{{ field.id_for_label }}" class="form-label fw-semibold">
+            {% if field.html_name == 'precio_unitario' %}Precio unitario{% else %}{{ field.label }}{% endif %}
+          </label>
           {{ field }}
           {% if field.errors %}
             <div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>
           {% endif %}
         </div>
+        {% if field.html_name == 'cantidad' %}
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Total compra</label>
+          <input type="text" id="total_calculado" class="form-control"
+                 readonly placeholder="Se calcula automático">
+        </div>
+        {% endif %}
       {% endfor %}
       <div class="d-flex gap-2 mt-4">
         <button type="submit" class="btn btn-primary px-4">
@@ -27,4 +36,14 @@
     </form>
   </div>
 </div>
+
+<script>
+function calcularTotal() {
+  const precio = parseFloat(document.querySelector('[name="precio_unitario"]').value) || 0;
+  const cantidad = parseFloat(document.querySelector('[name="cantidad"]').value) || 0;
+  document.getElementById('total_calculado').value = '$' + (precio * cantidad).toFixed(2);
+}
+document.querySelector('[name="precio_unitario"]').addEventListener('input', calcularTotal);
+document.querySelector('[name="cantidad"]').addEventListener('input', calcularTotal);
+</script>
 {% endblock %}
