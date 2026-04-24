@@ -9,15 +9,26 @@
   <div class="card-body">
     <form method="post" novalidate>
       {% csrf_token %}
+      
       {% for field in form %}
         <div class="mb-3">
           <label for="{{ field.id_for_label }}" class="form-label fw-semibold">{{ field.label }}</label>
-          {{ field }}
+          
+          {# Para el campo tamano_personalizado, lo envolvemos en un div oculto #}
+          {% if field.name == 'tamano_personalizado' %}
+            <div id="wrapper_personalizado" style="display: none;">
+              {{ field }}
+            </div>
+          {% else %}
+            {{ field }}
+          {% endif %}
+          
           {% if field.errors %}
             <div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>
           {% endif %}
         </div>
       {% endfor %}
+      
       <div class="d-flex gap-2 mt-4">
         <button type="submit" class="btn btn-primary px-4">
           <i class="bi bi-check-lg me-1"></i>Guardar
@@ -27,4 +38,34 @@
     </form>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Obtener el select del tamaño
+    var selectTamano = document.querySelector('select[name="tamano"]');
+    var wrapperPersonalizado = document.getElementById('wrapper_personalizado');
+    var campoPersonalizado = document.querySelector('input[name="tamano_personalizado"]');
+    
+    function togglePersonalizado() {
+      if (selectTamano.value === 'otro') {
+        wrapperPersonalizado.style.display = 'block';
+        if (campoPersonalizado && campoPersonalizado.value === '') {
+          campoPersonalizado.focus();
+        }
+      } else {
+        wrapperPersonalizado.style.display = 'none';
+        // Si no seleccionó "otro", limpiamos el campo personalizado
+        if (campoPersonalizado && selectTamano.value !== 'otro') {
+          campoPersonalizado.value = '';
+        }
+      }
+    }
+    
+    // Verificar al cargar (útil para cuando se edita un producto)
+    if (selectTamano) {
+      togglePersonalizado();
+      selectTamano.addEventListener('change', togglePersonalizado);
+    }
+  });
+</script>
 {% endblock %}
