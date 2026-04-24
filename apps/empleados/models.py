@@ -21,5 +21,10 @@ class Empleado(models.Model):
         verbose_name_plural = 'Empleados'
         ordering = ['nombre']
 
+    def save(self, *args, **kwargs):
+        if self.nombre:
+            self.nombre = self.nombre.title()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f'{self.nombre} ({self.get_rol_display()})'

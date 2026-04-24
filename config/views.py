@@ -15,7 +15,7 @@ def dashboard(request):
     citas_hoy = Cita.objects.filter(fecha_inicio__date=hoy).count()
     ventas_mes = Venta.objects.filter(fecha__month=mes_actual).count()
 
-    # 🔥 DATOS PARA GRÁFICA (ventas por mes)
+    # DATOS PARA GRAFICA (ventas por mes)
     ventas_por_mes = (
         Venta.objects
         .annotate(mes=TruncMonth('fecha'))

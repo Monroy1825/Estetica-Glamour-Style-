@@ -17,20 +17,62 @@ class ServicioForm(forms.ModelForm):
 
 
 class ProductoForm(forms.ModelForm):
+
+    TAMANO_CHOICES = [
+        ('', '— Selecciona un tamaño —'),
+        # Volumen
+        ('15 ml', '15 ml'), ('30 ml', '30 ml'), ('50 ml', '50 ml'),
+        ('75 ml', '75 ml'), ('100 ml', '100 ml'), ('120 ml', '120 ml'),
+        ('150 ml', '150 ml'), ('200 ml', '200 ml'), ('250 ml', '250 ml'),
+        ('300 ml', '300 ml'), ('350 ml', '350 ml'), ('400 ml', '400 ml'),
+        ('500 ml', '500 ml'), ('750 ml', '750 ml'), ('1 L', '1 L'),
+        ('1.5 L', '1.5 L'), ('2 L', '2 L'), ('5 L', '5 L'),
+        # Peso
+        ('10 g', '10 g'), ('25 g', '25 g'), ('50 g', '50 g'),
+        ('75 g', '75 g'), ('100 g', '100 g'), ('150 g', '150 g'),
+        ('200 g', '200 g'), ('250 g', '250 g'), ('300 g', '300 g'),
+        ('400 g', '400 g'), ('500 g', '500 g'), ('750 g', '750 g'),
+        ('1 kg', '1 kg'), ('2 kg', '2 kg'), ('5 kg', '5 kg'),
+
+        # Paquetes
+        ('paquete chico', 'Paquete chico'),
+        ('paquete mediano', 'Paquete mediano'),
+        ('paquete grande', 'Paquete grande'),
+        # Otro
+        ('otro', 'Otro — escribir abajo'),
+    ]
+
+    tamano = forms.ChoiceField(
+        choices=TAMANO_CHOICES,
+        required=False,
+        label='Tamaño',
+        widget=forms.Select(attrs={
+            'class': 'form-select',
+            'onchange': """
+                var val = this.value;
+                var campo = document.getElementById('id_tamano_personalizado');
+                var wrapper = document.getElementById('wrapper_personalizado');
+                if (val === 'otro') {
+                    wrapper.style.display = 'block';
+                    campo.value = '';
+                    campo.focus();
+                } else {
+                    wrapper.style.display = 'none';
+                    campo.value = val;
+                }
+            """
+        })
+    )
+
     class Meta:
         model = Producto
-        fields = ['nombre', 'marca', 'costo', 'precio_venta', 'stock_actual', 'stock_minimo']
+        fields = ['nombre', 'marca', 'tamano', 'tamano_personalizado',
+                  'costo', 'precio_venta', 'stock_actual', 'stock_minimo']
         widgets = {
-            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del producto', 'style': 'text-transform: uppercase'}),
-            'marca': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Marca', 'style': 'text-transform: uppercase'}),
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del producto'}),
+            'marca': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Marca'}),
             'costo': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
             'precio_venta': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
             'stock_actual': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
             'stock_minimo': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
         }
-
-    def clean_nombre(self):
-        return self.cleaned_data.get('nombre', '').upper()
-
-    def clean_marca(self):
-        return self.cleaned_data.get('marca', '').upper()

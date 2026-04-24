@@ -8,30 +8,45 @@ class Servicio(models.Model):
         ('tratamiento', 'Tratamiento'),
         ('unas', 'Uñas'),
         ('maquillaje', 'Maquillaje'),
-        ('otro', 'Otro'),
     ]
-
-    nombre = models.CharField(max_length=50)
-    categoria = models.CharField(max_length=50, choices=CATEGORIA_CHOICES)
-    precio_base = models.DecimalField(max_digits=10, decimal_places=2)
+    nombre = models.CharField(max_length=100)
+    categoria = models.CharField(max_length=20, choices=CATEGORIA_CHOICES)
+    precio_base = models.DecimalField(max_digits=8, decimal_places=2)
     activo = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = 'Servicio'
         verbose_name_plural = 'Servicios'
-        ordering = ['categoria', 'nombre']
+        ordering = ['nombre']
+
+    def save(self, *args, **kwargs):
+        if self.nombre:
+            self.nombre = self.nombre.title()
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f'{self.nombre} - ${self.precio_base}'
+        return self.nombre
 
 
 class Producto(models.Model):
-    nombre = models.CharField(max_length=50)
-    marca = models.CharField(max_length=50)
-    costo = models.FloatField()
-    precio_venta = models.FloatField()
-    stock_actual = models.IntegerField()
-    stock_minimo = models.IntegerField()
+    nombre = models.CharField(max_length=100)
+    marca = models.CharField(max_length=100, blank=True)
+    tamano = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name='Tamaño',
+        help_text='Selecciona la medida del producto'
+    )
+    tamano_personalizado = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name='Tamaño personalizado',
+        help_text='Si el tamaño no está en la lista, escríbelo aquí'
+    )
+    costo = models.DecimalField(max_digits=8, decimal_places=2)
+    precio_venta = models.DecimalField(max_digits=8, decimal_places=2)
+    stock_actual = models.PositiveIntegerField(default=0)
+    stock_minimo = models.PositiveIntegerField(default=5)
     activo = models.BooleanField(default=True)
 
     class Meta:
@@ -40,8 +55,5 @@ class Producto(models.Model):
         ordering = ['nombre']
 
     def __str__(self):
-        return f'{self.nombre} ({self.marca})'
-
-    @property
-    def stock_bajo(self):
-        return self.stock_actual <= self.stock_minimo
+        tamano = self.get_tamano_final()
+        return f'{self.nombre} ({tamano})' if tamano else self.nombre
