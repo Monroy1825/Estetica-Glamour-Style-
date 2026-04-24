@@ -3,9 +3,10 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, redirect
-from django.db.models import Sum, Count # Importante para los totales
+from django.db.models import Sum, Count
 from .models import Cita, Venta, Compra, Cotizacion
 from .forms import CitaForm, VentaForm, CompraForm, CotizacionForm
+
 
 def _paginate(queryset, request):
     paginator = Paginator(queryset, 10)
@@ -31,12 +32,10 @@ def cita_create(request):
     if request.method == 'POST':
         form = CitaForm(request.POST)
         if form.is_valid():
-
             empleado_id = form.cleaned_data['empleado'].id
             fecha_inicio = form.cleaned_data['fecha_inicio']
             fecha_fin = form.cleaned_data['fecha_fin']
 
-            # 🔴 VALIDAR CRUCE DE HORARIOS
             citas_conflicto = Cita.objects.filter(
                 empleado_id=empleado_id,
                 activo=True,
@@ -48,25 +47,62 @@ def cita_create(request):
                 messages.error(request, 'El empleado ya tiene una cita en ese horario.')
                 return render(request, 'operaciones/cita_form.html', {
                     'titulo': 'Nueva Cita',
-                    'form': form
+                    'form': form,
+                    'horarios_ocupados': _get_horarios_ocupados(),
+                    'cliente_id': None,
                 })
 
-            # 🔥 GUARDAR BIEN (AQUI ESTA LA CLAVE)
             cita = form.save(commit=False)
             cita.fecha_inicio = fecha_inicio
             cita.fecha_fin = fecha_fin
             cita.save()
 
+            agregar_otra = request.POST.get('agregar_otra', 'no')
+            if agregar_otra == 'si':
+                messages.success(request, '¡Cita guardada! Ahora registra la siguiente cita del cliente.')
+                return redirect(
+                    f"{request.path}?cliente={form.cleaned_data['cliente'].id}"
+                    f"&empleado={empleado_id}"
+                )
+
             messages.success(request, '¡La cita se ha creado exitosamente!')
             return redirect('operaciones:cita_list')
 
     else:
-        form = CitaForm()
+        initial = {}
+        cliente_id = request.GET.get('cliente')
+        empleado_id = request.GET.get('empleado')
+        if cliente_id:
+            initial['cliente'] = cliente_id
+        if empleado_id:
+            initial['empleado'] = empleado_id
+        form = CitaForm(initial=initial)
 
     return render(request, 'operaciones/cita_form.html', {
         'titulo': 'Nueva Cita',
-        'form': form
+        'form': form,
+        'horarios_ocupados': _get_horarios_ocupados(),
+        'cliente_id': request.GET.get('cliente'),
     })
+
+
+def _get_horarios_ocupados():
+    """Devuelve un dict con los horarios ocupados por empleado y fecha."""
+    import json
+    from datetime import datetime
+    citas = Cita.objects.filter(activo=True).values(
+        'empleado_id', 'fecha_inicio'
+    )
+    ocupados = {}
+    for c in citas:
+        emp_id = str(c['empleado_id'])
+        fecha = c['fecha_inicio'].strftime('%Y-%m-%d')
+        hora = c['fecha_inicio'].strftime('%H:%M')
+        clave = f"{emp_id}_{fecha}"
+        if clave not in ocupados:
+            ocupados[clave] = []
+        ocupados[clave].append(hora)
+    return json.dumps(ocupados)
 
 
 @login_required
@@ -85,9 +121,8 @@ def cita_update(request, pk):
 
             empleado_id = form.cleaned_data['empleado'].id
             fecha_inicio = form.cleaned_data['fecha_inicio']
-            fecha_fin = form.cleaned_data['fecha_fin']  # 👈 ya viene del form limpio
+            fecha_fin = form.cleaned_data['fecha_fin']
 
-            # 🔴 VALIDAR CRUCE DE HORARIOS
             citas_conflicto = Cita.objects.filter(
                 empleado_id=empleado_id,
                 activo=True,
@@ -102,10 +137,9 @@ def cita_update(request, pk):
                     'form': form
                 })
 
-            # 🔥 FORZAR ACTUALIZACIÓN CORRECTA
             cita = form.save(commit=False)
             cita.fecha_inicio = fecha_inicio
-            cita.fecha_fin = fecha_fin  # 👈 ESTA ES LA CLAVE
+            cita.fecha_fin = fecha_fin
             cita.save()
 
             messages.success(request, '¡Cita actualizada correctamente!')
@@ -306,7 +340,7 @@ def cotizacion_delete(request, pk):
     return render(request, 'operaciones/cotizacion_confirm_delete.html', {'cotizacion': cotizacion})
 
 
-# --- Proveedores (Catálogo Agrupado) ---
+# --- Proveedores ---
 
 @login_required
 def proveedor_list(request):

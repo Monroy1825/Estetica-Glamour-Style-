@@ -19,6 +19,11 @@ class Cita(models.Model):
     fecha_fin = models.DateTimeField()
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
     activo = models.BooleanField(default=True)
+    permitir_multiple = models.BooleanField(
+        default=False,
+        verbose_name='Permitir horario compartido',
+        help_text='Marcar si el cliente necesita más de un servicio en este bloque'
+    )
 
     class Meta:
         verbose_name = 'Cita'
@@ -27,6 +32,21 @@ class Cita(models.Model):
 
     def __str__(self):
         return f'{self.cliente} - {self.servicio} ({self.fecha_inicio:%d/%m/%Y})'
+
+
+class CitaServicioAdicional(models.Model):
+    """Servicios extra que se agregan a una cita existente."""
+    cita = models.ForeignKey(Cita, on_delete=models.CASCADE, related_name='servicios_adicionales')
+    servicio = models.ForeignKey('servicios.Servicio', on_delete=models.CASCADE)
+    nota = models.CharField(max_length=200, blank=True)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = 'Servicio adicional'
+        verbose_name_plural = 'Servicios adicionales'
+
+    def __str__(self):
+        return f'{self.servicio} (extra en cita #{self.cita_id})'
 
 
 class Venta(models.Model):
@@ -68,6 +88,12 @@ class Venta(models.Model):
 
 class Compra(models.Model):
     empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE, related_name='compras')
+    producto = models.ForeignKey(
+        Producto, 
+        on_delete=models.CASCADE, 
+        related_name='compras',
+        verbose_name='Producto'
+    )
     proveedor = models.CharField(max_length=50)
     fecha = models.DateTimeField(auto_now_add=True)
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
@@ -84,7 +110,7 @@ class Compra(models.Model):
         ordering = ['-fecha']
 
     def __str__(self):
-        return f'Compra #{self.pk} - {self.proveedor} (${self.precio_unitario})'
+        return f'Compra #{self.pk} - {self.producto.nombre} ({self.cantidad} x ${self.precio_unitario})'
 
 
 class Cotizacion(models.Model):

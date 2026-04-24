@@ -13,10 +13,17 @@
 
     {% if messages %}
       {% for message in messages %}
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-          <strong>⚠️ Error:</strong> {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+        {% if message.tags == 'error' %}
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>⚠️ Error:</strong> {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% else %}
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>✅</strong> {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endif %}
       {% endfor %}
     {% endif %}
 
@@ -28,41 +35,97 @@
           <label for="{{ field.id_for_label }}" class="form-label fw-semibold">
             {{ field.label }}
           </label>
-
           {{ field }}
-
           {% if field.errors %}
-            <div class="text-danger small mt-1">
-              {{ field.errors|join:", " }}
-            </div>
+            <div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>
           {% endif %}
         </div>
       {% endfor %}
+
+      {% if titulo == 'Nueva Cita' %}
+      <div class="mb-3 p-3 rounded" style="background-color:#f3e8ff; border:1px solid #d8b4fe;">
+        <p class="fw-semibold mb-2" style="color:#7b2d8b;">
+          <i class="bi bi-plus-circle me-1"></i>¿Desea agregar otra cita para el mismo cliente?
+        </p>
+        <div class="d-flex gap-3">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="agregar_otra" id="otra_si" value="si">
+            <label class="form-check-label" for="otra_si">Sí, en el siguiente horario</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="agregar_otra" id="otra_no" value="no" checked>
+            <label class="form-check-label" for="otra_no">No, solo esta cita</label>
+          </div>
+        </div>
+      </div>
+      {% endif %}
 
       <div class="d-flex gap-2 mt-4">
         <button type="submit" class="btn btn-primary px-4">
           <i class="bi bi-check-lg me-1"></i>Guardar
         </button>
-        <a href="{% url 'operaciones:cita_list' %}" class="btn btn-outline-secondary">
-          Cancelar
-        </a>
+        <a href="{% url 'operaciones:cita_list' %}" class="btn btn-outline-secondary">Cancelar</a>
       </div>
     </form>
-
   </div>
 </div>
 
-<!-- 🔥 BLOQUEAR FECHAS PASADAS -->
+<!-- Datos de horarios ocupados (separados del JS para evitar errores de sintaxis) -->
+<script id="horarios-data" type="application/json">{{ horarios_ocupados|safe }}</script>
+<script id="cliente-data" type="application/json">"{{ cliente_id }}"</script>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+
+    // Bloquear fechas pasadas
     const inputFecha = document.querySelector('input[type="date"]');
-
     const hoy = new Date().toISOString().split("T")[0];
+    if (inputFecha) inputFecha.min = hoy;
 
-    if (inputFecha) {
-        inputFecha.min = hoy;
+    // Leer datos desde Django de forma segura
+    const horariosOcupados = JSON.parse(document.getElementById('horarios-data').textContent);
+    const clienteId = JSON.parse(document.getElementById('cliente-data').textContent);
+
+    // Referencias a campos
+    const selectEmpleado = document.getElementById('id_empleado');
+    const inputFechaEl = document.getElementById('id_fecha_inicio');
+    const selectHorario = document.getElementById('id_horario');
+    const selectCliente = document.getElementById('id_cliente');
+
+    // Bloquear horarios ocupados según empleado y fecha
+    function bloquearHorarios() {
+        const empleadoId = selectEmpleado ? selectEmpleado.value : '';
+        const fecha = inputFechaEl ? inputFechaEl.value : '';
+        const clave = empleadoId + '_' + fecha;
+        const ocupados = horariosOcupados[clave] || [];
+
+        if (selectHorario) {
+            Array.from(selectHorario.options).forEach(opt => {
+                if (opt.value === '') return;
+                const horaInicio = opt.value.split('-')[0];
+                const bloqueado = ocupados.includes(horaInicio);
+                opt.disabled = bloqueado;
+                opt.text = bloqueado
+                    ? opt.text.replace(' 🔴 Ocupado', '') + ' 🔴 Ocupado'
+                    : opt.text.replace(' 🔴 Ocupado', '');
+            });
+        }
     }
+
+    if (selectEmpleado) selectEmpleado.addEventListener('change', bloquearHorarios);
+    if (inputFechaEl) inputFechaEl.addEventListener('change', bloquearHorarios);
+    bloquearHorarios();
+
+    // Bloquear campo cliente si viene prellenado desde cita anterior
+    if (clienteId && clienteId !== 'None' && selectCliente) {
+        selectCliente.disabled = true;
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'cliente';
+        hidden.value = selectCliente.value;
+        selectCliente.parentNode.appendChild(hidden);
+    }
+
 });
 </script>
-
 {% endblock %}
