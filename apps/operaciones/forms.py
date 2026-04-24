@@ -16,7 +16,7 @@ from apps.servicios.models import Producto
 # =========================
 class CitaForm(forms.ModelForm):
 
-    # 🔥 HORARIOS FIJOS
+    # HORARIOS FIJOS
     HORARIOS = [
         ("10:00-11:00", "10:00 AM - 11:00 AM"),
         ("11:00-12:00", "11:00 AM - 12:00 PM"),
@@ -28,7 +28,7 @@ class CitaForm(forms.ModelForm):
         ("20:00-21:00", "8:00 PM - 9:00 PM"),
     ]
 
-    # 👇 SELECT DE HORARIOS
+    # SELECT DE HORARIOS
     horario = forms.ChoiceField(
         choices=HORARIOS,
         widget=forms.Select(attrs={'class': 'form-select'})
@@ -42,7 +42,7 @@ class CitaForm(forms.ModelForm):
             'empleado': forms.Select(attrs={'class': 'form-select'}),
             'servicio': forms.Select(attrs={'class': 'form-select'}),
 
-            # 🔥 SOLO FECHA
+            # SOLO FECHA
             'fecha_inicio': forms.DateInput(
                 attrs={'class': 'form-control', 'type': 'date'}
             ),
@@ -58,13 +58,10 @@ class CitaForm(forms.ModelForm):
         if not fecha or not rango:
             return cleaned_data
 
-        # 🔥 separar horas
         inicio_str, fin_str = rango.split('-')
-
-        # 🔥 convertir fecha a string limpio
         fecha_str = fecha.strftime("%Y-%m-%d")
 
-        # 🔥 crear datetime correctamente
+        # crear datetime correctamente
         fecha_inicio = datetime.strptime(f"{fecha_str} {inicio_str}", "%Y-%m-%d %H:%M")
         fecha_fin = datetime.strptime(f"{fecha_str} {fin_str}", "%Y-%m-%d %H:%M")
 

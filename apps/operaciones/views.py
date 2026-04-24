@@ -36,7 +36,7 @@ def cita_create(request):
             fecha_inicio = form.cleaned_data['fecha_inicio']
             fecha_fin = form.cleaned_data['fecha_fin']
 
-            # 🔴 VALIDAR CRUCE DE HORARIOS
+            # VALIDAR CRUCE DE HORARIOS
             citas_conflicto = Cita.objects.filter(
                 empleado_id=empleado_id,
                 activo=True,
@@ -51,7 +51,7 @@ def cita_create(request):
                     'form': form
                 })
 
-            # 🔥 GUARDAR BIEN (AQUI ESTA LA CLAVE)
+            # GUARDAR
             cita = form.save(commit=False)
             cita.fecha_inicio = fecha_inicio
             cita.fecha_fin = fecha_fin
@@ -85,9 +85,9 @@ def cita_update(request, pk):
 
             empleado_id = form.cleaned_data['empleado'].id
             fecha_inicio = form.cleaned_data['fecha_inicio']
-            fecha_fin = form.cleaned_data['fecha_fin']  # 👈 ya viene del form limpio
+            fecha_fin = form.cleaned_data['fecha_fin']
 
-            # 🔴 VALIDAR CRUCE DE HORARIOS
+            # VALIDAR CRUCE DE HORARIOS
             citas_conflicto = Cita.objects.filter(
                 empleado_id=empleado_id,
                 activo=True,
@@ -102,10 +102,9 @@ def cita_update(request, pk):
                     'form': form
                 })
 
-            # 🔥 FORZAR ACTUALIZACIÓN CORRECTA
             cita = form.save(commit=False)
             cita.fecha_inicio = fecha_inicio
-            cita.fecha_fin = fecha_fin  # 👈 ESTA ES LA CLAVE
+            cita.fecha_fin = fecha_fin
             cita.save()
 
             messages.success(request, '¡Cita actualizada correctamente!')
