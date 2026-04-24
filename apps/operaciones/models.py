@@ -17,6 +17,7 @@ class Cita(models.Model):
     servicio = models.ForeignKey(Servicio, on_delete=models.CASCADE, related_name='citas')
     fecha_inicio = models.DateTimeField()
     fecha_fin = models.DateTimeField()
+    duracion_horas = models.FloatField(default=1.0, verbose_name='Duración estimada (horas)')
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
     activo = models.BooleanField(default=True)
 

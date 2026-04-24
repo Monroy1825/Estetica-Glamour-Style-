@@ -52,16 +52,54 @@
   </div>
 </div>
 
-<!-- 🔥 BLOQUEAR FECHAS PASADAS -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    const inputFecha = document.querySelector('input[type="date"]');
-
-    const hoy = new Date().toISOString().split("T")[0];
+    const inputFecha    = document.getElementById('id_fecha_inicio');
+    const selectEmpl    = document.getElementById('id_empleado');
+    const selectHorario = document.getElementById('id_horario');
+    const citaId        = "{{ cita_id|default:'' }}";
 
     if (inputFecha) {
-        inputFecha.min = hoy;
+        inputFecha.min = new Date().toISOString().split("T")[0];
     }
+
+    function toMinutes(t) {
+        const [h, m] = t.split(':').map(Number);
+        return h * 60 + m;
+    }
+
+    function dentroDeRango(slotStart, rangos) {
+        const s = toMinutes(slotStart);
+        return rangos.some(r => s >= toMinutes(r.inicio) && s < toMinutes(r.fin));
+    }
+
+    function actualizarHorarios() {
+        const fecha    = inputFecha ? inputFecha.value : '';
+        const empleado = selectEmpl ? selectEmpl.value : '';
+
+        if (!fecha || !empleado || !selectHorario) return;
+
+        const url = `/operaciones/citas/horarios-ocupados/?empleado=${empleado}&fecha=${fecha}` +
+                    (citaId ? `&cita_id=${citaId}` : '');
+
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                const rangos = data.ocupados || [];
+                Array.from(selectHorario.options).forEach(opt => {
+                    const ocupado = dentroDeRango(opt.value, rangos);
+                    opt.disabled = ocupado;
+                    opt.text = opt.text.replace(' — Ocupado', '') + (ocupado ? ' — Ocupado' : '');
+                });
+                if (selectHorario.options[selectHorario.selectedIndex]?.disabled) {
+                    selectHorario.value = '';
+                }
+            });
+    }
+
+    if (inputFecha)  inputFecha.addEventListener('change', actualizarHorarios);
+    if (selectEmpl)  selectEmpl.addEventListener('change', actualizarHorarios);
+    actualizarHorarios();
 });
 </script>
 

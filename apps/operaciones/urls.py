@@ -7,6 +7,7 @@ urlpatterns = [
     # Citas
     path('citas/', views.cita_list, name='cita_list'),
     path('citas/nueva/', views.cita_create, name='cita_create'),
+    path('citas/horarios-ocupados/', views.horarios_ocupados, name='horarios_ocupados'),
     path('citas/<int:pk>/', views.cita_detail, name='cita_detail'),
     path('citas/<int:pk>/editar/', views.cita_update, name='cita_update'),
     path('citas/<int:pk>/eliminar/', views.cita_delete, name='cita_delete'),

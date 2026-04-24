@@ -7,10 +7,13 @@ class ServicioForm(forms.ModelForm):
         model = Servicio
         fields = ['nombre', 'categoria', 'precio_base']
         widgets = {
-            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del servicio'}),
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del servicio', 'style': 'text-transform: uppercase'}),
             'categoria': forms.Select(attrs={'class': 'form-select'}),
             'precio_base': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
         }
+
+    def clean_nombre(self):
+        return self.cleaned_data.get('nombre', '').upper()
 
 
 class ProductoForm(forms.ModelForm):
@@ -18,10 +21,16 @@ class ProductoForm(forms.ModelForm):
         model = Producto
         fields = ['nombre', 'marca', 'costo', 'precio_venta', 'stock_actual', 'stock_minimo']
         widgets = {
-            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del producto'}),
-            'marca': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Marca'}),
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del producto', 'style': 'text-transform: uppercase'}),
+            'marca': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Marca', 'style': 'text-transform: uppercase'}),
             'costo': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
             'precio_venta': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
             'stock_actual': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
             'stock_minimo': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
         }
+
+    def clean_nombre(self):
+        return self.cleaned_data.get('nombre', '').upper()
+
+    def clean_marca(self):
+        return self.cleaned_data.get('marca', '').upper()
