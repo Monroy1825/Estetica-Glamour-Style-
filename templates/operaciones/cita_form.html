@@ -70,21 +70,29 @@
   </div>
 </div>
 
+<!-- Datos de horarios ocupados (separados del JS para evitar errores de sintaxis) -->
+<script id="horarios-data" type="application/json">{{ horarios_ocupados|safe }}</script>
+<script id="cliente-data" type="application/json">"{{ cliente_id }}"</script>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+
     // Bloquear fechas pasadas
     const inputFecha = document.querySelector('input[type="date"]');
     const hoy = new Date().toISOString().split("T")[0];
     if (inputFecha) inputFecha.min = hoy;
 
-    // Bloquear horarios ocupados según empleado y fecha
+    // Leer datos desde Django de forma segura
+    const horariosOcupados = JSON.parse(document.getElementById('horarios-data').textContent);
+    const clienteId = JSON.parse(document.getElementById('cliente-data').textContent);
+
+    // Referencias a campos
     const selectEmpleado = document.getElementById('id_empleado');
     const inputFechaEl = document.getElementById('id_fecha_inicio');
     const selectHorario = document.getElementById('id_horario');
+    const selectCliente = document.getElementById('id_cliente');
 
-    // Horarios ocupados pasados desde Django
-    const horariosOcupados = {{ horarios_ocupados|safe }};
-
+    // Bloquear horarios ocupados según empleado y fecha
     function bloquearHorarios() {
         const empleadoId = selectEmpleado ? selectEmpleado.value : '';
         const fecha = inputFechaEl ? inputFechaEl.value : '';
@@ -108,18 +116,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (inputFechaEl) inputFechaEl.addEventListener('change', bloquearHorarios);
     bloquearHorarios();
 
-    // Bloquear cliente si viene prellenado
-    const selectCliente = document.getElementById('id_cliente');
-    const clienteId = "{{ cliente_id }}";
+    // Bloquear campo cliente si viene prellenado desde cita anterior
     if (clienteId && clienteId !== 'None' && selectCliente) {
         selectCliente.disabled = true;
-        // Agregar campo oculto para que se envíe igual
         const hidden = document.createElement('input');
         hidden.type = 'hidden';
         hidden.name = 'cliente';
         hidden.value = selectCliente.value;
         selectCliente.parentNode.appendChild(hidden);
     }
+
 });
 </script>
 {% endblock %}
