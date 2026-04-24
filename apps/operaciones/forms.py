@@ -1,14 +1,7 @@
 from django import forms
 from .models import Cita, Venta, Compra, Cotizacion
 from apps.servicios.models import Producto
-
-
-from django import forms
-from .models import Cita
 from datetime import datetime
-from apps.servicios.models import Producto
-
-
 
 
 # =========================
@@ -16,7 +9,6 @@ from apps.servicios.models import Producto
 # =========================
 class CitaForm(forms.ModelForm):
 
-    # HORARIOS FIJOS
     HORARIOS = [
         ("10:00-11:00", "10:00 AM - 11:00 AM"),
         ("11:00-12:00", "11:00 AM - 12:00 PM"),
@@ -28,7 +20,6 @@ class CitaForm(forms.ModelForm):
         ("20:00-21:00", "8:00 PM - 9:00 PM"),
     ]
 
-    # SELECT DE HORARIOS
     horario = forms.ChoiceField(
         choices=HORARIOS,
         widget=forms.Select(attrs={'class': 'form-select'})
@@ -42,7 +33,7 @@ class CitaForm(forms.ModelForm):
             'empleado': forms.Select(attrs={'class': 'form-select'}),
             'servicio': forms.Select(attrs={'class': 'form-select'}),
 
-            # SOLO FECHA
+           
             'fecha_inicio': forms.DateInput(
                 attrs={'class': 'form-control', 'type': 'date'}
             ),
@@ -59,9 +50,9 @@ class CitaForm(forms.ModelForm):
             return cleaned_data
 
         inicio_str, fin_str = rango.split('-')
+
         fecha_str = fecha.strftime("%Y-%m-%d")
 
-        # crear datetime correctamente
         fecha_inicio = datetime.strptime(f"{fecha_str} {inicio_str}", "%Y-%m-%d %H:%M")
         fecha_fin = datetime.strptime(f"{fecha_str} {fin_str}", "%Y-%m-%d %H:%M")
 
@@ -70,6 +61,10 @@ class CitaForm(forms.ModelForm):
 
         return cleaned_data
 
+
+# =========================
+# VENTAS
+# =========================
 class VentaForm(forms.ModelForm):
     producto = forms.ModelChoiceField(
         queryset=Producto.objects.filter(activo=True),
@@ -94,6 +89,9 @@ class VentaForm(forms.ModelForm):
         }
 
 
+# =========================
+# COMPRAS
+# =========================
 class CompraForm(forms.ModelForm):
     producto = forms.ModelChoiceField(
         queryset=Producto.objects.filter(activo=True),
@@ -108,7 +106,7 @@ class CompraForm(forms.ModelForm):
 
     class Meta:
         model = Compra
-        fields = ['empleado', 'proveedor', 'precio_unitario']
+        fields = ['producto', 'cantidad', 'empleado', 'proveedor', 'precio_unitario'] 
         widgets = {
             'empleado': forms.Select(attrs={'class': 'form-select'}),
             'proveedor': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del proveedor'}),
@@ -116,6 +114,9 @@ class CompraForm(forms.ModelForm):
         }
 
 
+# =========================
+# COTIZACIONES
+# =========================
 class CotizacionForm(forms.ModelForm):
     class Meta:
         model = Cotizacion

@@ -1,78 +1,121 @@
 {% extends "base.html" %}
 {% block title %}Productos — Estética{% endblock %}
-
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="mb-0">
-    <i class="bi bi-box-seam me-2" style="color:#7b2d8b"></i>Productos
-  </h4>
-
+  <h4 class="mb-0"><i class="bi bi-box-seam me-2" style="color:#7b2d8b"></i>Productos</h4>
   <a href="{% url 'servicios:producto_create' %}" class="btn btn-primary btn-sm">
-    <i class="bi bi-plus-lg me-1"></i>Nuevo producto
+    <i class="bi bi-plus-lg me-1"></i>Nuevo Producto
   </a>
 </div>
 
 <div class="card shadow-sm">
-  <div class="card-body p-0">
-    <table class="table table-hover mb-0">
-      <thead class="table-light">
-        <tr>
-          <th>Nombre</th>
-          <th>Marca</th>
-          <th>Costo</th>
-          <th>Venta</th>
-          <th>Stock</th>
-          <th></th>
-        </tr>
-      </thead>
+  <div class="card-body">
+    <!-- Buscador -->
+    <div class="mb-3">
+      <input type="text" id="searchInput" class="form-control" placeholder="Buscar producto...">
+    </div>
 
-      <tbody>
-        {% for p in productos %}
-        <tr>
-          <td>{{ p.nombre }}</td>
-          <td>{{ p.marca }}</td>
-          <td>${{ p.costo }}</td>
-          <td>${{ p.precio_venta }}</td>
-
-          <!-- 🔥 STOCK MEJORADO -->
-          <td>
-            <span class="{% if p.stock_bajo %}text-danger fw-bold{% endif %}">
-              {{ p.stock_actual }}
-            </span>
-
-            {% if p.stock_bajo %}
-              <span class="badge bg-danger ms-1">
-                <i class="bi bi-exclamation-triangle"></i> Bajo
-              </span>
-            {% endif %}
-          </td>
-
-          <td class="text-end">
-            <a href="{% url 'servicios:producto_detail' p.pk %}" class="btn btn-sm btn-outline-secondary me-1">
-              <i class="bi bi-eye"></i>
-            </a>
-
-            <a href="{% url 'servicios:producto_update' p.pk %}" class="btn btn-sm btn-outline-primary me-1">
-              <i class="bi bi-pencil"></i>
-            </a>
-
-            <a href="{% url 'servicios:producto_delete' p.pk %}" class="btn btn-sm btn-outline-danger">
-              <i class="bi bi-trash"></i>
-            </a>
-          </td>
-        </tr>
-
-        {% empty %}
-        <tr>
-          <td colspan="6" class="text-center text-muted py-4">
-            Sin productos registrados.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-
-    </table>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle" id="productosTable">
+        <thead class="table-light">
+          <tr>
+            <th>Nombre</th>
+            <th>Marca</th>
+            <th>Costo</th>
+            <th>Venta</th>
+            <th>Tamaño</th>
+            <th>Existencia</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for producto in productos %}
+          <tr>
+            <td class="fw-bold">{{ producto.nombre }}</td>
+            <td>{{ producto.marca|default:"—" }}</td>
+            <td>${{ producto.costo }}</td>
+            <td>${{ producto.precio_venta }}</td>
+            <td>
+              {% if producto.tamano_personalizado %}
+                <span class="badge bg-info-subtle text-info">{{ producto.get_tamano_final }}</span>
+              {% elif producto.tamano %}
+                <span class="badge bg-secondary-subtle text-secondary">{{ producto.tamano }}</span>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if producto.stock_actual <= producto.stock_minimo %}
+                <span class="badge bg-danger-subtle text-danger">
+                  <i class="bi bi-exclamation-triangle"></i> {{ producto.stock_actual }}
+                </span>
+              {% else %}
+                <span class="badge bg-success-subtle text-success">{{ producto.stock_actual }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <a href="{% url 'servicios:producto_update' producto.pk %}" class="btn btn-outline-primary">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ producto.pk }}">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Modal de confirmación para eliminar -->
+          <div class="modal fade" id="deleteModal{{ producto.pk }}" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Confirmar eliminación</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  ¿Estás seguro de eliminar el producto <strong>{{ producto.nombre }}</strong>?
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                  <form method="post" action="{% url 'servicios:producto_delete' producto.pk %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center py-5 text-muted">
+              <i class="bi bi-inbox display-6 d-block mb-2"></i>
+              No hay productos registrados
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+       </table>
+    </div>
   </div>
 </div>
 
+<script>
+  // Filtro de búsqueda
+  document.getElementById('searchInput').addEventListener('keyup', function() {
+    var input = this.value.toLowerCase();
+    var rows = document.querySelectorAll('#productosTable tbody tr');
+    
+    rows.forEach(function(row) {
+      var nombre = row.cells[0]?.innerText.toLowerCase() || '';
+      var marca = row.cells[1]?.innerText.toLowerCase() || '';
+      
+      if (nombre.includes(input) || marca.includes(input)) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  });
+</script>
 {% endblock %}
