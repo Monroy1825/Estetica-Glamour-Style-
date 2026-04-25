@@ -7,7 +7,10 @@ class ClienteForm(forms.ModelForm):
         model = Cliente
         fields = ['nombre', 'telefono', 'email']
         widgets = {
-            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre completo'}),
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre completo', 'style': 'text-transform: uppercase'}),
             'telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Teléfono'}),
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'correo@ejemplo.com'}),
         }
+
+    def clean_nombre(self):
+        return self.cleaned_data.get('nombre', '').upper()

@@ -2,8 +2,9 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
+from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count # Importante para los totales
 from .models import Cita, Venta, Compra, Cotizacion
 from .forms import CitaForm, VentaForm, CompraForm, CotizacionForm
 
@@ -22,6 +23,39 @@ def _paginate(queryset, request):
 # --- Citas ---
 
 @login_required
+def horarios_ocupados(request):
+    empleado_id = request.GET.get('empleado')
+    fecha = request.GET.get('fecha')
+    cita_id = request.GET.get('cita_id')
+
+    if not empleado_id or not fecha:
+        return JsonResponse({'ocupados': []})
+
+    try:
+        fecha_dt = datetime.strptime(fecha, '%Y-%m-%d').date()
+    except ValueError:
+        return JsonResponse({'ocupados': []})
+
+    citas = Cita.objects.filter(
+        empleado_id=empleado_id,
+        fecha_inicio__date=fecha_dt,
+        activo=True,
+        estado__in=['pendiente', 'confirmada'],
+    )
+
+    if cita_id:
+        citas = citas.exclude(pk=cita_id)
+
+    ocupados = [
+        {
+            'inicio': timezone.localtime(c.fecha_inicio).strftime('%H:%M'),
+            'fin':    timezone.localtime(c.fecha_fin).strftime('%H:%M'),
+        }
+        for c in citas
+    ]
+    return JsonResponse({'ocupados': ocupados})
+
+@login_required
 def cita_list(request):
     qs = Cita.objects.filter(activo=True).select_related('cliente', 'empleado', 'servicio')
     return render(request, 'operaciones/cita_list.html', {'citas': _paginate(qs, request)})
@@ -36,7 +70,7 @@ def cita_create(request):
             fecha_inicio = form.cleaned_data['fecha_inicio']
             fecha_fin = form.cleaned_data['fecha_fin']
 
-            # VALIDAR CRUCE DE HORARIOS
+            # 🔴 VALIDAR CRUCE DE HORARIOS
             citas_conflicto = Cita.objects.filter(
                 empleado_id=empleado_id,
                 activo=True,
@@ -48,12 +82,10 @@ def cita_create(request):
                 messages.error(request, 'El empleado ya tiene una cita en ese horario.')
                 return render(request, 'operaciones/cita_form.html', {
                     'titulo': 'Nueva Cita',
-                    'form': form,
-                    'horarios_ocupados': _get_horarios_ocupados(),
-                    'cliente_id': None,
+                    'form': form
                 })
 
-            # GUARDAR BIEN (AQUI ESTA LA CLAVE)
+            # 🔥 GUARDAR BIEN (AQUI ESTA LA CLAVE)
             cita = form.save(commit=False)
             cita.fecha_inicio = fecha_inicio
             cita.fecha_fin = fecha_fin
@@ -125,20 +157,7 @@ def cita_update(request, pk):
             fecha_inicio = form.cleaned_data['fecha_inicio']
             fecha_fin = form.cleaned_data['fecha_fin']
 
-            # VALIDAR CRUCE DE HORARIOS
-            citas_conflicto = Cita.objects.filter(
-                empleado_id=empleado_id,
-                activo=True,
-            ).filter(
-                Q(fecha_inicio__lt=fecha_fin) & Q(fecha_fin__gt=fecha_inicio)
-            ).exclude(pk=cita.pk)
-
-            if citas_conflicto.exists():
-                messages.error(request, 'El empleado ya tiene una cita en ese horario.')
-                return render(request, 'operaciones/cita_form.html', {
-                    'titulo': 'Editar Cita',
-                    'form': form
-                })
+            # La validación de conflicto se maneja en CitaForm.clean()
 
             cita = form.save(commit=False)
             cita.fecha_inicio = fecha_inicio
@@ -153,7 +172,8 @@ def cita_update(request, pk):
 
     return render(request, 'operaciones/cita_form.html', {
         'titulo': 'Editar Cita',
-        'form': form
+        'form': form,
+        'cita_id': cita.pk,
     })
 
 

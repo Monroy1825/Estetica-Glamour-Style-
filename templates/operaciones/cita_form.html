@@ -70,62 +70,16 @@
   </div>
 </div>
 
-<!-- Datos de horarios ocupados (separados del JS para evitar errores de sintaxis) -->
-<script id="horarios-data" type="application/json">{{ horarios_ocupados|safe }}</script>
-<script id="cliente-data" type="application/json">"{{ cliente_id }}"</script>
-
+<!-- 🔥 BLOQUEAR FECHAS PASADAS -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-
-    // Bloquear fechas pasadas
     const inputFecha = document.querySelector('input[type="date"]');
+
     const hoy = new Date().toISOString().split("T")[0];
-    if (inputFecha) inputFecha.min = hoy;
 
-    // Leer datos desde Django de forma segura
-    const horariosOcupados = JSON.parse(document.getElementById('horarios-data').textContent);
-    const clienteId = JSON.parse(document.getElementById('cliente-data').textContent);
-
-    // Referencias a campos
-    const selectEmpleado = document.getElementById('id_empleado');
-    const inputFechaEl = document.getElementById('id_fecha_inicio');
-    const selectHorario = document.getElementById('id_horario');
-    const selectCliente = document.getElementById('id_cliente');
-
-    // Bloquear horarios ocupados según empleado y fecha
-    function bloquearHorarios() {
-        const empleadoId = selectEmpleado ? selectEmpleado.value : '';
-        const fecha = inputFechaEl ? inputFechaEl.value : '';
-        const clave = empleadoId + '_' + fecha;
-        const ocupados = horariosOcupados[clave] || [];
-
-        if (selectHorario) {
-            Array.from(selectHorario.options).forEach(opt => {
-                if (opt.value === '') return;
-                const horaInicio = opt.value.split('-')[0];
-                const bloqueado = ocupados.includes(horaInicio);
-                opt.disabled = bloqueado;
-                opt.text = bloqueado
-                    ? opt.text.replace(' 🔴 Ocupado', '') + ' 🔴 Ocupado'
-                    : opt.text.replace(' 🔴 Ocupado', '');
-            });
-        }
+    if (inputFecha) {
+        inputFecha.min = hoy;
     }
-
-    if (selectEmpleado) selectEmpleado.addEventListener('change', bloquearHorarios);
-    if (inputFechaEl) inputFechaEl.addEventListener('change', bloquearHorarios);
-    bloquearHorarios();
-
-    // Bloquear campo cliente si viene prellenado desde cita anterior
-    if (clienteId && clienteId !== 'None' && selectCliente) {
-        selectCliente.disabled = true;
-        const hidden = document.createElement('input');
-        hidden.type = 'hidden';
-        hidden.name = 'cliente';
-        hidden.value = selectCliente.value;
-        selectCliente.parentNode.appendChild(hidden);
-    }
-
 });
 </script>
 {% endblock %}

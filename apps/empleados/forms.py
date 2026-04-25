@@ -7,7 +7,7 @@ class EmpleadoForm(forms.ModelForm):
         model = Empleado
         fields = ['nombre', 'telefono', 'rol', 'fecha_ingreso']
         widgets = {
-            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre completo'}),
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre completo', 'style': 'text-transform: uppercase'}),
             'telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Teléfono'}),
             'rol': forms.Select(attrs={'class': 'form-select'}),
             'fecha_ingreso': forms.DateInput(
@@ -15,3 +15,6 @@ class EmpleadoForm(forms.ModelForm):
                 format='%Y-%m-%d',
             ),
         }
+
+    def clean_nombre(self):
+        return self.cleaned_data.get('nombre', '').upper()

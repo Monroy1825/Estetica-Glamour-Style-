@@ -7,10 +7,13 @@ class ServicioForm(forms.ModelForm):
         model = Servicio
         fields = ['nombre', 'categoria', 'precio_base']
         widgets = {
-            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del servicio'}),
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del servicio', 'style': 'text-transform: uppercase'}),
             'categoria': forms.Select(attrs={'class': 'form-select'}),
             'precio_base': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
         }
+
+    def clean_nombre(self):
+        return self.cleaned_data.get('nombre', '').upper()
 
 
 class ProductoForm(forms.ModelForm):
@@ -68,38 +71,8 @@ class ProductoForm(forms.ModelForm):
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del producto'}),
             'marca': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Marca'}),
-            'tamano_personalizado': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Escribe el tamaño exacto: Ej: 180 ml, kit 3 pzas...',
-                'id': 'id_tamano_personalizado',
-            }),
             'costo': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
             'precio_venta': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
             'stock_actual': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
             'stock_minimo': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
         }
-        labels = {
-            'tamano_personalizado': 'Tamaño personalizado',
-            'stock_actual': 'Existencia',  # Cambiado de 'Cantidad en existencia' a solo 'Existencia'
-            'stock_minimo': 'Cantidad mínima de alerta',
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance and self.instance.pk:
-            preset_values = [c[0] for c in self.TAMANO_CHOICES if c[0]]
-            if self.instance.tamano in preset_values:
-                self.fields['tamano'].initial = self.instance.tamano
-            elif self.instance.tamano:
-                self.fields['tamano'].initial = 'otro'
-
-    def clean(self):
-        cleaned = super().clean()
-        tamano = cleaned.get('tamano', '')
-        personalizado = cleaned.get('tamano_personalizado', '')
-        if tamano == 'otro':
-            cleaned['tamano'] = personalizado
-            cleaned['tamano_personalizado'] = personalizado
-        elif tamano:
-            cleaned['tamano_personalizado'] = ''
-        return cleaned

@@ -1,7 +1,14 @@
 from django import forms
 from .models import Cita, Venta, Compra, Cotizacion
 from apps.servicios.models import Producto
+
+
+from django import forms
+from .models import Cita
 from datetime import datetime
+from apps.servicios.models import Producto
+
+
 
 
 # =========================
@@ -10,14 +17,14 @@ from datetime import datetime
 class CitaForm(forms.ModelForm):
 
     HORARIOS = [
-        ("10:00-11:00", "10:00 AM - 11:00 AM"),
-        ("11:00-12:00", "11:00 AM - 12:00 PM"),
-        ("12:00-13:00", "12:00 PM - 1:00 PM"),
-        ("13:00-14:00", "1:00 PM - 2:00 PM"),
-        ("17:00-18:00", "5:00 PM - 6:00 PM"),
-        ("18:00-19:00", "6:00 PM - 7:00 PM"),
-        ("19:00-20:00", "7:00 PM - 8:00 PM"),
-        ("20:00-21:00", "8:00 PM - 9:00 PM"),
+        ("10:00", "10:00 AM"),
+        ("11:00", "11:00 AM"),
+        ("12:00", "12:00 PM"),
+        ("13:00", "1:00 PM"),
+        ("17:00", "5:00 PM"),
+        ("18:00", "6:00 PM"),
+        ("19:00", "7:00 PM"),
+        ("20:00", "8:00 PM"),
     ]
 
     horario = forms.ChoiceField(
@@ -27,13 +34,13 @@ class CitaForm(forms.ModelForm):
 
     class Meta:
         model = Cita
-        fields = ['cliente', 'empleado', 'servicio', 'fecha_inicio', 'horario', 'estado']
+        fields = ['cliente', 'empleado', 'servicio', 'fecha_inicio', 'horario', 'duracion_horas', 'estado']
         widgets = {
             'cliente': forms.Select(attrs={'class': 'form-select'}),
             'empleado': forms.Select(attrs={'class': 'form-select'}),
             'servicio': forms.Select(attrs={'class': 'form-select'}),
 
-           
+            # 🔥 SOLO FECHA
             'fecha_inicio': forms.DateInput(
                 attrs={'class': 'form-control', 'type': 'date'}
             ),
@@ -44,20 +51,43 @@ class CitaForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         fecha = cleaned_data.get('fecha_inicio')
-        rango = cleaned_data.get('horario')
+        inicio_str = cleaned_data.get('horario')
+        duracion = cleaned_data.get('duracion_horas') or 1.0
 
-        if not fecha or not rango:
+        if not fecha or not inicio_str:
             return cleaned_data
 
+        # 🔥 separar horas
         inicio_str, fin_str = rango.split('-')
 
+        # 🔥 convertir fecha a string limpio
         fecha_str = fecha.strftime("%Y-%m-%d")
 
+        # 🔥 crear datetime correctamente
         fecha_inicio = datetime.strptime(f"{fecha_str} {inicio_str}", "%Y-%m-%d %H:%M")
         fecha_fin = datetime.strptime(f"{fecha_str} {fin_str}", "%Y-%m-%d %H:%M")
 
         cleaned_data['fecha_inicio'] = fecha_inicio
         cleaned_data['fecha_fin'] = fecha_fin
+
+        empleado = cleaned_data.get('empleado')
+        if empleado:
+            from .models import Cita as CitaModel
+            conflictos = CitaModel.objects.filter(
+                empleado=empleado,
+                activo=True,
+                estado__in=['pendiente', 'confirmada'],
+                fecha_inicio__lt=fecha_fin,
+                fecha_fin__gt=fecha_inicio,
+            )
+            if self.instance and self.instance.pk:
+                conflictos = conflictos.exclude(pk=self.instance.pk)
+
+            if conflictos.exists():
+                self.add_error(
+                    'horario',
+                    'Este empleado ya tiene una cita en ese horario. Elige otro horario o empleado.'
+                )
 
         return cleaned_data
 
@@ -109,9 +139,13 @@ class CompraForm(forms.ModelForm):
         fields = ['producto', 'cantidad', 'empleado', 'proveedor', 'precio_unitario'] 
         widgets = {
             'empleado': forms.Select(attrs={'class': 'form-select'}),
-            'proveedor': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del proveedor'}),
+            'proveedor': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del proveedor', 'style': 'text-transform: uppercase'}),
             'precio_unitario': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
         }
+
+
+    def clean_proveedor(self):
+        return self.cleaned_data.get('proveedor', '').upper()
 
 
 # =========================
