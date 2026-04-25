@@ -40,7 +40,7 @@ class CitaForm(forms.ModelForm):
             'empleado': forms.Select(attrs={'class': 'form-select'}),
             'servicio': forms.Select(attrs={'class': 'form-select'}),
 
-            # 🔥 SOLO FECHA
+            # SOLO FECHA
             'fecha_inicio': forms.DateInput(
                 attrs={'class': 'form-control', 'type': 'date'}
             ),
@@ -57,13 +57,13 @@ class CitaForm(forms.ModelForm):
         if not fecha or not inicio_str:
             return cleaned_data
 
-        # 🔥 separar horas
+        # separar horas
         inicio_str, fin_str = rango.split('-')
 
-        # 🔥 convertir fecha a string limpio
+        # convertir fecha a string limpio
         fecha_str = fecha.strftime("%Y-%m-%d")
 
-        # 🔥 crear datetime correctamente
+        # crear datetime correctamente
         fecha_inicio = datetime.strptime(f"{fecha_str} {inicio_str}", "%Y-%m-%d %H:%M")
         fecha_fin = datetime.strptime(f"{fecha_str} {fin_str}", "%Y-%m-%d %H:%M")
 

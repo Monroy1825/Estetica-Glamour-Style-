@@ -70,7 +70,7 @@ def cita_create(request):
             fecha_inicio = form.cleaned_data['fecha_inicio']
             fecha_fin = form.cleaned_data['fecha_fin']
 
-            # 🔴 VALIDAR CRUCE DE HORARIOS
+            # VALIDAR CRUCE DE HORARIOS
             citas_conflicto = Cita.objects.filter(
                 empleado_id=empleado_id,
                 activo=True,
@@ -85,7 +85,7 @@ def cita_create(request):
                     'form': form
                 })
 
-            # 🔥 GUARDAR BIEN (AQUI ESTA LA CLAVE)
+            # GUARDAR BIEN (AQUI ESTA LA CLAVE)
             cita = form.save(commit=False)
             cita.fecha_inicio = fecha_inicio
             cita.fecha_fin = fecha_fin
