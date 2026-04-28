@@ -54,6 +54,9 @@ class Producto(models.Model):
         verbose_name_plural = 'Productos'
         ordering = ['nombre']
 
+    def get_tamano_final(self):
+        return self.tamano_personalizado or self.tamano
+
     def __str__(self):
         tamano = self.get_tamano_final()
         return f'{self.nombre} ({tamano})' if tamano else self.nombre

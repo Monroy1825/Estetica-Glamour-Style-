@@ -138,12 +138,13 @@ class Command(BaseCommand):
 
         # Compras
         compras_data = [
-            (empleados[4], 'Distribuidora Loreal México', 2450.00),
-            (empleados[4], 'Wella Professionals MX', 1800.00),
+            (empleados[4], productos[0], 'Distribuidora Loreal México', 85.00, 10),
+            (empleados[4], productos[1], 'Wella Professionals MX', 120.00, 8),
         ]
-        for empleado, proveedor, total in compras_data:
+        for empleado, producto, proveedor, precio_unitario, cantidad in compras_data:
             Compra.objects.get_or_create(
-                empleado=empleado, proveedor=proveedor, total=total
+                empleado=empleado, producto=producto, proveedor=proveedor,
+                defaults={'precio_unitario': precio_unitario, 'cantidad': cantidad}
             )
         self.stdout.write('  [OK] 2 compras')
 
