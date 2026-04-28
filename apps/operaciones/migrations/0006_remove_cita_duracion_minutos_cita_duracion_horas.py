@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('operaciones', '0005_cita_duracion_minutos'),
+        ('operaciones', '0008_cita_duracion_minutos'),
     ]
 
     operations = [
