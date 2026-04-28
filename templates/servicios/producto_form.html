@@ -9,12 +9,11 @@
   <div class="card-body">
     <form method="post" novalidate>
       {% csrf_token %}
-      
+ 
       {% for field in form %}
         <div class="mb-3">
           <label for="{{ field.id_for_label }}" class="form-label fw-semibold">{{ field.label }}</label>
-          
-          {# Para el campo tamano_personalizado, lo envolvemos en un div oculto #}
+ 
           {% if field.name == 'tamano_personalizado' %}
             <div id="wrapper_personalizado" style="display: none;">
               {{ field }}
@@ -22,13 +21,13 @@
           {% else %}
             {{ field }}
           {% endif %}
-          
+ 
           {% if field.errors %}
             <div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>
           {% endif %}
         </div>
       {% endfor %}
-      
+ 
       <div class="d-flex gap-2 mt-4">
         <button type="submit" class="btn btn-primary px-4">
           <i class="bi bi-check-lg me-1"></i>Guardar
@@ -38,34 +37,87 @@
     </form>
   </div>
 </div>
-
+ 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Obtener el select del tamaño
-    var selectTamano = document.querySelector('select[name="tamano"]');
-    var wrapperPersonalizado = document.getElementById('wrapper_personalizado');
-    var campoPersonalizado = document.querySelector('input[name="tamano_personalizado"]');
-    
-    function togglePersonalizado() {
-      if (selectTamano.value === 'otro') {
-        wrapperPersonalizado.style.display = 'block';
-        if (campoPersonalizado && campoPersonalizado.value === '') {
-          campoPersonalizado.focus();
-        }
-      } else {
-        wrapperPersonalizado.style.display = 'none';
-        // Si no seleccionó "otro", limpiamos el campo personalizado
-        if (campoPersonalizado && selectTamano.value !== 'otro') {
-          campoPersonalizado.value = '';
-        }
-      }
+document.addEventListener('DOMContentLoaded', function () {
+ 
+  // Tamaños disponibles por tipo de presentación
+  const tamanosPorPresentacion = {
+    'botella': ['250 ml', '350 ml', '500 ml', '750 ml', '1 L', '1.5 L', '2 L'],
+    'frasco':  ['30 ml', '50 ml', '100 ml', '150 ml', '200 ml', '250 ml', '300 ml', '500 ml'],
+    'tubo':    ['50 g', '75 g', '100 g', '150 g', '200 g', '250 g'],
+    'sachet':  ['5 ml', '10 ml', '15 ml', '20 ml', '30 ml', '50 ml'],
+    'lata':    ['100 ml', '200 ml', '250 ml', '400 ml', '500 ml'],
+    'caja':    ['50 g', '100 g', '200 g', '500 g', '1 kg'],
+    'pieza':   ['1 pieza', '2 piezas', '3 piezas', '6 piezas', '12 piezas'],
+    'paquete': ['paquete chico', 'paquete mediano', 'paquete grande'],
+    'otro':    [],
+  };
+ 
+  const selectPresentacion = document.querySelector('select[name="presentacion"]');
+  const selectTamano       = document.querySelector('select[name="tamano"]');
+  const wrapperPersonalizado = document.getElementById('wrapper_personalizado');
+  const campoPersonalizado   = document.querySelector('input[name="tamano_personalizado"]');
+ 
+  function actualizarTamanos(presentacion) {
+    if (!selectTamano) return;
+ 
+    const opciones = tamanosPorPresentacion[presentacion] || [];
+    const valorActual = selectTamano.value;
+ 
+    // Limpiar opciones actuales
+    selectTamano.innerHTML = '';
+ 
+    // Opción por defecto
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = opciones.length
+      ? '— Selecciona un tamaño —'
+      : '— Sin tamaños predefinidos —';
+    selectTamano.appendChild(defaultOpt);
+ 
+    // Agregar opciones según presentación
+    opciones.forEach(function (tam) {
+      const opt = document.createElement('option');
+      opt.value = tam;
+      opt.textContent = tam;
+      if (tam === valorActual) opt.selected = true;
+      selectTamano.appendChild(opt);
+    });
+ 
+    // Opción "Otro" siempre disponible
+    const otroOpt = document.createElement('option');
+    otroOpt.value = 'otro';
+    otroOpt.textContent = 'Otro — escribir abajo';
+    if (valorActual === 'otro') otroOpt.selected = true;
+    selectTamano.appendChild(otroOpt);
+ 
+    togglePersonalizado();
+  }
+ 
+  function togglePersonalizado() {
+    if (!selectTamano) return;
+    if (selectTamano.value === 'otro') {
+      wrapperPersonalizado.style.display = 'block';
+    } else {
+      wrapperPersonalizado.style.display = 'none';
+      if (campoPersonalizado) campoPersonalizado.value = '';
     }
-    
-    // Verificar al cargar (útil para cuando se edita un producto)
-    if (selectTamano) {
-      togglePersonalizado();
-      selectTamano.addEventListener('change', togglePersonalizado);
-    }
-  });
+  }
+ 
+  // Eventos
+  if (selectPresentacion) {
+    selectPresentacion.addEventListener('change', function () {
+      actualizarTamanos(this.value);
+    });
+    // Inicializar con el valor actual al cargar la página
+    actualizarTamanos(selectPresentacion.value);
+  }
+ 
+  if (selectTamano) {
+    selectTamano.addEventListener('change', togglePersonalizado);
+  }
+ 
+});
 </script>
 {% endblock %}

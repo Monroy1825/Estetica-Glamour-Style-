@@ -29,8 +29,28 @@ class Servicio(models.Model):
 
 
 class Producto(models.Model):
+    PRESENTACION_CHOICES = [
+        ('', '— Selecciona presentación —'),
+        ('botella', 'Botella'),
+        ('frasco', 'Frasco'),
+        ('tubo', 'Tubo'),
+        ('sachet', 'Sachet'),
+        ('lata', 'Lata'),
+        ('caja', 'Caja'),
+        ('pieza', 'Pieza'),
+        ('paquete', 'Paquete'),
+        ('otro', 'Otro'),
+    ]
+
     nombre = models.CharField(max_length=100)
     marca = models.CharField(max_length=100, blank=True)
+    presentacion = models.CharField(
+        max_length=50,
+        blank=True,
+        choices=PRESENTACION_CHOICES,
+        verbose_name='Presentación',
+        help_text='Tipo de envase o presentación del producto'
+    )
     tamano = models.CharField(
         max_length=100,
         blank=True,
@@ -53,6 +73,9 @@ class Producto(models.Model):
         verbose_name = 'Producto'
         verbose_name_plural = 'Productos'
         ordering = ['nombre']
+
+    def get_tamano_final(self):
+        return self.tamano_personalizado if self.tamano_personalizado else self.tamano
 
     def __str__(self):
         tamano = self.get_tamano_final()
