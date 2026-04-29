@@ -1,14 +1,7 @@
 from django import forms
 from .models import Cita, Venta, Compra, Cotizacion
 from apps.servicios.models import Producto
-
-
-from django import forms
-from .models import Cita
-from datetime import datetime
-from apps.servicios.models import Producto
-
-
+from datetime import datetime, timedelta
 
 
 # =========================
@@ -34,18 +27,16 @@ class CitaForm(forms.ModelForm):
 
     class Meta:
         model = Cita
-        fields = ['cliente', 'empleado', 'servicio', 'fecha_inicio', 'horario', 'duracion_horas', 'estado']
+        fields = ['cliente', 'empleado', 'servicio', 'fecha_inicio', 'horario', 'duracion_horas', 'estado', 'turno']
         widgets = {
             'cliente': forms.Select(attrs={'class': 'form-select'}),
             'empleado': forms.Select(attrs={'class': 'form-select'}),
             'servicio': forms.Select(attrs={'class': 'form-select'}),
-
-            # SOLO FECHA
             'fecha_inicio': forms.DateInput(
                 attrs={'class': 'form-control', 'type': 'date'}
             ),
-
             'estado': forms.Select(attrs={'class': 'form-select'}),
+            'turno': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'placeholder': 'Ej: 1, 2, 3...'}),
         }
 
     def clean(self):
@@ -57,15 +48,14 @@ class CitaForm(forms.ModelForm):
         if not fecha or not inicio_str:
             return cleaned_data
 
-        # separar horas
-        inicio_str, fin_str = rango.split('-')
-
-        # convertir fecha a string limpio
+        # Convertir fecha a string limpio
         fecha_str = fecha.strftime("%Y-%m-%d")
 
-        # crear datetime correctamente
+        # Crear datetime de inicio
         fecha_inicio = datetime.strptime(f"{fecha_str} {inicio_str}", "%Y-%m-%d %H:%M")
-        fecha_fin = datetime.strptime(f"{fecha_str} {fin_str}", "%Y-%m-%d %H:%M")
+
+        # Calcular fecha fin sumando la duración en horas
+        fecha_fin = fecha_inicio + timedelta(hours=duracion)
 
         cleaned_data['fecha_inicio'] = fecha_inicio
         cleaned_data['fecha_fin'] = fecha_fin
@@ -101,10 +91,23 @@ class VentaForm(forms.ModelForm):
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'}),
     )
+    cita = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        label='Cita relacionada (opcional)',
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from .models import Cita
+        self.fields['cita'].queryset = Cita.objects.filter(
+            activo=True, estado__in=['confirmada', 'completada']
+        ).select_related('cliente', 'servicio').order_by('-fecha_inicio')
 
     class Meta:
         model = Venta
-        fields = ['cliente', 'empleado', 'producto', 'metodo_pago', 'tipo', 'estatus', 'vigencia_hasta', 'total']
+        fields = ['cita', 'cliente', 'empleado', 'producto', 'metodo_pago', 'tipo', 'estatus', 'vigencia_hasta', 'total']
         widgets = {
             'cliente': forms.Select(attrs={'class': 'form-select'}),
             'empleado': forms.Select(attrs={'class': 'form-select'}),
@@ -136,13 +139,12 @@ class CompraForm(forms.ModelForm):
 
     class Meta:
         model = Compra
-        fields = ['producto', 'cantidad', 'empleado', 'proveedor', 'precio_unitario'] 
+        fields = ['producto', 'cantidad', 'empleado', 'proveedor', 'precio_unitario']
         widgets = {
             'empleado': forms.Select(attrs={'class': 'form-select'}),
             'proveedor': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del proveedor', 'style': 'text-transform: uppercase'}),
             'precio_unitario': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
         }
-
 
     def clean_proveedor(self):
         return self.cleaned_data.get('proveedor', '').upper()

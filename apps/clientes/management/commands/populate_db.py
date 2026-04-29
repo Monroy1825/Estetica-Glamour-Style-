@@ -6,14 +6,14 @@ from apps.clientes.models import Cliente
 from apps.empleados.models import Empleado
 from apps.servicios.models import Servicio, Producto
 from apps.operaciones.models import Cita, Venta, Compra, Cotizacion
-
-
+ 
+ 
 class Command(BaseCommand):
     help = 'Poblar la base de datos con datos de prueba de un salón mexicano'
-
+ 
     def handle(self, *args, **kwargs):
         self.stdout.write('Creando datos de prueba...')
-
+ 
         # Superusuario
         admin, _ = User.objects.get_or_create(username='admin', defaults={
             'email': 'admin@estetica.mx',
@@ -23,7 +23,7 @@ class Command(BaseCommand):
         admin.set_password('admin123')
         admin.save()
         self.stdout.write('  [OK] Superusuario: admin / admin123')
-
+ 
         # Empleados
         empleados_data = [
             ('Valeria Reyes Mora', '5512345678', 'estilista', date(2021, 3, 15)),
@@ -41,7 +41,7 @@ class Command(BaseCommand):
             })
             empleados.append(emp)
         self.stdout.write(f'  [OK] {len(empleados)} empleados')
-
+ 
         # Clientes
         clientes_data = [
             ('Ana González Torres', '5511112222', 'ana.gonzalez@gmail.com'),
@@ -61,7 +61,7 @@ class Command(BaseCommand):
             })
             clientes.append(cli)
         self.stdout.write(f'  [OK] {len(clientes)} clientes')
-
+ 
         # Servicios
         servicios_data = [
             ('Corte Dama', 'corte', 220.00),
@@ -79,7 +79,7 @@ class Command(BaseCommand):
             })
             servicios.append(srv)
         self.stdout.write(f'  [OK] {len(servicios)} servicios')
-
+ 
         # Productos
         productos_data = [
             ('Shampoo Reparador', 'Loreal', 85.00, 145.00, 20, 5),
@@ -98,24 +98,24 @@ class Command(BaseCommand):
             })
             productos.append(prod)
         self.stdout.write(f'  [OK] {len(productos)} productos')
-
+ 
         now = timezone.now()
-
+ 
         # Citas
         citas_data = [
-            (clientes[0], empleados[0], servicios[0], now + timedelta(days=1), now + timedelta(days=1, hours=1), 'confirmada'),
-            (clientes[1], empleados[1], servicios[2], now + timedelta(days=2), now + timedelta(days=2, hours=2), 'pendiente'),
-            (clientes[2], empleados[2], servicios[3], now - timedelta(days=1), now - timedelta(days=1) + timedelta(hours=1), 'completada'),
-            (clientes[3], empleados[0], servicios[1], now - timedelta(days=3), now - timedelta(days=3) + timedelta(hours=1), 'completada'),
-            (clientes[4], empleados[1], servicios[4], now + timedelta(days=5), now + timedelta(days=5, hours=1), 'cancelada'),
+            (clientes[0], empleados[0], servicios[0], now + timedelta(days=1), now + timedelta(days=1, hours=1), 'confirmada', 1),
+            (clientes[1], empleados[1], servicios[2], now + timedelta(days=2), now + timedelta(days=2, hours=2), 'pendiente', 2),
+            (clientes[2], empleados[2], servicios[3], now - timedelta(days=1), now - timedelta(days=1) + timedelta(hours=1), 'completada', 1),
+            (clientes[3], empleados[0], servicios[1], now - timedelta(days=3), now - timedelta(days=3) + timedelta(hours=1), 'completada', 3),
+            (clientes[4], empleados[1], servicios[4], now + timedelta(days=5), now + timedelta(days=5, hours=1), 'cancelada', 4),
         ]
-        for cliente, empleado, servicio, inicio, fin, estado in citas_data:
+        for cliente, empleado, servicio, inicio, fin, estado, turno in citas_data:
             Cita.objects.get_or_create(
                 cliente=cliente, empleado=empleado, servicio=servicio, fecha_inicio=inicio,
-                defaults={'fecha_fin': fin, 'estado': estado}
+                defaults={'fecha_fin': fin, 'estado': estado, 'turno': turno}
             )
         self.stdout.write('  [OK] 5 citas')
-
+ 
         # Ventas
         ventas_data = [
             (clientes[0], empleados[3], None, 'efectivo', 'servicio', 'pagada', None, 220.00),
@@ -135,18 +135,23 @@ class Command(BaseCommand):
                 }
             )
         self.stdout.write('  [OK] 4 ventas')
-
+ 
         # Compras
         compras_data = [
-            (empleados[4], 'Distribuidora Loreal México', 2450.00),
-            (empleados[4], 'Wella Professionals MX', 1800.00),
+            (empleados[4], productos[0], 'Distribuidora Loreal México', 2450.00, 10),
+            (empleados[4], productos[1], 'Wella Professionals MX', 1800.00, 8),
         ]
-        for empleado, proveedor, total in compras_data:
+        for empleado, producto, proveedor, precio_unitario, cantidad in compras_data:
             Compra.objects.get_or_create(
-                empleado=empleado, proveedor=proveedor, total=total
+                empleado=empleado, proveedor=proveedor,
+                defaults={
+                    'producto': producto,
+                    'precio_unitario': precio_unitario,
+                    'cantidad': cantidad,
+                }
             )
         self.stdout.write('  [OK] 2 compras')
-
+ 
         # Cotizaciones
         cotizaciones_data = [
             (clientes[6], servicios[5], None, date.today() + timedelta(days=15), 'vigente'),
@@ -163,5 +168,6 @@ class Command(BaseCommand):
                 }
             )
         self.stdout.write('  [OK] 3 cotizaciones')
-
+ 
         self.stdout.write(self.style.SUCCESS('\nBase de datos poblada correctamente.'))
+ 
