@@ -363,7 +363,7 @@ def cotizacion_delete(request, pk):
     return render(request, 'operaciones/cotizacion_confirm_delete.html', {'cotizacion': cotizacion})
 
 
-# --- Proveedores ---
+# --- Proveedores (Catálogo Agrupado) ---
 
 @login_required
 def proveedor_list(request):
