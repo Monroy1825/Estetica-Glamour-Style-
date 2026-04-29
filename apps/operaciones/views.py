@@ -307,7 +307,6 @@ def cotizacion_delete(request, pk):
 
 
 # --- Proveedores (Catálogo Agrupado) ---
-#asd
 @login_required
 def proveedor_list(request):
     proveedores = Compra.objects.values('proveedor').annotate(
