@@ -87,6 +87,13 @@
     .badge-pagada     { background-color: #198754; }
     .badge-vigente    { background-color: #0d6efd; }
     .badge-vencida    { background-color: #6c757d; }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="search"],
+    textarea {
+      text-transform: uppercase;
+    }
   </style>
 </head>
 <body>
@@ -223,19 +230,81 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    function titleCase(str) {
-      return str.toLowerCase().replace(/(?:^|\s)\S/g, function (c) { return c.toUpperCase(); });
+
+    function limpiar(valor, soloNumeros) {
+      if (soloNumeros) {
+        return valor.replace(/[^0-9]/g, '').slice(0, 10);
+      }
+      return valor.replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ0-9\s]/g, '').toUpperCase();
     }
-    document.querySelectorAll('input[name="nombre"], input[name="apellido"], input[name="nombre_completo"]').forEach(function (field) {
+
+    var textos = 'input[type="text"], input[type="email"], input[type="search"], textarea';
+    document.querySelectorAll(textos).forEach(function (field) {
       field.addEventListener('input', function () {
         var pos = this.selectionStart;
-        var newVal = titleCase(this.value);
-        if (this.value !== newVal) {
-          this.value = newVal;
-          this.setSelectionRange(pos, pos);
+        var limpio = limpiar(this.value, false);
+        if (this.value !== limpio) {
+          this.value = limpio;
+          if (this.setSelectionRange) this.setSelectionRange(pos, pos);
         }
       });
     });
+
+    var telefonos = 'input[type="tel"], input[name="telefono"]';
+    document.querySelectorAll(telefonos).forEach(function (field) {
+      field.setAttribute('maxlength', '10');
+      field.setAttribute('inputmode', 'numeric');
+      field.setAttribute('pattern', '[0-9]{10}');
+
+      field.addEventListener('input', function () {
+        var pos = this.selectionStart;
+        var limpio = limpiar(this.value, true);
+        if (this.value !== limpio) {
+          this.value = limpio;
+          if (this.setSelectionRange) this.setSelectionRange(pos, pos);
+        }
+        validarTelefono(this);
+      });
+
+      field.addEventListener('blur', function () {
+        validarTelefono(this);
+      });
+
+      field.addEventListener('keydown', function (e) {
+        var permitidas = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'];
+        if (permitidas.indexOf(e.key) === -1 && !/^[0-9]$/.test(e.key)) {
+          e.preventDefault();
+        }
+      });
+
+      var form = field.closest('form');
+      if (form) {
+        form.addEventListener('submit', function (e) {
+          if (field.value.length > 0 && field.value.length !== 10) {
+            e.preventDefault();
+            validarTelefono(field);
+            field.focus();
+          }
+        });
+      }
+    });
+
+    function validarTelefono(field) {
+      var msg = field.parentElement.querySelector('.tel-error');
+      if (field.value.length > 0 && field.value.length !== 10) {
+        field.style.borderColor = '#dc3545';
+        if (!msg) {
+          var err = document.createElement('div');
+          err.className = 'tel-error text-danger small mt-1';
+          err.textContent = 'El telefono debe tener exactamente 10 digitos.';
+          field.parentElement.appendChild(err);
+        }
+      } else {
+        field.style.borderColor = '';
+        if (msg) msg.remove();
+      }
+    }
+
   });
 </script>
 </body>
