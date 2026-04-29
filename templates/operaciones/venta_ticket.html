@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticket de Venta #{{ venta.pk }}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Courier New', monospace;
+      background: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+
+    .ticket-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .ticket {
+      background: #fff;
+      width: 100%;
+      border-radius: 4px;
+      padding: 28px 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+      position: relative;
+    }
+
+    .ticket::before, .ticket::after {
+      content: '';
+      display: block;
+      height: 12px;
+      background: repeating-linear-gradient(
+        90deg,
+        #f0f0f0 0px, #f0f0f0 10px,
+        #fff 10px, #fff 20px
+      );
+      margin: 0 -24px;
+    }
+    .ticket::before { margin-bottom: 20px; }
+    .ticket::after  { margin-top: 20px; }
+
+    .salon-name {
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      color: #7b2d8b;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .salon-sub {
+      text-align: center;
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 16px;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px dashed #ccc;
+      margin: 12px 0;
+    }
+
+    .ticket-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 6px;
+      gap: 8px;
+    }
+
+    .ticket-row .label {
+      color: #666;
+      white-space: nowrap;
+    }
+
+    .ticket-row .value {
+      text-align: right;
+      font-weight: bold;
+      color: #222;
+      word-break: break-word;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 2px dashed #7b2d8b;
+      color: #7b2d8b;
+    }
+
+    .gracias {
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+      margin-top: 8px;
+      font-style: italic;
+    }
+
+    .btn-actions {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      font-family: sans-serif;
+    }
+
+    .btn-print {
+      background: #7b2d8b;
+      color: white;
+    }
+
+    .btn-back {
+      background: #e9ecef;
+      color: #333;
+    }
+
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      .btn-actions { display: none; }
+      .ticket {
+        box-shadow: none;
+        border-radius: 0;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div style="display:flex; flex-direction:column; align-items:center; gap:16px; width:100%; max-width:380px;">
+
+    <div class="ticket">
+      <div class="salon-name">Estética Glamour Style</div>
+      <div class="salon-sub">Ticket de Venta</div>
+
+      <hr class="divider">
+
+      <div class="ticket-row">
+        <span class="label">Venta #</span>
+        <span class="value">{{ venta.pk }}</span>
+      </div>
+      <div class="ticket-row">
+        <span class="label">Fecha</span>
+        <span class="value">{{ venta.fecha|date:"d/m/Y H:i" }}</span>
+      </div>
+
+      <hr class="divider">
+
+      <div class="ticket-row">
+        <span class="label">Cliente</span>
+        <span class="value">{{ venta.cliente }}</span>
+      </div>
+      <div class="ticket-row">
+        <span class="label">Empleado</span>
+        <span class="value">{{ venta.empleado }}</span>
+      </div>
+
+      <hr class="divider">
+
+      <div class="ticket-row">
+        <span class="label">Concepto</span>
+        <span class="value">
+          {% if venta.producto %}{{ venta.producto }}{% else %}{{ venta.get_tipo_display }}{% endif %}
+        </span>
+      </div>
+      <div class="ticket-row">
+        <span class="label">Método de pago</span>
+        <span class="value">{{ venta.get_metodo_pago_display }}</span>
+      </div>
+      <div class="ticket-row">
+        <span class="label">Estatus</span>
+        <span class="value">{{ venta.get_estatus_display }}</span>
+      </div>
+
+      <div class="total-row">
+        <span>TOTAL</span>
+        <span>${{ venta.total }}</span>
+      </div>
+
+      <p class="gracias">¡Gracias por su preferencia!</p>
+    </div>
+
+    <div class="btn-actions">
+      <a href="{% url 'operaciones:venta_list' %}" class="btn btn-back">Volver</a>
+      <button onclick="window.print()" class="btn btn-print">Imprimir</button>
+    </div>
+
+  </div>
+</body>
+</html>

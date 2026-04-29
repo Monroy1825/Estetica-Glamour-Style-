@@ -18,6 +18,7 @@ urlpatterns = [
     path('ventas/<int:pk>/', views.venta_detail, name='venta_detail'),
     path('ventas/<int:pk>/editar/', views.venta_update, name='venta_update'),
     path('ventas/<int:pk>/eliminar/', views.venta_delete, name='venta_delete'),
+    path('ventas/<int:pk>/ticket/', views.venta_ticket, name='venta_ticket'),
 
     # Compras
     path('compras/', views.compra_list, name='compra_list'),

@@ -3,6 +3,19 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h4 class="mb-0"><i class="bi bi-receipt me-2" style="color:#7b2d8b"></i>Reporte de Ventas</h4>
+  <div class="d-flex gap-2 align-items-center">
+    <form method="get" class="d-flex gap-2 align-items-center mb-0">
+      <select name="mes" class="form-select form-select-sm" onchange="this.form.submit()" style="width:auto;">
+        {% for num, nombre in meses %}
+        <option value="{{ num }}" {% if num == mes_actual %}selected{% endif %}>{{ nombre }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    <a href="?mes={{ mes_actual }}" class="btn btn-sm btn-danger" id="btn-pdf"
+       onclick="this.href='{% url 'reporte_ventas_pdf' %}?mes={{ mes_actual }}'">
+      <i class="bi bi-file-earmark-pdf me-1"></i>Descargar PDF
+    </a>
+  </div>
 </div>
 <div class="card shadow-sm">
   <div class="card-body p-0">
@@ -35,7 +48,7 @@
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="8" class="text-center text-muted py-4">No hay ventas registradas.</td></tr>
+          <tr><td colspan="8" class="text-center text-muted py-4">No hay ventas en este mes.</td></tr>
           {% endfor %}
         </tbody>
       </table>

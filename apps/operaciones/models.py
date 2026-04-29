@@ -20,6 +20,7 @@ class Cita(models.Model):
     duracion_horas = models.FloatField(default=1.0, verbose_name='Duración estimada (horas)')
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
     activo = models.BooleanField(default=True)
+    turno = models.PositiveIntegerField(null=True, blank=True)
     permitir_multiple = models.BooleanField(
         default=False,
         verbose_name='Permitir horario compartido',
@@ -69,6 +70,7 @@ class Venta(models.Model):
 
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='ventas')
     empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE, related_name='ventas')
+    cita = models.ForeignKey('Cita', on_delete=models.SET_NULL, null=True, blank=True, related_name='ventas_cita')
     producto = models.ForeignKey(Producto, on_delete=models.SET_NULL, null=True, blank=True, related_name='ventas')
     fecha = models.DateTimeField(auto_now_add=True)
     metodo_pago = models.CharField(max_length=20, choices=METODO_PAGO_CHOICES)

@@ -45,6 +45,16 @@ class Producto(models.Model):
     )
     costo = models.DecimalField(max_digits=8, decimal_places=2)
     precio_venta = models.DecimalField(max_digits=8, decimal_places=2)
+    PRESENTACION_CHOICES = [
+        ('frasco', 'Frasco'),
+        ('tubo', 'Tubo'),
+        ('pieza', 'Pieza'),
+        ('botella', 'Botella'),
+        ('otro', 'Otro'),
+    ]
+    presentacion = models.CharField(
+        max_length=20, choices=PRESENTACION_CHOICES, default='otro', blank=True, null=True
+    )
     stock_actual = models.PositiveIntegerField(default=0)
     stock_minimo = models.PositiveIntegerField(default=5)
     activo = models.BooleanField(default=True)

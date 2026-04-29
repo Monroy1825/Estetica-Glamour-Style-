@@ -251,6 +251,12 @@ def venta_delete(request, pk):
     return render(request, 'operaciones/venta_confirm_delete.html', {'venta': venta})
 
 
+@login_required
+def venta_ticket(request, pk):
+    venta = get_object_or_404(Venta.objects.select_related('cliente', 'empleado', 'producto'), pk=pk)
+    return render(request, 'operaciones/venta_ticket.html', {'venta': venta})
+
+
 # --- Compras ---
 
 @login_required

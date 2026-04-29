@@ -34,18 +34,16 @@ class CitaForm(forms.ModelForm):
 
     class Meta:
         model = Cita
-        fields = ['cliente', 'empleado', 'servicio', 'fecha_inicio', 'horario', 'duracion_horas', 'estado']
+        fields = ['cliente', 'empleado', 'servicio', 'fecha_inicio', 'horario', 'duracion_horas', 'estado', 'turno']
         widgets = {
             'cliente': forms.Select(attrs={'class': 'form-select'}),
             'empleado': forms.Select(attrs={'class': 'form-select'}),
             'servicio': forms.Select(attrs={'class': 'form-select'}),
-
-            # SOLO FECHA
             'fecha_inicio': forms.DateInput(
                 attrs={'class': 'form-control', 'type': 'date'}
             ),
-
             'estado': forms.Select(attrs={'class': 'form-select'}),
+            'turno': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
         }
 
     def clean(self):
@@ -96,6 +94,11 @@ class CitaForm(forms.ModelForm):
 # VENTAS
 # =========================
 class VentaForm(forms.ModelForm):
+    cita = forms.ModelChoiceField(
+        queryset=Cita.objects.filter(activo=True),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
     producto = forms.ModelChoiceField(
         queryset=Producto.objects.filter(activo=True),
         required=False,
@@ -104,7 +107,7 @@ class VentaForm(forms.ModelForm):
 
     class Meta:
         model = Venta
-        fields = ['cliente', 'empleado', 'producto', 'metodo_pago', 'tipo', 'estatus', 'vigencia_hasta', 'total']
+        fields = ['cliente', 'empleado', 'cita', 'producto', 'metodo_pago', 'tipo', 'estatus', 'vigencia_hasta', 'total']
         widgets = {
             'cliente': forms.Select(attrs={'class': 'form-select'}),
             'empleado': forms.Select(attrs={'class': 'form-select'}),

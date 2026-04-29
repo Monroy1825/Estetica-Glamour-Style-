@@ -21,6 +21,7 @@
           <td>${{ v.total }}</td>
           <td><span class="badge badge-{{ v.estatus }}">{{ v.get_estatus_display }}</span></td>
           <td class="text-end">
+            <a href="{% url 'operaciones:venta_ticket' v.pk %}" class="btn btn-sm btn-outline-success me-1" title="Ver ticket"><i class="bi bi-receipt"></i></a>
             <a href="{% url 'operaciones:venta_detail' v.pk %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-eye"></i></a>
             <a href="{% url 'operaciones:venta_update' v.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
             <a href="{% url 'operaciones:venta_delete' v.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
