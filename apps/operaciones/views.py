@@ -188,6 +188,15 @@ def cita_delete(request, pk):
     return render(request, 'operaciones/cita_confirm_delete.html', {'cita': cita})
 
 
+@login_required
+def get_precio_cita(request, cita_id):
+    try:
+        cita = Cita.objects.select_related('servicio').get(pk=cita_id)
+        return JsonResponse({'precio': float(cita.servicio.precio_base), 'servicio': str(cita.servicio)})
+    except Cita.DoesNotExist:
+        return JsonResponse({'precio': 0, 'servicio': ''})
+
+
 # --- Ventas ---
 
 @login_required

@@ -11,6 +11,7 @@ urlpatterns = [
     path('citas/<int:pk>/', views.cita_detail, name='cita_detail'),
     path('citas/<int:pk>/editar/', views.cita_update, name='cita_update'),
     path('citas/<int:pk>/eliminar/', views.cita_delete, name='cita_delete'),
+    path('citas/<int:cita_id>/precio/', views.get_precio_cita, name='get_precio_cita'),
 
     # Ventas
     path('ventas/', views.venta_list, name='venta_list'),

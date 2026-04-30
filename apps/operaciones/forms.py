@@ -101,17 +101,13 @@ class VentaForm(forms.ModelForm):
 
     class Meta:
         model = Venta
-        fields = ['cliente', 'empleado', 'cita', 'producto', 'metodo_pago', 'tipo', 'estatus', 'vigencia_hasta', 'total']
+        fields = ['cliente', 'empleado', 'cita', 'producto', 'metodo_pago', 'tipo', 'estatus', 'total']
         widgets = {
             'cliente': forms.Select(attrs={'class': 'form-select'}),
             'empleado': forms.Select(attrs={'class': 'form-select'}),
             'metodo_pago': forms.Select(attrs={'class': 'form-select'}),
             'tipo': forms.Select(attrs={'class': 'form-select'}),
             'estatus': forms.Select(attrs={'class': 'form-select'}),
-            'vigencia_hasta': forms.DateInput(
-                attrs={'class': 'form-control', 'type': 'date'},
-                format='%Y-%m-%d',
-            ),
             'total': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
         }
 
