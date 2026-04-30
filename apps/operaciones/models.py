@@ -20,7 +20,7 @@ class Cita(models.Model):
     duracion_horas = models.FloatField(default=1.0, verbose_name='Duración estimada (horas)')
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
     activo = models.BooleanField(default=True)
-    turno = models.PositiveIntegerField(null=True, blank=True)
+   
     permitir_multiple = models.BooleanField(
         default=False,
         verbose_name='Permitir horario compartido',

@@ -34,7 +34,7 @@ class CitaForm(forms.ModelForm):
 
     class Meta:
         model = Cita
-        fields = ['cliente', 'empleado', 'servicio', 'fecha_inicio', 'horario', 'duracion_horas', 'estado', 'turno']
+        fields = ['cliente', 'empleado', 'servicio', 'fecha_inicio', 'horario', 'duracion_horas', 'estado']
         widgets = {
             'cliente': forms.Select(attrs={'class': 'form-select'}),
             'empleado': forms.Select(attrs={'class': 'form-select'}),
@@ -43,7 +43,7 @@ class CitaForm(forms.ModelForm):
                 attrs={'class': 'form-control', 'type': 'date'}
             ),
             'estado': forms.Select(attrs={'class': 'form-select'}),
-            'turno': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
+            
         }
 
     def clean(self):

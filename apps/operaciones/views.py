@@ -254,11 +254,15 @@ def venta_delete(request, pk):
 @login_required
 def venta_ticket(request, pk):
     venta = get_object_or_404(Venta.objects.select_related('cliente', 'empleado', 'producto'), pk=pk)
+    
+    ############# cambio para agrupar en el ticket #############
     ventas = Venta.objects.filter(
-        cliente=venta.cliente,
-        fecha__date=venta.fecha.date(),
-        activo=True
-    ).select_related('producto', 'cita__servicio').order_by('fecha')
+    cliente=venta.cliente,
+    activo=True,
+    estatus='pendiente'  # o quita esta línea si quieres TODAS
+).select_related('producto', 'cita__servicio').order_by('fecha')
+    ##########################################################
+    
     total = sum(v.total for v in ventas)
     return render(request, 'operaciones/venta_ticket.html', {
         'venta': venta,
