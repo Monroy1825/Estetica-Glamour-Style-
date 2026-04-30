@@ -253,7 +253,7 @@
     document.querySelectorAll('input[type="email"]').forEach(function (field) {
       field.addEventListener('input', function () {
         var pos = this.selectionStart;
-        var limpio = this.value.replace(/[^a-zA-Z0-9@.]/g, '');
+        var limpio = this.value.replace(/[^a-zA-Z0-9@.\-_]/g, '');
         if (this.value !== limpio) {
           this.value = limpio;
           if (this.setSelectionRange) this.setSelectionRange(pos, pos);
