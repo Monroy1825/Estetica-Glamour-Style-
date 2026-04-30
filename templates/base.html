@@ -238,11 +238,22 @@
       return valor.replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ0-9\s]/g, '').toUpperCase();
     }
 
-    var textos = 'input[type="text"], input[type="email"], input[type="search"], textarea';
+    var textos = 'input[type="text"], input[type="search"], textarea';
     document.querySelectorAll(textos).forEach(function (field) {
       field.addEventListener('input', function () {
         var pos = this.selectionStart;
         var limpio = limpiar(this.value, false);
+        if (this.value !== limpio) {
+          this.value = limpio;
+          if (this.setSelectionRange) this.setSelectionRange(pos, pos);
+        }
+      });
+    });
+
+    document.querySelectorAll('input[type="email"]').forEach(function (field) {
+      field.addEventListener('input', function () {
+        var pos = this.selectionStart;
+        var limpio = this.value.replace(/[^a-zA-Z0-9@.]/g, '');
         if (this.value !== limpio) {
           this.value = limpio;
           if (this.setSelectionRange) this.setSelectionRange(pos, pos);

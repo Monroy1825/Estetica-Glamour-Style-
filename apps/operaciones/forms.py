@@ -5,7 +5,7 @@ from apps.servicios.models import Producto
 
 from django import forms
 from .models import Cita
-from datetime import datetime
+from datetime import datetime, timedelta
 from apps.servicios.models import Producto
 
 
@@ -55,15 +55,9 @@ class CitaForm(forms.ModelForm):
         if not fecha or not inicio_str:
             return cleaned_data
 
-        # separar horas
-        inicio_str, fin_str = rango.split('-')
-
-        # convertir fecha a string limpio
         fecha_str = fecha.strftime("%Y-%m-%d")
-
-        # crear datetime correctamente
         fecha_inicio = datetime.strptime(f"{fecha_str} {inicio_str}", "%Y-%m-%d %H:%M")
-        fecha_fin = datetime.strptime(f"{fecha_str} {fin_str}", "%Y-%m-%d %H:%M")
+        fecha_fin = fecha_inicio + timedelta(hours=float(duracion))
 
         cleaned_data['fecha_inicio'] = fecha_inicio
         cleaned_data['fecha_fin'] = fecha_fin
