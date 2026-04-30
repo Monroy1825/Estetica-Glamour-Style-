@@ -57,7 +57,7 @@ def horarios_ocupados(request):
 
 @login_required
 def cita_list(request):
-    qs = Cita.objects.filter(activo=True).select_related('cliente', 'empleado', 'servicio')
+    qs = Cita.objects.filter(activo=True).select_related('cliente', 'empleado', 'servicio').order_by('cliente__nombre', '-fecha_inicio')
     return render(request, 'operaciones/cita_list.html', {'citas': _paginate(qs, request)})
 
 
@@ -254,7 +254,17 @@ def venta_delete(request, pk):
 @login_required
 def venta_ticket(request, pk):
     venta = get_object_or_404(Venta.objects.select_related('cliente', 'empleado', 'producto'), pk=pk)
-    return render(request, 'operaciones/venta_ticket.html', {'venta': venta})
+    ventas = Venta.objects.filter(
+        cliente=venta.cliente,
+        fecha__date=venta.fecha.date(),
+        activo=True
+    ).select_related('producto', 'cita__servicio').order_by('fecha')
+    total = sum(v.total for v in ventas)
+    return render(request, 'operaciones/venta_ticket.html', {
+        'venta': venta,
+        'ventas': ventas,
+        'total': total,
+    })
 
 
 # --- Compras ---

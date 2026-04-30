@@ -164,12 +164,8 @@
       <hr class="divider">
 
       <div class="ticket-row">
-        <span class="label">Venta #</span>
-        <span class="value">{{ venta.pk }}</span>
-      </div>
-      <div class="ticket-row">
         <span class="label">Fecha</span>
-        <span class="value">{{ venta.fecha|date:"d/m/Y H:i" }}</span>
+        <span class="value">{{ venta.fecha|date:"d/m/Y" }}</span>
       </div>
 
       <hr class="divider">
@@ -185,12 +181,15 @@
 
       <hr class="divider">
 
+      {% for v in ventas %}
       <div class="ticket-row">
-        <span class="label">Concepto</span>
-        <span class="value">
-          {% if venta.producto %}{{ venta.producto }}{% else %}{{ venta.get_tipo_display }}{% endif %}
-        </span>
+        <span class="label">{% if v.producto %}{{ v.producto }}{% elif v.cita %}{{ v.cita.servicio }}{% else %}{{ v.get_tipo_display }}{% endif %}</span>
+        <span class="value">${{ v.total }}</span>
       </div>
+      {% endfor %}
+
+      <hr class="divider">
+
       <div class="ticket-row">
         <span class="label">Método de pago</span>
         <span class="value">{{ venta.get_metodo_pago_display }}</span>
@@ -202,7 +201,7 @@
 
       <div class="total-row">
         <span>TOTAL</span>
-        <span>${{ venta.total }}</span>
+        <span>${{ total }}</span>
       </div>
 
       <p class="gracias">¡Gracias por su preferencia!</p>

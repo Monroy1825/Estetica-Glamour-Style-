@@ -12,9 +12,14 @@
         <tr><th>Cliente</th><th>Empleado</th><th>Servicio</th><th>Fecha</th><th>Duración</th><th>Turno</th><th>Estado</th><th></th></tr>
       </thead>
       <tbody>
-        {% for c in citas %}
+        {% regroup citas by cliente as grupos %}
+        {% for grupo in grupos %}
+        <tr style="background:#f3e8f7;">
+          <td colspan="8" class="fw-bold ps-3" style="color:#7b2d8b;">{{ grupo.grouper }}</td>
+        </tr>
+        {% for c in grupo.list %}
         <tr>
-          <td>{{ c.cliente }}</td>
+          <td></td>
           <td>{{ c.empleado.nombre }}</td>
           <td>{{ c.servicio.nombre }}</td>
           <td>{{ c.fecha_inicio|date:"d/m/Y H:i" }}</td>
@@ -27,6 +32,7 @@
             <a href="{% url 'operaciones:cita_delete' c.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
           </td>
         </tr>
+        {% endfor %}
         {% empty %}
         <tr><td colspan="8" class="text-center text-muted py-4">Sin citas registradas.</td></tr>
         {% endfor %}
