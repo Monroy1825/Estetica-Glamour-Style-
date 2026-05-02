@@ -15,11 +15,11 @@
         {% for v in ventas %}
         <tr>
           <td>{{ v.cliente }}</td>
-          <td>{{ v.fecha|date:"d/m/Y" }}</td>
+          <td class="no-uppercase">{{ v.fecha|date:"d/m/Y" }}</td>
           <td>{{ v.get_tipo_display }}</td>
           <td>{{ v.get_metodo_pago_display }}</td>
-          <td>${{ v.total }}</td>
-          <td><span class="badge badge-{{ v.estatus }}">{{ v.get_estatus_display }}</span></td>
+          <td class="no-uppercase">${{ v.total }}</td>
+          <td><span class="badge badge-{{ v.estatus }} no-uppercase">{{ v.get_estatus_display }}</span></td>
           <td class="text-end">
             <a href="{% url 'operaciones:venta_ticket' v.pk %}" class="btn btn-sm btn-outline-success me-1" title="Ver ticket"><i class="bi bi-receipt"></i></a>
             <a href="{% url 'operaciones:venta_detail' v.pk %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-eye"></i></a>

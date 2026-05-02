@@ -12,8 +12,13 @@ class ServicioForm(forms.ModelForm):
             'precio_base': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
         }
 
-    def clean_nombre(self):
-        return self.cleaned_data.get('nombre', '').upper()
+    def clean(self):
+        cleaned_data = super().clean()
+        for field_name, value in cleaned_data.items():
+            field = self.fields.get(field_name)
+            if isinstance(value, str) and field_name != 'email' and not isinstance(field, forms.ChoiceField):
+                cleaned_data[field_name] = value.upper()
+        return cleaned_data
 
 
 class ProductoForm(forms.ModelForm):
@@ -37,3 +42,11 @@ class ProductoForm(forms.ModelForm):
             'stock_actual': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
             'stock_minimo': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        for field_name, value in cleaned_data.items():
+            field = self.fields.get(field_name)
+            if isinstance(value, str) and field_name != 'email' and not isinstance(field, forms.ChoiceField):
+                cleaned_data[field_name] = value.upper()
+        return cleaned_data

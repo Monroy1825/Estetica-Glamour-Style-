@@ -48,6 +48,11 @@ class CitaForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        for field_name, value in cleaned_data.items():
+            field = self.fields.get(field_name)
+            if isinstance(value, str) and field_name != 'email' and not isinstance(field, forms.ChoiceField):
+                cleaned_data[field_name] = value.upper()
+
         fecha = cleaned_data.get('fecha_inicio')
         inicio_str = cleaned_data.get('horario')
         duracion = cleaned_data.get('duracion_horas') or 1.0
@@ -111,6 +116,14 @@ class VentaForm(forms.ModelForm):
             'total': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
         }
 
+    def clean(self):
+        cleaned_data = super().clean()
+        for field_name, value in cleaned_data.items():
+            field = self.fields.get(field_name)
+            if isinstance(value, str) and field_name != 'email' and not isinstance(field, forms.ChoiceField):
+                cleaned_data[field_name] = value.upper()
+        return cleaned_data
+
 
 # =========================
 # COMPRAS
@@ -137,8 +150,13 @@ class CompraForm(forms.ModelForm):
         }
 
 
-    def clean_proveedor(self):
-        return self.cleaned_data.get('proveedor', '').upper()
+    def clean(self):
+        cleaned_data = super().clean()
+        for field_name, value in cleaned_data.items():
+            field = self.fields.get(field_name)
+            if isinstance(value, str) and field_name != 'email' and not isinstance(field, forms.ChoiceField):
+                cleaned_data[field_name] = value.upper()
+        return cleaned_data
 
 
 # =========================
@@ -158,3 +176,11 @@ class CotizacionForm(forms.ModelForm):
             ),
             'estado': forms.Select(attrs={'class': 'form-select'}),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        for field_name, value in cleaned_data.items():
+            field = self.fields.get(field_name)
+            if isinstance(value, str) and field_name != 'email' and not isinstance(field, forms.ChoiceField):
+                cleaned_data[field_name] = value.upper()
+        return cleaned_data

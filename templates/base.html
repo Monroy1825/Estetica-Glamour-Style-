@@ -16,6 +16,9 @@
       --danger: #e74c3c;
     }
 
+    * { text-transform: uppercase; }
+    .no-uppercase { text-transform: none !important; }
+
     body {
       background-color: #f8f5fa;
       margin: 0;
@@ -216,7 +219,7 @@
       <div class="topnav-bell" data-bs-toggle="dropdown" aria-expanded="false" style="cursor:pointer;">
         <i class="bi bi-bell"></i>
         {% if total_notificaciones %}
-        <span class="badge-bell">{{ total_notificaciones }}</span>
+        <span class="badge-bell no-uppercase">{{ total_notificaciones }}</span>
         {% endif %}
       </div>
       <div class="dropdown-menu dropdown-menu-end p-0" style="min-width:320px;max-height:400px;overflow-y:auto;margin-top:10px;">
@@ -308,7 +311,7 @@
       <a href="{% url 'operaciones:cita_list' %}" class="{% if 'cita' in request.resolver_match.url_name %}active{% endif %}">
         🗓️ Citas
         {% if citas_pendientes_hoy %}
-        <span class="badge-menu">{{ citas_pendientes_hoy }}</span>
+        <span class="badge-menu no-uppercase">{{ citas_pendientes_hoy }}</span>
         {% endif %}
       </a>
     </li>

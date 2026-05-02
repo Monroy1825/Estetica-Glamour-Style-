@@ -16,10 +16,10 @@
         <tr>
           <td>{{ c.proveedor }}</td>
           <td>{{ c.empleado.nombre }}</td>
-          <td>{{ c.fecha|date:"d/m/Y" }}</td>
-          <td>${{ c.precio_unitario }}</td>
-          <td>{{ c.cantidad }}</td>
-          <td>${{ c.total_compra }}</td>
+          <td class="no-uppercase">{{ c.fecha|date:"d/m/Y" }}</td>
+          <td class="no-uppercase">${{ c.precio_unitario }}</td>
+          <td class="no-uppercase">{{ c.cantidad }}</td>
+          <td class="no-uppercase">${{ c.total_compra }}</td>
           <td class="text-end">
             <a href="{% url 'operaciones:compra_detail' c.pk %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-eye"></i></a>
             <a href="{% url 'operaciones:compra_update' c.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
