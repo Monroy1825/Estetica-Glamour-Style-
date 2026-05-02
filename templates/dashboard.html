@@ -1,60 +1,184 @@
 {% extends 'base.html' %}
+{% block title %}Dashboard — Estetica{% endblock %}
 
 {% block content %}
-<h2>Dashboard</h2>
 
-<div class="row mb-4">
-  <div class="col-md-4">
-    <div class="card p-3 text-center">
-      <h5>Clientes</h5>
-      <h2>{{ total_clientes }}</h2>
-    </div>
-  </div>
-
-  <div class="col-md-4">
-    <div class="card p-3 text-center">
-      <h5>Citas hoy</h5>
-      <h2>{{ citas_hoy }}</h2>
-    </div>
-  </div>
-
-  <div class="col-md-4">
-    <div class="card p-3 text-center">
-      <h5>Ventas del mes</h5>
-      <h2>{{ ventas_mes }}</h2>
-    </div>
-  </div>
+<div class="mb-3" style="padding-top:8px;">
+  <h5 class="fw-bold mb-0" style="color:#2d2d2d;">Bienvenida, {{ user.get_full_name|default:user.username }}</h5>
+  <div class="text-muted" style="font-size:0.8rem;">Panel de control</div>
 </div>
 
-<!-- GRÁFICA -->
-<div class="card p-4">
-  <h5>Ventas por mes</h5>
-  <canvas id="ventasChart"></canvas>
+<div class="row g-2 mb-3">
+
+  <div class="col-6 col-md-3">
+    <div class="card" style="border:1px solid #ede8f2;border-radius:14px;background:#fff;">
+      <div class="card-body text-center" style="padding:10px 14px;">
+        <div class="text-muted mb-1" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.05em;">Total clientes</div>
+        <div class="fw-bold" style="font-size:1.8rem;color:#7b2d8b;">{{ total_clientes }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="card" style="border:1px solid #ede8f2;border-radius:14px;background:#fff;">
+      <div class="card-body text-center" style="padding:10px 14px;">
+        <div class="text-muted mb-1" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.05em;">Citas hoy</div>
+        <div class="fw-bold" style="font-size:1.8rem;color:#7b2d8b;">{{ citas_hoy }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="card" style="border:1px solid #ede8f2;border-radius:14px;background:#fff;">
+      <div class="card-body text-center" style="padding:10px 14px;">
+        <div class="text-muted mb-1" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.05em;">Ventas del mes</div>
+        <div class="fw-bold" style="font-size:1.8rem;color:#7b2d8b;">{{ ventas_mes }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="card" style="border:1px solid #ede8f2;border-radius:14px;background:#fff;">
+      <div class="card-body text-center" style="padding:10px 14px;">
+        <div class="text-muted mb-1" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.05em;">Stock bajo</div>
+        <div class="fw-bold" style="font-size:1.8rem;color:#e74c3c;">{{ stock_bajo }}</div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
-<!-- DATOS SEGUROS -->
+<div class="row g-2 mb-3">
+
+  <div class="col-md-6">
+    <div class="card h-100" style="border:1px solid #ede8f2;border-radius:14px;background:#fff;">
+      <div class="card-body" style="padding:12px 14px;">
+        <h6 class="fw-bold mb-2" style="color:#2d2d2d;font-size:0.85rem;">Ventas recientes</h6>
+        {% if ventas_recientes %}
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr>
+              <th style="font-size:0.75rem;color:#888;font-weight:600;border-bottom:1px solid #ede8f2;">Cliente</th>
+              <th style="font-size:0.75rem;color:#888;font-weight:600;border-bottom:1px solid #ede8f2;">Empleada</th>
+              <th style="font-size:0.75rem;color:#888;font-weight:600;border-bottom:1px solid #ede8f2;" class="text-end">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for v in ventas_recientes %}
+            <tr style="border-bottom:1px solid #f5f0fa;">
+              <td style="font-size:0.8rem;padding:6px 0;">{{ v.cliente }}</td>
+              <td style="font-size:0.8rem;padding:6px 0;">{{ v.empleado }}</td>
+              <td style="font-size:0.8rem;padding:6px 0;font-weight:600;color:#7b2d8b;" class="text-end">${{ v.total }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted mb-0" style="font-size:0.82rem;">Sin ventas registradas.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card h-100" style="border:1px solid #ede8f2;border-radius:14px;background:#fff;">
+      <div class="card-body" style="padding:12px 14px;">
+        <h6 class="fw-bold mb-2" style="color:#2d2d2d;font-size:0.85rem;">Ventas por mes</h6>
+        <div style="position:relative;height:130px;">
+          <canvas id="ventasChart" style="max-height:150px;"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="row g-2">
+
+  <div class="col-md-6">
+    <div class="card h-100" style="border:1px solid #ede8f2;border-radius:14px;background:#fff;">
+      <div class="card-body" style="padding:12px 14px;">
+        <h6 class="fw-bold mb-2" style="color:#2d2d2d;font-size:0.85rem;">Citas de hoy</h6>
+        {% if citas_hoy_lista %}
+        <ul class="list-unstyled mb-0">
+          {% for cita in citas_hoy_lista %}
+          <li class="d-flex align-items-center gap-2 py-1" style="border-bottom:1px solid #f5f0fa;">
+            <div style="width:30px;height:30px;border-radius:50%;background:#7b2d8b;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.8rem;flex-shrink:0;">
+              {{ cita.cliente.nombre|slice:":1"|upper }}
+            </div>
+            <div class="flex-grow-1">
+              <div style="font-size:0.82rem;font-weight:600;color:#2d2d2d;">{{ cita.cliente.nombre }}</div>
+              <div style="font-size:0.72rem;color:#888;">{{ cita.servicio.nombre }}</div>
+            </div>
+            <div class="text-end">
+              <div style="font-size:0.75rem;color:#555;">{{ cita.fecha_inicio|date:"H:i" }}</div>
+              <span class="badge badge-{{ cita.estado }}" style="font-size:0.6rem;">{{ cita.get_estado_display }}</span>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted mb-0" style="font-size:0.82rem;">Sin citas para hoy.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card h-100" style="border:1px solid #ede8f2;border-radius:14px;background:#fff;">
+      <div class="card-body" style="padding:12px 14px;">
+        <h6 class="fw-bold mb-2" style="color:#2d2d2d;font-size:0.85rem;">Accesos rapidos</h6>
+        <div class="row g-2">
+          <div class="col-6">
+            <a href="{% url 'operaciones:cita_create' %}" class="d-flex flex-column align-items-center justify-content-center gap-1 text-decoration-none py-2 px-2 rounded" style="background:#f8f5fa;border:1px solid #ede8f2;color:#2d2d2d;" onmouseover="this.style.background='#f3e8f7'" onmouseout="this.style.background='#f8f5fa'">
+              <div style="width:34px;height:34px;background:#7b2d8b;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;margin:0 auto 4px;">+</div>
+              <span style="font-size:0.75rem;font-weight:500;">Nueva cita</span>
+            </a>
+          </div>
+          <div class="col-6">
+            <a href="{% url 'operaciones:venta_create' %}" class="d-flex flex-column align-items-center justify-content-center gap-1 text-decoration-none py-2 px-2 rounded" style="background:#f8f5fa;border:1px solid #ede8f2;color:#2d2d2d;" onmouseover="this.style.background='#f3e8f7'" onmouseout="this.style.background='#f8f5fa'">
+              <div style="width:34px;height:34px;background:#7b2d8b;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;margin:0 auto 4px;">+</div>
+              <span style="font-size:0.75rem;font-weight:500;">Nueva venta</span>
+            </a>
+          </div>
+          <div class="col-6">
+            <a href="{% url 'clientes:create' %}" class="d-flex flex-column align-items-center justify-content-center gap-1 text-decoration-none py-2 px-2 rounded" style="background:#f8f5fa;border:1px solid #ede8f2;color:#2d2d2d;" onmouseover="this.style.background='#f3e8f7'" onmouseout="this.style.background='#f8f5fa'">
+              <div style="width:34px;height:34px;background:#7b2d8b;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;margin:0 auto 4px;">+</div>
+              <span style="font-size:0.75rem;font-weight:500;">Nuevo cliente</span>
+            </a>
+          </div>
+          <div class="col-6">
+            <a href="{% url 'reporte_ventas' %}" class="d-flex flex-column align-items-center justify-content-center gap-1 text-decoration-none py-2 px-2 rounded" style="background:#f8f5fa;border:1px solid #ede8f2;color:#2d2d2d;" onmouseover="this.style.background='#f3e8f7'" onmouseout="this.style.background='#f8f5fa'">
+              <div style="width:34px;height:34px;background:#7b2d8b;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;margin:0 auto 4px;">+</div>
+              <span style="font-size:0.75rem;font-weight:500;">Ver reportes</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
 {{ labels|json_script:"labels-data" }}
 {{ data|json_script:"data-data" }}
-
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
-const labels = JSON.parse(document.getElementById('labels-data').textContent);
-const data = JSON.parse(document.getElementById('data-data').textContent);
-
-const ctx = document.getElementById('ventasChart');
-
-new Chart(ctx, {
+  var labels = JSON.parse(document.getElementById('labels-data').textContent);
+  var data = JSON.parse(document.getElementById('data-data').textContent);
+  new Chart(document.getElementById('ventasChart'), {
     type: 'bar',
     data: {
-        labels: labels,
-        datasets: [{
-            label: 'Ventas',
-            data: data,
-        }]
+      labels: labels,
+      datasets: [{ label: 'Ventas', data: data, backgroundColor: '#7b2d8b', borderRadius: 4 }]
     },
-});
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } }
+    }
+  });
 </script>
 
 {% endblock %}
