@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 
-from .models import Venta, Cita
+from .models import Venta, Cita, Compra
 from apps.servicios.models import Producto
 
 MESES = [
@@ -53,6 +53,23 @@ def reporte_citas(request):
 def reporte_stock(request):
     productos = Producto.objects.filter(activo=True).order_by('nombre')
     return render(request, 'reportes/reporte_stock.html', {'productos': productos})
+
+
+@login_required
+def reporte_compras(request):
+    hoy = timezone.now()
+    mes = int(request.GET.get('mes', hoy.month))
+    anio = hoy.year
+    compras = (
+        Compra.objects.filter(activo=True, fecha__month=mes, fecha__year=anio)
+        .select_related('empleado', 'producto')
+        .order_by('-fecha')
+    )
+    return render(request, 'reportes/reporte_compras.html', {
+        'compras': compras,
+        'meses': MESES,
+        'mes_actual': mes,
+    })
 
 
 def _build_pdf(title, subtitle, headers, rows):
@@ -161,4 +178,38 @@ def reporte_citas_pdf(request):
     buffer = _build_pdf('Citas', f'Reporte de Citas — {nombre_mes} {anio}', headers, rows)
     response = HttpResponse(buffer, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="reporte_citas_{nombre_mes}_{anio}.pdf"'
+    return response
+
+
+@login_required
+def reporte_compras_pdf(request):
+    hoy = timezone.now()
+    mes = int(request.GET.get('mes', hoy.month))
+    anio = hoy.year
+    nombre_mes = dict(MESES)[mes]
+
+    compras = (
+        Compra.objects.filter(activo=True, fecha__month=mes, fecha__year=anio)
+        .select_related('empleado', 'producto')
+        .order_by('-fecha')
+    )
+
+    headers = ['#', 'Fecha', 'Producto', 'Proveedor', 'Empleado', 'Cantidad', 'Precio Unit.', 'Total']
+    rows = [
+        [
+            str(c.pk),
+            c.fecha.strftime('%d/%m/%Y'),
+            str(c.producto),
+            c.proveedor,
+            str(c.empleado),
+            str(c.cantidad),
+            f'${c.precio_unitario}',
+            f'${c.total_compra}',
+        ]
+        for c in compras
+    ]
+
+    buffer = _build_pdf('Compras', f'Reporte de Compras — {nombre_mes} {anio}', headers, rows)
+    response = HttpResponse(buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="reporte_compras_{nombre_mes}_{anio}.pdf"'
     return response
