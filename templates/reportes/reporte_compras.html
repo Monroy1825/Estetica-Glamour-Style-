@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Reporte de Compras — Estética{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="mb-0"><i class="bi bi-cart-check me-2" style="color:#7b2d8b"></i>Reporte de Compras</h4>
+  <div class="d-flex gap-2 align-items-center">
+    <form method="get" class="d-flex gap-2 align-items-center mb-0">
+      <select name="mes" class="form-select form-select-sm" onchange="this.form.submit()" style="width:auto;">
+        {% for num, nombre in meses %}
+        <option value="{{ num }}" {% if num == mes_actual %}selected{% endif %}>{{ nombre }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    <a href="{% url 'reporte_compras_pdf' %}?mes={{ mes_actual }}" class="btn btn-sm btn-danger">
+      <i class="bi bi-file-earmark-pdf me-1"></i>Descargar PDF
+    </a>
+  </div>
+</div>
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-striped mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Fecha</th>
+            <th>Producto</th>
+            <th>Proveedor</th>
+            <th>Empleado</th>
+            <th>Cantidad</th>
+            <th>Precio Unit.</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for compra in compras %}
+          <tr>
+            <td>{{ compra.pk }}</td>
+            <td>{{ compra.fecha|date:"d/m/Y H:i" }}</td>
+            <td>{{ compra.producto }}</td>
+            <td>{{ compra.proveedor }}</td>
+            <td>{{ compra.empleado }}</td>
+            <td>{{ compra.cantidad }}</td>
+            <td>${{ compra.precio_unitario }}</td>
+            <td>${{ compra.total_compra }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8" class="text-center text-muted py-4">No hay compras en este mes.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
