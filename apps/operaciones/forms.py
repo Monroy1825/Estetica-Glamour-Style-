@@ -1,14 +1,7 @@
 from django import forms
 from .models import Cita, Venta, Compra, Cotizacion
 from apps.servicios.models import Producto
-
-
-from django import forms
-from .models import Cita
 from datetime import datetime, timedelta
-from apps.servicios.models import Producto
-
-
 
 
 # =========================
@@ -43,7 +36,6 @@ class CitaForm(forms.ModelForm):
                 attrs={'class': 'form-control', 'type': 'date'}
             ),
             'estado': forms.Select(attrs={'class': 'form-select'}),
-            
         }
 
     def clean(self):
@@ -148,7 +140,6 @@ class CompraForm(forms.ModelForm):
             'proveedor': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del proveedor', 'style': 'text-transform: uppercase'}),
             'precio_unitario': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
         }
-
 
     def clean(self):
         cleaned_data = super().clean()
