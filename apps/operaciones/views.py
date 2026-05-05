@@ -57,9 +57,37 @@ def horarios_ocupados(request):
 
 @login_required
 def cita_list(request):
-    qs = Cita.objects.filter(activo=True).select_related('cliente', 'empleado', 'servicio').order_by('cliente__nombre', '-fecha_inicio')
-    return render(request, 'operaciones/cita_list.html', {'citas': _paginate(qs, request)})
-
+    # Importar los modelos necesarios
+    from apps.empleados.models import Empleado
+    from apps.clientes.models import Cliente
+    
+    # Agrupar por empleado
+    empleados_con_citas = []
+    empleados = Empleado.objects.filter(activo=True)
+    
+    for empleado in empleados:
+        citas_empleado = Cita.objects.filter(
+            activo=True, 
+            empleado=empleado
+        ).select_related('cliente', 'servicio').order_by('-fecha_inicio')
+        
+        if citas_empleado.exists():
+            # Obtener clientes únicos de este empleado
+            clientes = Cliente.objects.filter(
+                citas__empleado=empleado,
+                citas__activo=True
+            ).distinct()
+            
+            empleados_con_citas.append({
+                'empleado': empleado,
+                'citas': citas_empleado,
+                'clientes': clientes,
+                'total_citas': citas_empleado.count()
+            })
+    
+    return render(request, 'operaciones/cita_list.html', {
+        'empleados_con_citas': empleados_con_citas
+    })
 
 @login_required
 def cita_create(request):

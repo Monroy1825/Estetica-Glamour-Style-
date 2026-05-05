@@ -2,51 +2,116 @@
 {% block title %}Citas — Estética{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="mb-0"><i class="bi bi-calendar-check me-2" style="color:#7b2d8b"></i>Citas</h4>
+  <h4 class="mb-0"><i class="bi bi-calendar-check me-2" style="color:#7b2d8b"></i>Citas por Empleado</h4>
   <a href="{% url 'operaciones:cita_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Nueva cita</a>
 </div>
-<div class="card shadow-sm">
+
+{% for grupo in empleados_con_citas %}
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-white" style="border-left: 4px solid #7b2d8b;">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-0" style="color:#7b2d8b;">
+          <i class="bi bi-person-badge me-2"></i>{{ grupo.empleado.nombre }}
+          <span class="badge bg-secondary ms-2">{{ grupo.empleado.get_rol_display }}</span>
+        </h5>
+        <small class="text-muted">
+          <i class="bi bi-people me-1"></i>{{ grupo.clientes|length }} clientes asignados | 
+          <i class="bi bi-calendar me-1"></i>{{ grupo.total_citas }} citas totales
+        </small>
+      </div>
+      <div>
+        <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" data-bs-target="#clientes-{{ forloop.counter }}">
+          <i class="bi bi-people-fill"></i> Ver clientes
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Lista de clientes asignados -->
+  <div class="collapse" id="clientes-{{ forloop.counter }}">
+    <div class="card-body bg-light">
+      <h6 class="mb-3"><i class="bi bi-person-vcard"></i> Clientes asignados a {{ grupo.empleado.nombre }}:</h6>
+      <div class="row">
+        {% for cliente in grupo.clientes %}
+        <div class="col-md-3 col-sm-6 mb-2">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-person-circle me-2 text-primary"></i>
+            <div>
+              <strong>{{ cliente.nombre }}</strong><br>
+              <small class="text-muted">{{ cliente.telefono }}</small>
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+          <p class="text-muted mb-0">No hay clientes asignados</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  
   <div class="card-body p-0">
     <table class="table table-hover mb-0">
       <thead class="table-light">
-        <tr><th>Cliente</th><th>Empleado</th><th>Servicio</th><th>Fecha</th><th>Duración</th><th>Turno</th><th>Estado</th><th></th></tr>
+        <tr>
+          <th>Cliente</th>
+          <th>Servicio</th>
+          <th>Fecha</th>
+          <th>Duración</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
       </thead>
       <tbody>
-        {% regroup citas by cliente as grupos %}
-        {% for grupo in grupos %}
-        <tr style="background:#f3e8f7;">
-          <td colspan="8" class="fw-bold ps-3" style="color:#7b2d8b;">{{ grupo.grouper }}</td>
-        </tr>
-        {% for c in grupo.list %}
+        {% for cita in grupo.citas %}
         <tr>
-          <td></td>
-          <td>{{ c.empleado.nombre }}</td>
-          <td>{{ c.servicio.nombre }}</td>
-          <td class="no-uppercase">{{ c.fecha_inicio|date:"d/m/Y H:i" }}</td>
-          <td class="no-uppercase">{{ c.duracion_horas }} hr</td>
-          <td>{{ c.turno|default:"—" }}</td>
-          <td><span class="badge badge-{{ c.estado }} no-uppercase">{{ c.get_estado_display }}</span></td>
+          <td>
+            <strong>{{ cita.cliente.nombre }}</strong><br>
+            <small class="text-muted">{{ cita.cliente.telefono }}</small>
+          </td>
+          <td>{{ cita.servicio.nombre }}</td>
+          <td class="no-uppercase">{{ cita.fecha_inicio|date:"d/m/Y H:i" }}</td>
+          <td class="no-uppercase">{{ cita.duracion_horas }} hr</td>
+          <td>
+            <span class="badge {% if cita.estado == 'pendiente' %}bg-warning{% elif cita.estado == 'confirmada' %}bg-info{% elif cita.estado == 'completada' %}bg-success{% else %}bg-danger{% endif %} no-uppercase">
+              {{ cita.get_estado_display }}
+            </span>
+          </td>
           <td class="text-end">
-            <a href="{% url 'operaciones:cita_detail' c.pk %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-eye"></i></a>
-            <a href="{% url 'operaciones:cita_update' c.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'operaciones:cita_delete' c.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+            <a href="{% url 'operaciones:cita_detail' cita.pk %}" class="btn btn-sm btn-outline-secondary me-1">
+              <i class="bi bi-eye"></i>
+            </a>
+            <a href="{% url 'operaciones:cita_update' cita.pk %}" class="btn btn-sm btn-outline-primary me-1">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="{% url 'operaciones:cita_delete' cita.pk %}" class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-trash"></i>
+            </a>
           </td>
         </tr>
-        {% endfor %}
         {% empty %}
-        <tr><td colspan="8" class="text-center text-muted py-4">Sin citas registradas.</td></tr>
+        <tr>
+          <td colspan="6" class="text-center text-muted py-4">
+            <i class="bi bi-calendar-x"></i> No hay citas para este empleado
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
-{% if citas.has_other_pages %}
-<nav class="mt-3">
-  <ul class="pagination pagination-sm justify-content-center">
-    {% if citas.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ citas.previous_page_number }}">«</a></li>{% endif %}
-    <li class="page-item disabled"><a class="page-link no-uppercase">Pág. {{ citas.number }} / {{ citas.paginator.num_pages }}</a></li>
-    {% if citas.has_next %}<li class="page-item"><a class="page-link" href="?page={{ citas.next_page_number }}">»</a></li>{% endif %}
-  </ul>
-</nav>
-{% endif %}
+{% empty %}
+<div class="card shadow-sm">
+  <div class="card-body text-center py-5">
+    <i class="bi bi-calendar-x" style="font-size: 48px; color: #ccc;"></i>
+    <p class="mt-3 text-muted">No hay citas registradas en el sistema</p>
+    <a href="{% url 'operaciones:cita_create' %}" class="btn btn-primary">Crear primera cita</a>
+  </div>
+</div>
+{% endfor %}
+
+<!-- Agregar Bootstrap JS para los collapses -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}
