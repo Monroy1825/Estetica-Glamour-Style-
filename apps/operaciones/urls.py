@@ -37,4 +37,7 @@ urlpatterns = [
 
     # Proveedores
     path('proveedores/', views.proveedor_list, name='proveedor_list'),
+
+    # confirmar pago
+    path('confirmar-pago/<int:cliente_id>/', views.confirmar_pago, name='confirmar_pago'),
 ]

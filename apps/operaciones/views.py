@@ -57,9 +57,37 @@ def horarios_ocupados(request):
 
 @login_required
 def cita_list(request):
-    qs = Cita.objects.filter(activo=True).select_related('cliente', 'empleado', 'servicio').order_by('cliente__nombre', '-fecha_inicio')
-    return render(request, 'operaciones/cita_list.html', {'citas': _paginate(qs, request)})
-
+    # Importar los modelos necesarios
+    from apps.empleados.models import Empleado
+    from apps.clientes.models import Cliente
+    
+    # Agrupar por empleado
+    empleados_con_citas = []
+    empleados = Empleado.objects.filter(activo=True)
+    
+    for empleado in empleados:
+        citas_empleado = Cita.objects.filter(
+            activo=True, 
+            empleado=empleado
+        ).select_related('cliente', 'servicio').order_by('-fecha_inicio')
+        
+        if citas_empleado.exists():
+            # Obtener clientes únicos de este empleado
+            clientes = Cliente.objects.filter(
+                citas__empleado=empleado,
+                citas__activo=True
+            ).distinct()
+            
+            empleados_con_citas.append({
+                'empleado': empleado,
+                'citas': citas_empleado,
+                'clientes': clientes,
+                'total_citas': citas_empleado.count()
+            })
+    
+    return render(request, 'operaciones/cita_list.html', {
+        'empleados_con_citas': empleados_con_citas
+    })
 
 @login_required
 def cita_create(request):
@@ -264,19 +292,24 @@ def venta_delete(request, pk):
 def venta_ticket(request, pk):
     venta = get_object_or_404(Venta.objects.select_related('cliente', 'empleado', 'producto'), pk=pk)
     
-    ############# cambio para agrupar en el ticket #############
+    # Mostrar SOLO ventas PENDIENTES del cliente
     ventas = Venta.objects.filter(
-    cliente=venta.cliente,
-    activo=True,
-    estatus='pendiente'  # o quita esta línea si quieres TODAS
-).select_related('producto', 'cita__servicio').order_by('fecha')
-    ##########################################################
+        cliente=venta.cliente,
+        activo=True,
+        estatus='pendiente'  # Solo pendientes
+    ).select_related('producto', 'cita__servicio').prefetch_related('cita__servicios_adicionales').order_by('fecha')
     
     total = sum(v.total for v in ventas)
+    
+    # Verificar si hay ventas pendientes para mostrar el botón
+    hay_pendientes = ventas.exists()
+    
     return render(request, 'operaciones/venta_ticket.html', {
         'venta': venta,
         'ventas': ventas,
         'total': total,
+        'cliente': venta.cliente,
+        'hay_pendientes': hay_pendientes,  # Para controlar el botón
     })
 
 
@@ -340,6 +373,7 @@ def compra_delete(request, pk):
     return render(request, 'operaciones/compra_confirm_delete.html', {'compra': compra})
 
 
+
 # --- Cotizaciones ---
 
 @login_required
@@ -401,3 +435,34 @@ def proveedor_list(request):
         inversion_total=Sum('precio_unitario')
     ).order_by('-inversion_total')
     return render(request, 'operaciones/proveedor_list.html', {'proveedores': proveedores})
+
+
+# confirmar pago
+@login_required
+def confirmar_pago(request, cliente_id):
+    """Cambiar todas las ventas pendientes del cliente a pagadas"""
+    if request.method == 'POST':
+        from django.db.models import Sum
+        
+        # Obtener ventas pendientes
+        ventas = Venta.objects.filter(
+            cliente_id=cliente_id,
+            estatus='pendiente',
+            activo=True
+        )
+        
+        if ventas.exists():
+            cantidad = ventas.count()
+            total = ventas.aggregate(total=Sum('total'))['total']
+            
+            # Cambiar estatus a 'pagada'
+            ventas.update(estatus='pagada')
+            
+            messages.success(
+                request, 
+                f'✅ Pago confirmado. {cantidad} venta(s) pagada(s). Total: ${total}'
+            )
+        else:
+            messages.warning(request, '⚠️ No hay ventas pendientes para este cliente.')
+    
+    return redirect('operaciones:venta_list')
