@@ -29,7 +29,9 @@
 <!-- GRÁFICA -->
 <div class="card p-4">
   <h5>Ventas por mes</h5>
-  <canvas id="ventasChart"></canvas>
+  <div style="position: relative; height: 300px;">
+    <canvas id="ventasChart"></canvas>
+  </div>
 </div>
 
 <!-- DATOS SEGUROS -->
@@ -52,8 +54,24 @@ new Chart(ctx, {
         datasets: [{
             label: 'Ventas',
             data: data,
+            backgroundColor: 'rgba(123, 45, 139, 0.5)',
+            borderColor: 'rgba(123, 45, 139, 1)',
+            borderWidth: 1,
         }]
     },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'top' }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { stepSize: 1 }
+            }
+        }
+    }
 });
 </script>
 
