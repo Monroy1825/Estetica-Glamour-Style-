@@ -379,7 +379,20 @@
       return valor.replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ0-9\s]/g, '').toUpperCase();
     }
 
-    var textos = 'input[type="text"], input[type="search"], textarea';
+    // Campos de nombre: solo letras y espacios
+    document.querySelectorAll('input[data-tipo="nombre"]').forEach(function (field) {
+      field.addEventListener('input', function () {
+        var pos = this.selectionStart;
+        var limpio = this.value.replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]/g, '').toUpperCase();
+        if (this.value !== limpio) {
+          this.value = limpio;
+          if (this.setSelectionRange) this.setSelectionRange(pos, pos);
+        }
+      });
+    });
+
+    // Resto de inputs de texto (excluye nombre y teléfono)
+    var textos = 'input[type="text"]:not([data-tipo="nombre"]):not([name="telefono"]), input[type="search"], textarea';
     document.querySelectorAll(textos).forEach(function (field) {
       field.addEventListener('input', function () {
         var pos = this.selectionStart;
