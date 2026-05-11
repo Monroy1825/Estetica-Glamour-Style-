@@ -171,6 +171,10 @@ def reporte_compras(request):
         total_inversion += float(c.precio_unitario) * c.cantidad
     
     proveedores_distintos = compras.values('proveedor').distinct().count()
+    promedio_compra = total_inversion / total_compras if total_compras > 0 else 0
+    
+    nombre_mes_desde = dict(MESES).get(int(mes_desde) if mes_desde else None, '')
+    nombre_mes_hasta = dict(MESES).get(int(mes_hasta) if mes_hasta else None, '')
     years = range(anio - 2, anio + 1)
     
     return render(request, 'reportes/reporte_compras.html', {
@@ -180,11 +184,13 @@ def reporte_compras(request):
         'mes_desde': mes_desde,
         'mes_hasta': mes_hasta,
         'anio_seleccionado': anio,
+        'nombre_mes_desde': nombre_mes_desde,
+        'nombre_mes_hasta': nombre_mes_hasta,
         'total_compras': total_compras,
         'total_inversion': total_inversion,
         'proveedores_distintos': proveedores_distintos,
+        'promedio_compra': promedio_compra,
     })
-
 
 # ==================== FUNCIONES PARA PDF ====================
 def _build_pdf(title, subtitle, headers, rows):
