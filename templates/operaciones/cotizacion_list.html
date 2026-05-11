@@ -16,9 +16,9 @@
         <tr>
           <td>{{ q.cliente }}</td>
           <td>{{ q.servicio|default:q.producto|default:"—" }}</td>
-          <td>{{ q.fecha|date:"d/m/Y" }}</td>
-          <td>{{ q.vigencia|date:"d/m/Y" }}</td>
-          <td><span class="badge badge-{{ q.estado }}">{{ q.get_estado_display }}</span></td>
+          <td class="no-uppercase">{{ q.fecha|date:"d/m/Y" }}</td>
+          <td class="no-uppercase">{{ q.vigencia|date:"d/m/Y" }}</td>
+          <td><span class="badge badge-{{ q.estado }} no-uppercase">{{ q.get_estado_display }}</span></td>
           <td class="text-end">
             <a href="{% url 'operaciones:cotizacion_detail' q.pk %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-eye"></i></a>
             <a href="{% url 'operaciones:cotizacion_update' q.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>

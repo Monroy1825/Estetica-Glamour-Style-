@@ -11,6 +11,8 @@ urlpatterns = [
     path('citas/<int:pk>/', views.cita_detail, name='cita_detail'),
     path('citas/<int:pk>/editar/', views.cita_update, name='cita_update'),
     path('citas/<int:pk>/eliminar/', views.cita_delete, name='cita_delete'),
+    path('citas/<int:cita_id>/precio/', views.get_precio_cita, name='get_precio_cita'),
+    path('citas/batch-delete/', views.cita_batch_delete, name='cita_batch_delete'),  #prueba para agrupar y eliminar citas
 
     # Ventas
     path('ventas/', views.venta_list, name='venta_list'),
@@ -18,6 +20,7 @@ urlpatterns = [
     path('ventas/<int:pk>/', views.venta_detail, name='venta_detail'),
     path('ventas/<int:pk>/editar/', views.venta_update, name='venta_update'),
     path('ventas/<int:pk>/eliminar/', views.venta_delete, name='venta_delete'),
+    path('ventas/<int:pk>/ticket/', views.venta_ticket, name='venta_ticket'),
 
     # Compras
     path('compras/', views.compra_list, name='compra_list'),
@@ -35,4 +38,7 @@ urlpatterns = [
 
     # Proveedores
     path('proveedores/', views.proveedor_list, name='proveedor_list'),
+
+    # confirmar pago
+    path('confirmar-pago/<int:cliente_id>/', views.confirmar_pago, name='confirmar_pago'),
 ]

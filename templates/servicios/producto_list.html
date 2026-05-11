@@ -24,6 +24,7 @@
             <th>Costo</th>
             <th>Venta</th>
             <th>Tamaño</th>
+            <th>Presentación</th>
             <th>Existencia</th>
             <th>Acciones</th>
           </tr>
@@ -40,6 +41,13 @@
                 <span class="badge bg-info-subtle text-info">{{ producto.get_tamano_final }}</span>
               {% elif producto.tamano %}
                 <span class="badge bg-secondary-subtle text-secondary">{{ producto.tamano }}</span>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if producto.presentacion %}
+                {{ producto.get_presentacion_display }}
               {% else %}
                 <span class="text-muted">—</span>
               {% endif %}
@@ -88,7 +96,7 @@
           </div>
           {% empty %}
           <tr>
-            <td colspan="7" class="text-center py-5 text-muted">
+            <td colspan="8" class="text-center py-5 text-muted">
               <i class="bi bi-inbox display-6 d-block mb-2"></i>
               No hay productos registrados
             </td>

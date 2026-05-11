@@ -1,30 +1,250 @@
 {% extends "base.html" %}
 {% block title %}{{ titulo }} — Estética{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="mb-0"><i class="bi bi-receipt me-2" style="color:#7b2d8b"></i>{{ titulo }}</h4>
-  <a href="{% url 'operaciones:venta_list' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Volver</a>
+
+<style>
+  .form-section {
+    background: #ffffff;
+    border: 1px solid #ede8f2;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .form-section-header {
+    padding: 12px 20px;
+    border-bottom: 1px solid #ede8f2;
+    font-size: 11px;
+    letter-spacing: 0.8px;
+    color: #aaa;
+    font-weight: 600;
+  }
+  .form-section-body {
+    padding: 20px;
+  }
+  .form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .form-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+  .field-group label {
+    font-size: 11px;
+    letter-spacing: 0.6px;
+    color: #aaa;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .field-group .form-control,
+  .field-group .form-select {
+    border: 1px solid #e0d0e8;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #111;
+    background-color: #fff;
+    height: 40px;
+  }
+  .field-group .form-control:focus,
+  .field-group .form-select:focus {
+    border-color: #7b2d8b;
+    box-shadow: 0 0 0 3px rgba(123,45,139,0.1);
+  }
+  .total-amount {
+    font-size: 32px;
+    font-weight: 600;
+    color: #7b2d8b;
+    line-height: 1;
+  }
+  .total-hint {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 4px;
+  }
+  .btn-guardar {
+    background-color: #7b2d8b;
+    border: none;
+    border-radius: 99px;
+    padding: 0 28px;
+    height: 40px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .btn-guardar:hover {
+    background-color: #5e2069;
+    color: #fff;
+  }
+  .btn-cancelar {
+    background-color: #f3e8f7;
+    border: 1px solid #e0d0e8;
+    border-radius: 99px;
+    padding: 0 24px;
+    height: 40px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #111;
+    display: inline-flex;
+    align-items: center;
+  }
+  .btn-cancelar:hover {
+    background-color: #ede8f2;
+    color: #111;
+  }
+  .page-header-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #111;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .page-header-icon {
+    width: 32px;
+    height: 32px;
+    background: #f3e8f7;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+  }
+</style>
+
+<div class="page-header-title">
+  <div class="page-header-icon">💳</div>
+  {{ titulo }}
 </div>
-<div class="card shadow-sm" style="max-width:480px">
-  <div class="card-body">
-    <form method="post" novalidate>
-      {% csrf_token %}
-      {% for field in form %}
-        <div class="mb-3">
-          <label for="{{ field.id_for_label }}" class="form-label fw-semibold">{{ field.label }}</label>
-          {{ field }}
-          {% if field.errors %}
-            <div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  <!-- DATOS GENERALES -->
+  <div class="form-section">
+    <div class="form-section-header">DATOS GENERALES</div>
+    <div class="form-section-body">
+      <div class="form-grid-2">
+        <div class="field-group">
+          <label>CLIENTE</label>
+          {{ form.cliente }}
+          {% if form.cliente.errors %}
+            <div class="text-danger small mt-1">{{ form.cliente.errors|join:", " }}</div>
           {% endif %}
         </div>
-      {% endfor %}
-      <div class="d-flex gap-2 mt-4">
-        <button type="submit" class="btn btn-primary px-4">
-          <i class="bi bi-check-lg me-1"></i>Guardar
-        </button>
-        <a href="{% url 'operaciones:venta_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+        <div class="field-group">
+          <label>EMPLEADO</label>
+          {{ form.empleado }}
+          {% if form.empleado.errors %}
+            <div class="text-danger small mt-1">{{ form.empleado.errors|join:", " }}</div>
+          {% endif %}
+        </div>
       </div>
-    </form>
+    </div>
   </div>
-</div>
+
+  <!-- DETALLES DE LA VENTA -->
+  <div class="form-section">
+    <div class="form-section-header">DETALLES DE LA VENTA</div>
+    <div class="form-section-body">
+      <div class="form-grid-2" style="margin-bottom:16px">
+        <div class="field-group">
+          <label>CITA</label>
+          {{ form.cita }}
+          {% if form.cita.errors %}
+            <div class="text-danger small mt-1">{{ form.cita.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+        <div class="field-group">
+          <label>PRODUCTO</label>
+          {{ form.producto }}
+          {% if form.producto.errors %}
+            <div class="text-danger small mt-1">{{ form.producto.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+      </div>
+      <div class="form-grid-3">
+        <div class="field-group">
+          <label>TIPO</label>
+          {{ form.tipo }}
+          {% if form.tipo.errors %}
+            <div class="text-danger small mt-1">{{ form.tipo.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+        <div class="field-group">
+          <label>MÉTODO DE PAGO</label>
+          {{ form.metodo_pago }}
+          {% if form.metodo_pago.errors %}
+            <div class="text-danger small mt-1">{{ form.metodo_pago.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+        <div class="field-group">
+          <label>ESTATUS</label>
+          {{ form.estatus }}
+          {% if form.estatus.errors %}
+            <div class="text-danger small mt-1">{{ form.estatus.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOTAL Y ACCIONES -->
+  <div class="form-section">
+    <div class="form-section-header">TOTAL Y ACCIONES</div>
+    <div class="form-section-body d-flex align-items-center justify-content-between">
+      <div>
+        <div style="font-size:11px;letter-spacing:0.6px;color:#aaa;margin-bottom:4px;">TOTAL VENTA</div>
+        <div class="total-amount" id="total_display">$0.00</div>
+        <div class="total-hint">Se calcula automáticamente</div>
+        <div style="display:none">{{ form.total }}</div>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{% url 'operaciones:venta_list' %}" class="btn btn-cancelar">CANCELAR</a>
+        <button type="submit" class="btn btn-guardar">GUARDAR</button>
+      </div>
+    </div>
+  </div>
+
+</form>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var citaSelect = document.getElementById('id_cita');
+    var productoSelect = document.getElementById('id_producto');
+    var totalInput = document.getElementById('id_total');
+
+    var precioCita = 0;
+    var precioProducto = 0;
+
+    function actualizarTotal() {
+      var suma = precioCita + precioProducto;
+      totalInput.value = suma.toFixed(2);
+      document.getElementById('total_display').textContent = '$' + suma.toFixed(2);
+    }
+
+    citaSelect.addEventListener('change', function () {
+      var id = this.value;
+      if (!id) { precioCita = 0; actualizarTotal(); return; }
+      fetch('/operaciones/citas/' + id + '/precio/')
+        .then(function (r) { return r.json(); })
+        .then(function (data) { precioCita = data.precio || 0; actualizarTotal(); });
+    });
+
+    productoSelect.addEventListener('change', function () {
+      var id = this.value;
+      if (!id) { precioProducto = 0; actualizarTotal(); return; }
+      fetch('/servicios/productos/' + id + '/precio/')
+        .then(function (r) { return r.json(); })
+        .then(function (data) { precioProducto = data.precio || 0; actualizarTotal(); });
+    });
+
+    // Inicializar display con valor existente (modo edición)
+    var valorExistente = parseFloat(totalInput.value) || 0;
+    document.getElementById('total_display').textContent = '$' + valorExistente.toFixed(2);
+  });
+</script>
+
 {% endblock %}

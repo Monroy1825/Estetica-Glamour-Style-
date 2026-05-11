@@ -1,36 +1,316 @@
 {% extends "base.html" %}
-{% block title %}Ventas — Estética{% endblock %}
+{% block title %}Ventas — Estética Glamour{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="mb-0"><i class="bi bi-receipt me-2" style="color:#7b2d8b"></i>Ventas</h4>
-  <a href="{% url 'operaciones:venta_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Nueva venta</a>
-</div>
-<div class="card shadow-sm">
-  <div class="card-body p-0">
-    <table class="table table-hover mb-0">
-      <thead class="table-light">
-        <tr><th>Cliente</th><th>Fecha</th><th>Tipo</th><th>Método</th><th>Total</th><th>Estatus</th><th></th></tr>
-      </thead>
-      <tbody>
-        {% for v in ventas %}
-        <tr>
-          <td>{{ v.cliente }}</td>
-          <td>{{ v.fecha|date:"d/m/Y" }}</td>
-          <td>{{ v.get_tipo_display }}</td>
-          <td>{{ v.get_metodo_pago_display }}</td>
-          <td>${{ v.total }}</td>
-          <td><span class="badge badge-{{ v.estatus }}">{{ v.get_estatus_display }}</span></td>
-          <td class="text-end">
-            <a href="{% url 'operaciones:venta_detail' v.pk %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-eye"></i></a>
-            <a href="{% url 'operaciones:venta_update' v.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'operaciones:venta_delete' v.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="7" class="text-center text-muted py-4">Sin ventas registradas.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+
+<style>
+  :root {
+    --primary: #7b2d8b;
+    --primary-dark: #5e2069;
+    --primary-light: #f3e8f7;
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-600: #6c757d;
+    --gray-800: #343a40;
+  }
+
+  .sales-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+  .sales-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .sales-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 22px;
+  }
+  .sales-title h4 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--gray-800);
+  }
+  .sales-title p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--gray-600);
+  }
+  .btn-new-sale {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+  .btn-new-sale:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(123,45,139,0.3);
+    color: white;
+  }
+
+  .sales-table-container {
+    background: white;
+    border-radius: 20px;
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  }
+  .sales-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .sales-table th {
+    background: var(--gray-100);
+    padding: 15px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--gray-600);
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .sales-table td {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--gray-800);
+    border-bottom: 1px solid var(--gray-200);
+    vertical-align: middle;
+  }
+  .sales-table tbody tr:hover {
+    background: var(--primary-light);
+  }
+
+  .badge-tipo {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-servicio {
+    background: #e3f2fd;
+    color: #1565c0;
+  }
+  .badge-producto {
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+  .badge-mixto {
+    background: #f3e5f5;
+    color: #7b1fa2;
+  }
+  .badge-estatus-pagada {
+    background: #d4edda;
+    color: #155724;
+  }
+  .badge-estatus-pendiente {
+    background: #fff3cd;
+    color: #856404;
+  }
+  .badge-estatus-cancelada {
+    background: #f8d7da;
+    color: #721c24;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .btn-action {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .btn-ticket {
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+  .btn-ticket:hover {
+    background: #2e7d32;
+    color: white;
+  }
+  .btn-view {
+    background: var(--gray-100);
+    color: var(--gray-600);
+  }
+  .btn-view:hover {
+    background: var(--primary);
+    color: white;
+  }
+  .btn-edit {
+    background: #e3f2fd;
+    color: #1565c0;
+  }
+  .btn-edit:hover {
+    background: #1565c0;
+    color: white;
+  }
+  .btn-delete {
+    background: #ffebee;
+    color: #c62828;
+  }
+  .btn-delete:hover {
+    background: #c62828;
+    color: white;
+  }
+
+  .pagination-custom {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+  }
+  .page-link-custom {
+    padding: 8px 14px;
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    color: var(--gray-600);
+    text-decoration: none;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .page-link-custom:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  .page-link-custom.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+  }
+
+  @media (max-width: 768px) {
+    .sales-table th, .sales-table td {
+      padding: 10px 12px;
+    }
+    .action-buttons {
+      gap: 4px;
+    }
+  }
+</style>
+
+<div class="sales-header">
+  <div class="sales-title">
+    <div class="sales-icon">
+      <i class="bi bi-receipt"></i>
+    </div>
+    <div>
+      <h4>Registro de Ventas</h4>
+      <p>Gestión y seguimiento de transacciones</p>
+    </div>
   </div>
+  <a href="{% url 'operaciones:venta_create' %}" class="btn-new-sale">
+    <i class="bi bi-plus-lg"></i> Nueva Venta
+  </a>
 </div>
+
+<div class="sales-table-container">
+  <table class="sales-table">
+    <thead>
+      <tr>
+        <th>Cliente</th>
+        <th>Fecha</th>
+        <th>Tipo</th>
+        <th>Metodo</th>
+        <th>Total</th>
+        <th>Estatus</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in ventas %}
+      <tr>
+        <td><strong>{{ v.cliente }}</strong><br><small class="text-muted">{{ v.empleado }}</small></td>
+        <td style="white-space: nowrap;">{{ v.fecha|date:"d/m/Y" }}<br><small class="text-muted">{{ v.fecha|date:"H:i" }}</small></td>
+        <td>
+          <span class="badge-tipo badge-{% if v.tipo == 'servicio' %}servicio{% elif v.tipo == 'producto' %}producto{% else %}mixto{% endif %}">
+            {{ v.get_tipo_display }}
+          </span>
+        </td>
+        <td>{{ v.get_metodo_pago_display }}</td>
+        <td style="font-weight: 700; color: var(--primary);">${{ v.total|floatformat:2 }}</td>
+        <td>
+          <span class="badge-tipo badge-estatus-{{ v.estatus }}">
+            {{ v.get_estatus_display }}
+          </span>
+        </td>
+        <td>
+          <div class="action-buttons">
+            <a href="{% url 'operaciones:venta_ticket' v.pk %}" class="btn-action btn-ticket" title="Ticket">
+              <i class="bi bi-receipt"></i>
+            </a>
+            <a href="{% url 'operaciones:venta_detail' v.pk %}" class="btn-action btn-view" title="Ver">
+              <i class="bi bi-eye"></i>
+            </a>
+            <a href="{% url 'operaciones:venta_update' v.pk %}" class="btn-action btn-edit" title="Editar">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="{% url 'operaciones:venta_delete' v.pk %}" class="btn-action btn-delete" title="Eliminar">
+              <i class="bi bi-trash"></i>
+            </a>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="7" class="text-center py-5" style="color: var(--gray-600);">
+          <i class="bi bi-inbox" style="font-size: 48px;"></i>
+          <p class="mt-2 mb-0">No hay ventas registradas</p>
+          <a href="{% url 'operaciones:venta_create' %}" class="btn btn-sm btn-primary mt-2">Registrar primera venta</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if ventas.has_other_pages %}
+<div class="pagination-custom">
+  {% if ventas.has_previous %}
+    <a href="?page={{ ventas.previous_page_number }}" class="page-link-custom">
+      <i class="bi bi-chevron-left"></i> Anterior
+    </a>
+  {% endif %}
+  
+  <span class="page-link-custom active">
+    {{ ventas.number }} / {{ ventas.paginator.num_pages }}
+  </span>
+  
+  {% if ventas.has_next %}
+    <a href="?page={{ ventas.next_page_number }}" class="page-link-custom">
+      Siguiente <i class="bi bi-chevron-right"></i>
+    </a>
+  {% endif %}
+</div>
+{% endif %}
+
 {% endblock %}

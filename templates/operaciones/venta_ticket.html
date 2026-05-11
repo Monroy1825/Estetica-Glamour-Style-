@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticket del Cliente</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Courier New', monospace;
+      background: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+
+    .ticket-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .ticket {
+      background: #fff;
+      width: 100%;
+      border-radius: 4px;
+      padding: 28px 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+      position: relative;
+    }
+
+    .ticket::before, .ticket::after {
+      content: '';
+      display: block;
+      height: 12px;
+      background: repeating-linear-gradient(
+        90deg,
+        #f0f0f0 0px, #f0f0f0 10px,
+        #fff 10px, #fff 20px
+      );
+      margin: 0 -24px;
+    }
+    .ticket::before { margin-bottom: 20px; }
+    .ticket::after  { margin-top: 20px; }
+
+    .salon-name {
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      color: #7b2d8b;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .salon-sub {
+      text-align: center;
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 16px;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px dashed #ccc;
+      margin: 12px 0;
+    }
+
+    .ticket-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 6px;
+      gap: 8px;
+    }
+
+    .ticket-row .label {
+      color: #666;
+    }
+
+    .ticket-row .value {
+      text-align: right;
+      font-weight: bold;
+      color: #222;
+      word-break: break-word;
+    }
+
+    .items-header {
+      font-weight: bold;
+      margin-bottom: 8px;
+      font-size: 13px;
+      text-decoration: underline;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 2px dashed #7b2d8b;
+      color: #7b2d8b;
+    }
+
+    .gracias {
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+      margin-top: 8px;
+      font-style: italic;
+    }
+
+    .btn-actions {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      font-family: sans-serif;
+      transition: all 0.3s ease;
+    }
+
+    .btn-print {
+      background: #7b2d8b;
+      color: white;
+    }
+
+    .btn-print:hover {
+      background: #5a1e68;
+    }
+
+    .btn-back {
+      background: #e9ecef;
+      color: #333;
+    }
+
+    .btn-back:hover {
+      background: #dee2e6;
+    }
+
+    .btn-pagar {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-pagar:hover {
+      background: #218838;
+    }
+
+    .alert-info {
+      background-color: #d1ecf1;
+      border: 1px solid #bee5eb;
+      border-radius: 6px;
+      padding: 12px;
+      color: #0c5460;
+      font-size: 13px;
+      text-align: center;
+      margin-top: 10px;
+      font-family: sans-serif;
+    }
+
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      .btn-actions { display: none; }
+      .alert-info { display: none; }
+      .ticket {
+        box-shadow: none;
+        border-radius: 0;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="ticket-wrapper">
+
+    <div class="ticket">
+      <div class="salon-name">Estetica Glamour Style</div>
+      <div class="salon-sub">Ticket de Venta</div>
+
+      <hr class="divider">
+
+      <div class="ticket-row">
+        <span class="label">Fecha</span>
+        <span class="value">{{ venta.fecha|date:"d/m/Y H:i" }}</span>
+      </div>
+
+      <hr class="divider">
+
+      <div class="ticket-row">
+        <span class="label">Cliente</span>
+        <span class="value">{{ venta.cliente.nombre }}</span>
+      </div>
+      <div class="ticket-row">
+        <span class="label">Empleado</span>
+        <span class="value">{{ venta.empleado.nombre }}</span>
+      </div>
+
+      <hr class="divider">
+
+      <div class="items-header">Detalle de servicios:</div>
+
+      {% for v in ventas %}
+      <div class="ticket-row">
+        <span class="label">
+          {% if v.producto %}
+            {{ v.producto.nombre }}
+          {% elif v.cita and v.cita.servicio %}
+            {{ v.cita.servicio.nombre }}
+          {% else %}
+            Venta
+          {% endif %}
+        </span>
+        <span class="value">${{ v.total|floatformat:2 }}</span>
+      </div>
+
+      {# Servicios adicionales de la cita #}
+      {% if v.cita and v.cita.servicios_adicionales.all %}
+        {% for extra in v.cita.servicios_adicionales.all %}
+        <div class="ticket-row">
+          <span class="label" style="margin-left: 15px;">+ {{ extra.servicio.nombre }}</span>
+          <span class="value">Incluido</span>
+        </div>
+        {% endfor %}
+      {% endif %}
+      {% empty %}
+      <div class="ticket-row">
+        <span class="label">No hay servicios pendientes</span>
+        <span class="value">$0</span>
+      </div>
+      {% endfor %}
+
+      <hr class="divider">
+
+      <div class="ticket-row">
+        <span class="label">Metodo de pago</span>
+        <span class="value">{{ venta.get_metodo_pago_display|capfirst }}</span>
+      </div>
+      <div class="ticket-row">
+        <span class="label">Estatus</span>
+        <span class="value">
+          {% if venta.estatus == 'pendiente' %}
+            Pendiente
+          {% else %}
+            Pagada
+          {% endif %}
+        </span>
+      </div>
+
+      <div class="total-row">
+        <span>TOTAL A PAGAR</span>
+        <span>${{ total|floatformat:2 }}</span>
+      </div>
+
+      <p class="gracias">Gracias por su preferencia!</p>
+    </div>
+
+    <div class="btn-actions">
+      {% if hay_pendientes %}
+      <form method="POST" action="{% url 'operaciones:confirmar_pago' cliente.id %}" style="flex:1">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-pagar">Pagado</button>
+      </form>
+      {% endif %}
+      <a href="{% url 'operaciones:venta_list' %}" class="btn btn-back">Volver</a>
+      <button onclick="window.print()" class="btn btn-print">Imprimir</button>
+    </div>
+
+    {% if not hay_pendientes and ventas %}
+    <div class="alert-info">
+      No hay ventas pendientes para este cliente.
+    </div>
+    {% endif %}
+
+  </div>
+</body>
+<script>
+    // Verificar si debe imprimir automáticamente
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const debeImprimir = urlParams.get('imprimir');
+        
+        if (debeImprimir === '1') {
+            // Pequeña pausa para asegurar que el DOM esté listo
+            setTimeout(function() {
+                window.print();
+                
+                // Opcional: Mostrar mensaje y redirigir después de imprimir
+                var imprimiendo = true;
+                window.onafterprint = function() {
+                    if (imprimiendo) {
+                        imprimiendo = false;
+                        // Redirigir al listado de ventas después de imprimir
+                        setTimeout(function() {
+                            window.location.href = "{% url 'operaciones:venta_list' %}";
+                        }, 500);
+                    }
+                };
+            }, 500);
+        }
+    });
+</script>
+</html>

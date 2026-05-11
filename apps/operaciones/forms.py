@@ -1,14 +1,7 @@
 from django import forms
 from .models import Cita, Venta, Compra, Cotizacion
 from apps.servicios.models import Producto
-
-
-from django import forms
-from .models import Cita
-from datetime import datetime
-from apps.servicios.models import Producto
-
-
+from datetime import datetime, timedelta
 
 
 # =========================
@@ -39,17 +32,19 @@ class CitaForm(forms.ModelForm):
             'cliente': forms.Select(attrs={'class': 'form-select'}),
             'empleado': forms.Select(attrs={'class': 'form-select'}),
             'servicio': forms.Select(attrs={'class': 'form-select'}),
-
-            # SOLO FECHA
             'fecha_inicio': forms.DateInput(
                 attrs={'class': 'form-control', 'type': 'date'}
             ),
-
             'estado': forms.Select(attrs={'class': 'form-select'}),
         }
 
     def clean(self):
         cleaned_data = super().clean()
+        for field_name, value in cleaned_data.items():
+            field = self.fields.get(field_name)
+            if isinstance(value, str) and field_name != 'email' and not isinstance(field, forms.ChoiceField):
+                cleaned_data[field_name] = value.upper()
+
         fecha = cleaned_data.get('fecha_inicio')
         inicio_str = cleaned_data.get('horario')
         duracion = cleaned_data.get('duracion_horas') or 1.0
@@ -57,15 +52,9 @@ class CitaForm(forms.ModelForm):
         if not fecha or not inicio_str:
             return cleaned_data
 
-        # separar horas
-        inicio_str, fin_str = rango.split('-')
-
-        # convertir fecha a string limpio
         fecha_str = fecha.strftime("%Y-%m-%d")
-
-        # crear datetime correctamente
         fecha_inicio = datetime.strptime(f"{fecha_str} {inicio_str}", "%Y-%m-%d %H:%M")
-        fecha_fin = datetime.strptime(f"{fecha_str} {fin_str}", "%Y-%m-%d %H:%M")
+        fecha_fin = fecha_inicio + timedelta(hours=float(duracion))
 
         cleaned_data['fecha_inicio'] = fecha_inicio
         cleaned_data['fecha_fin'] = fecha_fin
@@ -96,6 +85,11 @@ class CitaForm(forms.ModelForm):
 # VENTAS
 # =========================
 class VentaForm(forms.ModelForm):
+    cita = forms.ModelChoiceField(
+        queryset=Cita.objects.filter(activo=True),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
     producto = forms.ModelChoiceField(
         queryset=Producto.objects.filter(activo=True),
         required=False,
@@ -104,19 +98,23 @@ class VentaForm(forms.ModelForm):
 
     class Meta:
         model = Venta
-        fields = ['cliente', 'empleado', 'producto', 'metodo_pago', 'tipo', 'estatus', 'vigencia_hasta', 'total']
+        fields = ['cliente', 'empleado', 'cita', 'producto', 'metodo_pago', 'tipo', 'estatus', 'total']
         widgets = {
             'cliente': forms.Select(attrs={'class': 'form-select'}),
             'empleado': forms.Select(attrs={'class': 'form-select'}),
             'metodo_pago': forms.Select(attrs={'class': 'form-select'}),
             'tipo': forms.Select(attrs={'class': 'form-select'}),
             'estatus': forms.Select(attrs={'class': 'form-select'}),
-            'vigencia_hasta': forms.DateInput(
-                attrs={'class': 'form-control', 'type': 'date'},
-                format='%Y-%m-%d',
-            ),
             'total': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        for field_name, value in cleaned_data.items():
+            field = self.fields.get(field_name)
+            if isinstance(value, str) and field_name != 'email' and not isinstance(field, forms.ChoiceField):
+                cleaned_data[field_name] = value.upper()
+        return cleaned_data
 
 
 # =========================
@@ -143,9 +141,13 @@ class CompraForm(forms.ModelForm):
             'precio_unitario': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
         }
 
-
-    def clean_proveedor(self):
-        return self.cleaned_data.get('proveedor', '').upper()
+    def clean(self):
+        cleaned_data = super().clean()
+        for field_name, value in cleaned_data.items():
+            field = self.fields.get(field_name)
+            if isinstance(value, str) and field_name != 'email' and not isinstance(field, forms.ChoiceField):
+                cleaned_data[field_name] = value.upper()
+        return cleaned_data
 
 
 # =========================
@@ -165,3 +167,11 @@ class CotizacionForm(forms.ModelForm):
             ),
             'estado': forms.Select(attrs={'class': 'form-select'}),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        for field_name, value in cleaned_data.items():
+            field = self.fields.get(field_name)
+            if isinstance(value, str) and field_name != 'email' and not isinstance(field, forms.ChoiceField):
+                cleaned_data[field_name] = value.upper()
+        return cleaned_data

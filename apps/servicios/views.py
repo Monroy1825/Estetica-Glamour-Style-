@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Servicio, Producto
 from .forms import ServicioForm, ProductoForm
@@ -113,3 +114,12 @@ def producto_delete(request, pk):
         producto.save()
         return redirect('servicios:producto_list')
     return render(request, 'servicios/producto_confirm_delete.html', {'producto': producto})
+
+
+@login_required
+def get_precio_producto(request, producto_id):
+    try:
+        producto = Producto.objects.get(pk=producto_id)
+        return JsonResponse({'precio': float(producto.precio_venta)})
+    except Producto.DoesNotExist:
+        return JsonResponse({'precio': 0})

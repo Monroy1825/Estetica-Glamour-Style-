@@ -7,6 +7,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Sum, Count # Importante para los totales
 from .models import Cita, Venta, Compra, Cotizacion
 from .forms import CitaForm, VentaForm, CompraForm, CotizacionForm
+from django.utils import timezone 
 
 
 def _paginate(queryset, request):
@@ -57,9 +58,37 @@ def horarios_ocupados(request):
 
 @login_required
 def cita_list(request):
-    qs = Cita.objects.filter(activo=True).select_related('cliente', 'empleado', 'servicio')
-    return render(request, 'operaciones/cita_list.html', {'citas': _paginate(qs, request)})
-
+    # Importar los modelos necesarios
+    from apps.empleados.models import Empleado
+    from apps.clientes.models import Cliente
+    
+    # Agrupar por empleado
+    empleados_con_citas = []
+    empleados = Empleado.objects.filter(activo=True)
+    
+    for empleado in empleados:
+        citas_empleado = Cita.objects.filter(
+            activo=True, 
+            empleado=empleado
+        ).select_related('cliente', 'servicio').order_by('-fecha_inicio')
+        
+        if citas_empleado.exists():
+            # Obtener clientes únicos de este empleado
+            clientes = Cliente.objects.filter(
+                citas__empleado=empleado,
+                citas__activo=True
+            ).distinct()
+            
+            empleados_con_citas.append({
+                'empleado': empleado,
+                'citas': citas_empleado,
+                'clientes': clientes,
+                'total_citas': citas_empleado.count()
+            })
+    
+    return render(request, 'operaciones/cita_list.html', {
+        'empleados_con_citas': empleados_con_citas
+    })
 
 @login_required
 def cita_create(request):
@@ -188,6 +217,15 @@ def cita_delete(request, pk):
     return render(request, 'operaciones/cita_confirm_delete.html', {'cita': cita})
 
 
+@login_required
+def get_precio_cita(request, cita_id):
+    try:
+        cita = Cita.objects.select_related('servicio').get(pk=cita_id)
+        return JsonResponse({'precio': float(cita.servicio.precio_base), 'servicio': str(cita.servicio)})
+    except Cita.DoesNotExist:
+        return JsonResponse({'precio': 0, 'servicio': ''})
+
+
 # --- Ventas ---
 
 @login_required
@@ -201,22 +239,91 @@ def venta_create(request):
     if request.method == 'POST':
         form = VentaForm(request.POST)
         if form.is_valid():
+            cita = form.cleaned_data.get('cita')
             producto = form.cleaned_data.get('producto')
-            if producto is not None:
+            total = form.cleaned_data.get('total', 0)
+            
+            # Determinar el tipo de venta
+            if cita and producto:
+                tipo = 'mixto'
+            elif cita:
+                tipo = 'servicio'
+            elif producto:
+                tipo = 'producto'
+            else:
+                tipo = 'mixto'
+            
+            # Caso 1: Solo producto
+            if producto and not cita:
                 if producto.stock_actual <= 0:
-                    messages.error(request, f'Sin stock disponible para "{producto}". No se pudo registrar la venta.')
+                    messages.error(request, f'Sin stock disponible para "{producto.nombre}"')
                 else:
-                    venta = form.save()
+                    venta = form.save(commit=False)
+                    venta.tipo = tipo
+                    venta.save()
                     producto.stock_actual -= 1
                     producto.save()
                     messages.success(request, '¡Venta registrada con éxito!')
                     return redirect('operaciones:venta_list')
-            else:
-                form.save()
+            
+            # Caso 2: Solo servicio (cita)
+            elif cita and not producto:
+                venta = form.save(commit=False)
+                venta.tipo = tipo
+                venta.save()
                 messages.success(request, '¡Venta registrada con éxito!')
                 return redirect('operaciones:venta_list')
+            
+            # Caso 3: Ambos (cita y producto) - CREAR DOS VENTAS SEPARADAS
+            elif cita and producto:
+                # Obtener precios
+                precio_servicio = float(cita.servicio.precio_base)
+                precio_producto = float(producto.precio_venta)
+                
+                # Crear venta para el servicio
+                venta_servicio = Venta(
+                    cliente=form.cleaned_data['cliente'],
+                    empleado=form.cleaned_data['empleado'],
+                    cita=cita,
+                    producto=None,
+                    metodo_pago=form.cleaned_data['metodo_pago'],
+                    tipo='servicio',
+                    estatus=form.cleaned_data.get('estatus', 'pendiente'),
+                    total=precio_servicio,
+                    activo=True
+                )
+                venta_servicio.save()
+                
+                # Verificar stock del producto
+                if producto.stock_actual <= 0:
+                    messages.warning(request, f'Producto "{producto.nombre}" sin stock. Solo se registró el servicio.')
+                else:
+                    # Crear venta para el producto
+                    venta_producto = Venta(
+                        cliente=form.cleaned_data['cliente'],
+                        empleado=form.cleaned_data['empleado'],
+                        cita=None,
+                        producto=producto,
+                        metodo_pago=form.cleaned_data['metodo_pago'],
+                        tipo='producto',
+                        estatus=form.cleaned_data.get('estatus', 'pendiente'),
+                        total=precio_producto,
+                        activo=True
+                    )
+                    venta_producto.save()
+                    producto.stock_actual -= 1
+                    producto.save()
+                
+                messages.success(request, f'¡Ventas registradas! Servicio: ${precio_servicio}, Producto: ${precio_producto}')
+                return redirect('operaciones:venta_list')
+            
+            else:
+                messages.error(request, 'Debe seleccionar al menos una cita o un producto')
+                return render(request, 'operaciones/venta_form.html', {'titulo': 'Nueva Venta', 'form': form})
+                
     else:
         form = VentaForm()
+    
     return render(request, 'operaciones/venta_form.html', {'titulo': 'Nueva Venta', 'form': form})
 
 
@@ -251,13 +358,57 @@ def venta_delete(request, pk):
     return render(request, 'operaciones/venta_confirm_delete.html', {'venta': venta})
 
 
+@login_required
+def venta_ticket(request, pk):
+    venta = get_object_or_404(Venta.objects.select_related('cliente', 'empleado', 'producto'), pk=pk)
+    
+    # Mostrar SOLO ventas PENDIENTES del cliente
+    ventas = Venta.objects.filter(
+        cliente=venta.cliente,
+        activo=True,
+        estatus='pendiente'  # Solo pendientes
+    ).select_related('producto', 'cita__servicio').prefetch_related('cita__servicios_adicionales').order_by('fecha')
+    
+    total = sum(v.total for v in ventas)
+    
+    # Verificar si hay ventas pendientes para mostrar el botón
+    hay_pendientes = ventas.exists()
+    
+    return render(request, 'operaciones/venta_ticket.html', {
+        'venta': venta,
+        'ventas': ventas,
+        'total': total,
+        'cliente': venta.cliente,
+        'hay_pendientes': hay_pendientes,  # Para controlar el botón
+    })
+
+
 # --- Compras ---
+
+
 
 @login_required
 def compra_list(request):
-    qs = Compra.objects.filter(activo=True).select_related('empleado')
-    return render(request, 'operaciones/compra_list.html', {'compras': _paginate(qs, request)})
-
+    qs = Compra.objects.filter(activo=True).select_related('empleado', 'producto')
+    
+    # Calcular estadísticas
+    total_inversion = qs.aggregate(total=Sum('precio_unitario'))['total'] or 0
+    proveedores_distintos = qs.values('proveedor').distinct().count()
+    
+    paginator = Paginator(qs, 10)
+    page = request.GET.get('page')
+    try:
+        compras = paginator.page(page)
+    except PageNotAnInteger:
+        compras = paginator.page(1)
+    except EmptyPage:
+        compras = paginator.page(paginator.num_pages)
+    
+    return render(request, 'operaciones/compra_list.html', {
+        'compras': compras,
+        'total_inversion': total_inversion,
+        'proveedores_distintos': proveedores_distintos,
+    })
 
 @login_required
 def compra_create(request):
@@ -309,6 +460,7 @@ def compra_delete(request, pk):
         messages.success(request, 'Registro de compra eliminado.')
         return redirect('operaciones:compra_list')
     return render(request, 'operaciones/compra_confirm_delete.html', {'compra': compra})
+
 
 
 # --- Cotizaciones ---
@@ -363,7 +515,7 @@ def cotizacion_delete(request, pk):
     return render(request, 'operaciones/cotizacion_confirm_delete.html', {'cotizacion': cotizacion})
 
 
-# --- Proveedores ---
+# --- Proveedores (Catálogo Agrupado) ---
 
 @login_required
 def proveedor_list(request):
@@ -372,3 +524,143 @@ def proveedor_list(request):
         inversion_total=Sum('precio_unitario')
     ).order_by('-inversion_total')
     return render(request, 'operaciones/proveedor_list.html', {'proveedores': proveedores})
+
+
+# confirmar pago
+@login_required
+def confirmar_pago(request, cliente_id):
+    """Confirmar pago de todas las ventas pendientes de un cliente"""
+    if request.method == 'POST':
+        from django.db.models import Sum
+        
+        ventas = Venta.objects.filter(
+            cliente_id=cliente_id,
+            estatus='pendiente',
+            activo=True
+        )
+        
+        if ventas.exists():
+            cantidad = ventas.count()
+            total = ventas.aggregate(total=Sum('total'))['total']
+            
+            ventas.update(estatus='pagada')
+            
+            messages.success(
+                request, 
+                f'Pago confirmado correctamente. {cantidad} venta(s) pagada(s). Total: ${total}'
+            )
+        else:
+            messages.warning(request, 'No hay ventas pendientes para este cliente.')
+    
+    return redirect('operaciones:venta_list')
+
+
+## ajuste para vista convinada en el ticket de venta 
+
+@login_required
+def venta_combinada_create(request):
+    if request.method == 'POST':
+        form = VentaCombinadaForm(request.POST)
+        if form.is_valid():
+            # Crear cabecera
+            venta = VentaCabecera.objects.create(
+                cliente=form.cleaned_data['cliente'],
+                empleado=form.cleaned_data['empleado'],
+                metodo_pago=form.cleaned_data['metodo_pago'],
+                estatus='pendiente'
+            )
+            
+            total = 0
+            
+            # Agregar servicio de la cita
+            if form.cleaned_data['cita']:
+                cita = form.cleaned_data['cita']
+                precio = float(cita.servicio.precio_base)
+                VentaDetalle.objects.create(
+                    venta=venta,
+                    tipo='servicio',
+                    servicio=cita.servicio,
+                    cita=cita,
+                    descripcion=cita.servicio.nombre,
+                    cantidad=1,
+                    precio_unitario=precio,
+                    subtotal=precio
+                )
+                total += precio
+                
+                # Servicios adicionales
+                for extra in cita.servicios_adicionales.all():
+                    precio_extra = float(extra.servicio.precio_base)
+                    VentaDetalle.objects.create(
+                        venta=venta,
+                        tipo='servicio',
+                        servicio=extra.servicio,
+                        cita=cita,
+                        descripcion=f'+ {extra.servicio.nombre}',
+                        cantidad=1,
+                        precio_unitario=precio_extra,
+                        subtotal=precio_extra
+                    )
+                    total += precio_extra
+            
+            # Agregar producto
+            if form.cleaned_data['producto']:
+                producto = form.cleaned_data['producto']
+                precio = float(producto.precio_venta)
+                VentaDetalle.objects.create(
+                    venta=venta,
+                    tipo='producto',
+                    producto=producto,
+                    descripcion=producto.nombre,
+                    cantidad=1,
+                    precio_unitario=precio,
+                    subtotal=precio
+                )
+                total += precio
+                producto.stock_actual -= 1
+                producto.save()
+            
+            # Actualizar total de la venta
+            venta.subtotal = total
+            venta.total = total
+            venta.save()
+            
+            messages.success(request, f'Venta {venta.folio} creada exitosamente. Total: ${total}')
+            return redirect('operaciones:venta_list')
+    else:
+        form = VentaCombinadaForm()
+    
+    return render(request, 'operaciones/venta_combinada_form.html', {'form': form})
+
+
+
+# prueba para eliminar varias citas a la vez 
+
+import json
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+
+
+@login_required
+@require_POST
+def cita_batch_delete(request):
+    """Eliminar múltiples citas a la vez"""
+    try:
+        data = json.loads(request.body)
+        ids = data.get('ids', [])
+        
+        if not ids:
+            return JsonResponse({'success': False, 'error': 'No se seleccionaron citas'})
+        
+        # Eliminar (desactivar) las citas
+        citas_eliminadas = Cita.objects.filter(pk__in=ids, activo=True).update(activo=False)
+        
+        return JsonResponse({
+            'success': True,
+            'eliminadas': citas_eliminadas,
+            'mensaje': f'Se eliminaron {citas_eliminadas} cita(s) correctamente'
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+    

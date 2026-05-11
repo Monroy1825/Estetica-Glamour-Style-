@@ -140,19 +140,12 @@ class Command(BaseCommand):
         # COMPRAS CORREGIDAS - SIN 'total' (es propiedad calculada)
         # ============================================================
         compras_data = [
-            (empleados[4], productos[0], 'Distribuidora Loreal México', 85.00, 10),
-            (empleados[4], productos[1], 'Wella Professionals MX', 120.00, 8),
-            (empleados[4], productos[2], 'Distribuidora Loreal México', 90.00, 5),
-            (empleados[4], productos[3], 'OPI Distribuidor', 40.00, 12),
+            (empleados[4], 'Distribuidora Loreal México', 2450.00),
+            (empleados[4], 'Wella Professionals MX', 1800.00),
         ]
         for empleado, producto, proveedor, precio_unitario, cantidad in compras_data:
             Compra.objects.get_or_create(
-                empleado=empleado,
-                producto=producto,
-                proveedor=proveedor,
-                precio_unitario=precio_unitario,
-                cantidad=cantidad,
-                fecha=date.today(),
+                empleado=empleado, proveedor=proveedor, total=total
             )
         self.stdout.write('  [OK] 4 compras')
 

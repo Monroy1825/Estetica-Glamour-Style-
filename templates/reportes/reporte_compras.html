@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Reporte de Ventas — Estética Glamour{% endblock %}
+{% block title %}Reporte de Compras — Estética Glamour{% endblock %}
 {% block content %}
 
 <style>
@@ -10,14 +10,13 @@
     --success: #28a745;
     --warning: #ffc107;
     --info: #17a2b8;
-    --danger: #dc3545;
     --gray-100: #f8f9fa;
     --gray-200: #e9ecef;
     --gray-600: #6c757d;
     --gray-800: #343a40;
   }
 
-  /* Header con gradiente */
+  /* Header */
   .report-header-modern {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     border-radius: 20px;
@@ -25,10 +24,9 @@
     margin-bottom: 28px;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(123,45,139,0.2);
   }
   .report-header-modern::before {
-    content: "📊";
+    content: "📦";
     position: absolute;
     right: 20px;
     bottom: 10px;
@@ -40,7 +38,6 @@
     font-size: 26px;
     font-weight: 700;
     margin: 0 0 8px 0;
-    letter-spacing: -0.5px;
   }
   .report-header-modern p {
     color: rgba(255,255,255,0.85);
@@ -56,10 +53,6 @@
     margin-bottom: 28px;
     border: 1px solid var(--gray-200);
     box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-  .filters-card-modern:hover {
-    box-shadow: 0 8px 24px rgba(123,45,139,0.1);
   }
   .filters-title-modern {
     font-size: 13px;
@@ -71,9 +64,6 @@
     display: flex;
     align-items: center;
     gap: 10px;
-  }
-  .filters-title-modern i {
-    font-size: 18px;
   }
   .filter-grid {
     display: flex;
@@ -99,10 +89,8 @@
     border: 1.5px solid var(--gray-200);
     border-radius: 12px;
     font-size: 13px;
-    font-weight: 500;
     background: white;
     transition: all 0.2s;
-    cursor: pointer;
   }
   .filter-item select:hover {
     border-color: var(--primary);
@@ -162,7 +150,7 @@
     color: var(--primary);
   }
 
-  /* Tarjetas de estadísticas */
+  /* Estadísticas */
   .stats-grid-modern {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -226,13 +214,13 @@
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0,0,0,0.04);
   }
-  .ventas-table-modern {
+  .compras-table-modern {
     width: 100%;
     border-collapse: collapse;
   }
-  .ventas-table-modern th {
+  .compras-table-modern th {
     background: var(--gray-100);
-    padding: 16px 16px;
+    padding: 15px 16px;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
@@ -240,35 +228,15 @@
     color: var(--gray-600);
     border-bottom: 1px solid var(--gray-200);
   }
-  .ventas-table-modern td {
+  .compras-table-modern td {
     padding: 14px 16px;
     font-size: 13px;
     color: var(--gray-800);
     border-bottom: 1px solid var(--gray-200);
+    vertical-align: middle;
   }
-  .ventas-table-modern tbody tr:hover {
+  .compras-table-modern tbody tr:hover {
     background: var(--primary-light);
-  }
-  .badge-estatus {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 5px 12px;
-    border-radius: 30px;
-    font-size: 11px;
-    font-weight: 600;
-  }
-  .badge-pagada {
-    background: #d4edda;
-    color: #155724;
-  }
-  .badge-pendiente {
-    background: #fff3cd;
-    color: #856404;
-  }
-  .badge-cancelada {
-    background: #f8d7da;
-    color: #721c24;
   }
   .table-footer-modern {
     background: var(--gray-100);
@@ -306,11 +274,7 @@
     .filter-item {
       width: 100%;
     }
-    .report-header-modern h2 {
-      font-size: 20px;
-    }
-    .ventas-table-modern th,
-    .ventas-table-modern td {
+    .compras-table-modern th, .compras-table-modern td {
       padding: 10px 12px;
     }
   }
@@ -319,9 +283,9 @@
 <!-- Header -->
 <div class="report-header-modern">
   <h2>
-    <i class="bi bi-graph-up"></i> Reporte de Ventas
+    <i class="bi bi-cart-check"></i> Reporte de Compras
   </h2>
-  <p>Análisis detallado de ingresos y transacciones</p>
+  <p>Análisis detallado de adquisiciones e inventario</p>
 </div>
 
 <!-- Filtros -->
@@ -360,10 +324,10 @@
     <div class="filter-item">
       <label>&nbsp;</label>
       <div style="display: flex; gap: 10px;">
-        <a href="{% url 'reporte_ventas' %}" class="btn-clean">
+        <a href="{% url 'reporte_compras' %}" class="btn-clean">
           <i class="bi bi-eraser"></i> Limpiar
         </a>
-        <a href="{% url 'reporte_ventas_pdf' %}?mes_desde={{ mes_desde }}&mes_hasta={{ mes_hasta }}&anio={{ anio_seleccionado }}" class="btn-pdf-modern">
+        <a href="{% url 'reporte_compras_pdf' %}?mes_desde={{ mes_desde }}&mes_hasta={{ mes_hasta }}&anio={{ anio_seleccionado }}" class="btn-pdf-modern">
           <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
         </a>
       </div>
@@ -387,82 +351,68 @@
 <div class="stats-grid-modern">
   <div class="stat-card-modern">
     <div class="stat-icon-modern">
-      <i class="bi bi-receipt"></i>
+      <i class="bi bi-cart-check"></i>
     </div>
-    <div class="stat-value-modern">{{ total_ventas }}</div>
-    <div class="stat-label-modern">Total Ventas</div>
+    <div class="stat-value-modern">{{ total_compras|default:"0" }}</div>
+    <div class="stat-label-modern">Total Compras</div>
   </div>
   <div class="stat-card-modern">
     <div class="stat-icon-modern">
       <i class="bi bi-currency-dollar"></i>
     </div>
-    <div class="stat-value-modern">${{ total_ingresos|floatformat:0 }}</div>
-    <div class="stat-label-modern">Ingresos Totales</div>
+    <div class="stat-value-modern">${{ total_inversion|default:"0"|floatformat:0 }}</div>
+    <div class="stat-label-modern">Inversión Total</div>
+  </div>
+  <div class="stat-card-modern">
+    <div class="stat-icon-modern">
+      <i class="bi bi-building"></i>
+    </div>
+    <div class="stat-value-modern">{{ proveedores_distintos|default:"0" }}</div>
+    <div class="stat-label-modern">Proveedores</div>
   </div>
   <div class="stat-card-modern">
     <div class="stat-icon-modern">
       <i class="bi bi-calculator"></i>
     </div>
     <div class="stat-value-modern">
-      ${% if total_ventas > 0 %}{{ total_ingresos|floatformat:2 }}{% else %}0{% endif %}
+      ${{ promedio_compra|default:"0"|floatformat:0 }}
     </div>
-    <div class="stat-label-modern">Promedio por Venta</div>
-  </div>
-  <div class="stat-card-modern">
-    <div class="stat-icon-modern">
-      <i class="bi bi-people"></i>
-    </div>
-    <div class="stat-value-modern">{{ clientes_atendidos|default:"0" }}</div>
-    <div class="stat-label-modern">Clientes Atendidos</div>
+    <div class="stat-label-modern">Promedio por Compra</div>
   </div>
 </div>
 
-<!-- Tabla -->
+<!-- Tabla de compras -->
 <div class="table-container-modern">
-  <table class="ventas-table-modern">
+  <table class="compras-table-modern">
     <thead>
       <tr>
         <th>#</th>
         <th>Fecha</th>
-        <th>Cliente</th>
+        <th>Producto</th>
+        <th>Proveedor</th>
         <th>Empleado</th>
-        <th>Producto/Servicio</th>
+        <th>Cantidad</th>
+        <th>Precio Unit.</th>
         <th>Total</th>
-        <th>Método pago</th>
-        <th>Estatus</th>
       </tr>
     </thead>
     <tbody>
-      {% for venta in ventas %}
+      {% for compra in compras %}
       <tr>
-        <td>{{ forloop.counter }}</td>
-        <td>{{ venta.fecha|date:"d/m/Y H:i" }}</td>
-        <td><strong>{{ venta.cliente }}</strong></td>
-        <td>{{ venta.empleado }}</td>
-        <td>
-          {% if venta.producto %}
-              {{ venta.producto }}
-          {% elif venta.cita %}
-              {{ venta.cita.servicio }}
-          {% else %}
-            <span class="text-muted">—</span>
-          {% endif %}
-        </td>
-        <td style="font-weight: 700; color: var(--primary);">${{ venta.total }}</td>
-        <td>{{ venta.get_metodo_pago_display }}</td>
-        <td>
-          <span class="badge-estatus badge-{{ venta.estatus }}">
-            {% if venta.estatus == 'pagada' %}✅ Pagada
-            {% elif venta.estatus == 'pendiente' %}⏳ Pendiente
-            {% else %}❌ Cancelada{% endif %}
-          </span>
-        </td>
+        <td>{{ compra.pk }}</td>
+        <td>{{ compra.fecha|date:"d/m/Y H:i" }}<br><small class="text-muted">{{ compra.fecha|date:"H:i" }}</small></td>
+        <td><strong>{{ compra.producto }}</strong></td>
+        <td>{{ compra.proveedor }}</td>
+        <td>{{ compra.empleado }}</td>
+        <td><span style="font-weight: 600;">{{ compra.cantidad }}</span> <small>und</small></td>
+        <td class="text-primary">${{ compra.precio_unitario|floatformat:2 }}</td>
+        <td class="fw-bold" style="color: var(--primary);">${{ compra.total_compra|floatformat:2 }}</td>
       </tr>
       {% empty %}
       <tr>
         <td colspan="8" class="empty-state">
           <i class="bi bi-inbox"></i>
-          <p>No hay ventas en el rango seleccionado</p>
+          <p>No hay compras en el rango seleccionado</p>
         </td>
       </tr>
       {% endfor %}
@@ -481,7 +431,7 @@
       {% endif %}
     </div>
     <div class="total-grande">
-      TOTAL: ${{ total_ingresos|floatformat:2 }}
+        INVERSIÓN TOTAL: ${{ total_inversion|default:"0"|floatformat:2 }}
     </div>
   </div>
 </div>

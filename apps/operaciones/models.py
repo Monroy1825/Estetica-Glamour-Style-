@@ -20,6 +20,7 @@ class Cita(models.Model):
     duracion_horas = models.FloatField(default=1.0, verbose_name='Duración estimada (horas)')
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
     activo = models.BooleanField(default=True)
+   
     permitir_multiple = models.BooleanField(
         default=False,
         verbose_name='Permitir horario compartido',
@@ -69,6 +70,7 @@ class Venta(models.Model):
 
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='ventas')
     empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE, related_name='ventas')
+    cita = models.ForeignKey('Cita', on_delete=models.SET_NULL, null=True, blank=True, related_name='ventas_cita')
     producto = models.ForeignKey(Producto, on_delete=models.SET_NULL, null=True, blank=True, related_name='ventas')
     fecha = models.DateTimeField(auto_now_add=True)
     metodo_pago = models.CharField(max_length=20, choices=METODO_PAGO_CHOICES)
@@ -137,3 +139,83 @@ class Cotizacion(models.Model):
 
     def __str__(self):
         return f'Cotización #{self.pk} - {self.cliente}'
+    
+
+##cambio para corregir el ticket de venta
+
+class VentaCabecera(models.Model):
+    """Cabecera de venta - agrupa múltiples detalles"""
+    METODO_PAGO_CHOICES = [
+        ('efectivo', 'Efectivo'),
+        ('tarjeta', 'Tarjeta'),
+        ('transferencia', 'Transferencia'),
+    ]
+    ESTATUS_CHOICES = [
+        ('pagada', 'Pagada'),
+        ('pendiente', 'Pendiente'),
+        ('cancelada', 'Cancelada'),
+    ]
+
+    folio = models.CharField(max_length=20, unique=True, editable=False)
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='ventas_cabecera')
+    empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE, related_name='ventas_cabecera')
+    fecha = models.DateTimeField(auto_now_add=True)
+    metodo_pago = models.CharField(max_length=20, choices=METODO_PAGO_CHOICES)
+    estatus = models.CharField(max_length=20, choices=ESTATUS_CHOICES, default='pendiente')
+    subtotal = models.FloatField(default=0)
+    total = models.FloatField(default=0)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = 'Venta'
+        verbose_name_plural = 'Ventas'
+        ordering = ['-fecha']
+
+    def save(self, *args, **kwargs):
+        if not self.folio:
+            # Generar folio automático: VENTA-20260510-0001
+            from datetime import datetime
+            fecha_str = datetime.now().strftime('%Y%m%d')
+            ultima_venta = VentaCabecera.objects.filter(
+                folio__startswith=f'VENTA-{fecha_str}'
+            ).order_by('-folio').first()
+            if ultima_venta:
+                ultimo_numero = int(ultima_venta.folio.split('-')[-1])
+                nuevo_numero = ultimo_numero + 1
+            else:
+                nuevo_numero = 1
+            self.folio = f'VENTA-{fecha_str}-{nuevo_numero:04d}'
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.folio} - {self.cliente} (${self.total})'
+
+
+class VentaDetalle(models.Model):
+    """Detalle de venta - cada servicio o producto"""
+    TIPO_CHOICES = [
+        ('servicio', 'Servicio'),
+        ('producto', 'Producto'),
+    ]
+    
+    venta = models.ForeignKey(VentaCabecera, on_delete=models.CASCADE, related_name='detalles')
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
+    servicio = models.ForeignKey(Servicio, on_delete=models.SET_NULL, null=True, blank=True)
+    producto = models.ForeignKey(Producto, on_delete=models.SET_NULL, null=True, blank=True)
+    cita = models.ForeignKey(Cita, on_delete=models.SET_NULL, null=True, blank=True)
+    descripcion = models.CharField(max_length=200)
+    cantidad = models.IntegerField(default=1)
+    precio_unitario = models.FloatField()
+    subtotal = models.FloatField()
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = 'Detalle de venta'
+        verbose_name_plural = 'Detalles de venta'
+
+    def save(self, *args, **kwargs):
+        self.subtotal = self.cantidad * self.precio_unitario
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.descripcion} x{self.cantidad} = ${self.subtotal}'
