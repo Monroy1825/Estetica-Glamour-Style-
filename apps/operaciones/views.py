@@ -631,3 +631,36 @@ def venta_combinada_create(request):
         form = VentaCombinadaForm()
     
     return render(request, 'operaciones/venta_combinada_form.html', {'form': form})
+
+
+
+# prueba para eliminar varias citas a la vez 
+
+import json
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+
+
+@login_required
+@require_POST
+def cita_batch_delete(request):
+    """Eliminar múltiples citas a la vez"""
+    try:
+        data = json.loads(request.body)
+        ids = data.get('ids', [])
+        
+        if not ids:
+            return JsonResponse({'success': False, 'error': 'No se seleccionaron citas'})
+        
+        # Eliminar (desactivar) las citas
+        citas_eliminadas = Cita.objects.filter(pk__in=ids, activo=True).update(activo=False)
+        
+        return JsonResponse({
+            'success': True,
+            'eliminadas': citas_eliminadas,
+            'mensaje': f'Se eliminaron {citas_eliminadas} cita(s) correctamente'
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+    

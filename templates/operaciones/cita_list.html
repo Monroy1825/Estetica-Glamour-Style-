@@ -1,9 +1,101 @@
 {% extends "base.html" %}
 {% block title %}Citas — Estética{% endblock %}
 {% block content %}
+
+<style>
+  .batch-actions {
+    background: white;
+    border-radius: 12px;
+    padding: 12px 20px;
+    margin-bottom: 20px;
+    border: 1px solid #ede8f2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .selected-count {
+    font-size: 13px;
+    color: #7b2d8b;
+    font-weight: 600;
+  }
+  .btn-delete-batch {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-delete-batch:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+  }
+  .btn-delete-batch.disabled {
+    background: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+  }
+  .btn-delete-batch.disabled:hover {
+    transform: none;
+  }
+  .checkbox-col {
+    width: 35px;
+    text-align: center;
+  }
+  .select-all {
+    cursor: pointer;
+  }
+  .search-filter {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .search-filter input {
+    padding: 8px 12px;
+    border: 1px solid #ede8f2;
+    border-radius: 8px;
+    font-size: 13px;
+    width: 200px;
+  }
+  .search-filter select {
+    padding: 8px 12px;
+    border: 1px solid #ede8f2;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+</style>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h4 class="mb-0"><i class="bi bi-calendar-check me-2" style="color:#7b2d8b"></i>Citas por Empleado</h4>
   <a href="{% url 'operaciones:cita_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Nueva cita</a>
+</div>
+
+<!-- Barra de acciones masivas -->
+<div class="batch-actions">
+  <div class="search-filter">
+    <input type="text" id="searchInput" placeholder="Buscar cliente..." class="form-control form-control-sm">
+    <select id="estadoFilter" class="form-select form-select-sm" style="width: auto;">
+      <option value="">Todos los estados</option>
+      <option value="pendiente">Pendiente</option>
+      <option value="confirmada">Confirmada</option>
+      <option value="completada">Completada</option>
+      <option value="cancelada">Cancelada</option>
+    </select>
+  </div>
+  <div class="batch-actions-right" style="display: flex; gap: 12px; align-items: center;">
+    <span class="selected-count" id="selectedCount">0 seleccionadas</span>
+    <button id="deleteBatchBtn" class="btn-delete-batch disabled">
+      <i class="bi bi-trash"></i> Eliminar seleccionadas
+    </button>
+  </div>
 </div>
 
 {% for grupo in empleados_con_citas %}
@@ -56,6 +148,9 @@
     <table class="table table-hover mb-0">
       <thead class="table-light">
         <tr>
+          <th class="checkbox-col">
+            <input type="checkbox" class="select-all-empleado" data-empleado="{{ grupo.empleado.id }}">
+          </th>
           <th>Cliente</th>
           <th>Servicio</th>
           <th>Fecha</th>
@@ -66,7 +161,10 @@
       </thead>
       <tbody>
         {% for cita in grupo.citas %}
-        <tr>
+        <tr class="cita-row" data-id="{{ cita.pk }}" data-cliente="{{ cita.cliente.nombre|lower }}" data-estado="{{ cita.estado }}">
+          <td class="checkbox-col">
+            <input type="checkbox" class="cita-checkbox" value="{{ cita.pk }}">
+          </td>
           <td>
             <strong>{{ cita.cliente.nombre }}</strong><br>
             <small class="text-muted">{{ cita.cliente.telefono }}</small>
@@ -80,21 +178,9 @@
             </span>
           </td>
           <td class="text-end">
-            <a href="{% url 'operaciones:cita_detail' cita.pk %}" class="btn btn-sm btn-outline-secondary me-1">
-              <i class="bi bi-eye"></i>
-            </a>
-            <a href="{% url 'operaciones:cita_update' cita.pk %}" class="btn btn-sm btn-outline-primary me-1">
-              <i class="bi bi-pencil"></i>
-            </a>
-            <a href="{% url 'operaciones:cita_delete' cita.pk %}" class="btn btn-sm btn-outline-danger">
-              <i class="bi bi-trash"></i>
-            </a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="6" class="text-center text-muted py-4">
-            <i class="bi bi-calendar-x"></i> No hay citas para este empleado
+            <a href="{% url 'operaciones:cita_detail' cita.pk %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-eye"></i></a>
+            <a href="{% url 'operaciones:cita_update' cita.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'operaciones:cita_delete' cita.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
           </td>
         </tr>
         {% endfor %}
@@ -112,6 +198,125 @@
 </div>
 {% endfor %}
 
-<!-- Agregar Bootstrap JS para los collapses -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const checkboxes = document.querySelectorAll('.cita-checkbox');
+  const selectAllBtns = document.querySelectorAll('.select-all-empleado');
+  const deleteBatchBtn = document.getElementById('deleteBatchBtn');
+  const selectedCountSpan = document.getElementById('selectedCount');
+  const searchInput = document.getElementById('searchInput');
+  const estadoFilter = document.getElementById('estadoFilter');
+  
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  
+  function updateSelectedCount() {
+    const selected = document.querySelectorAll('.cita-checkbox:checked').length;
+    selectedCountSpan.textContent = `${selected} seleccionada${selected !== 1 ? 's' : ''}`;
+    
+    if (selected > 0) {
+      deleteBatchBtn.classList.remove('disabled');
+      deleteBatchBtn.disabled = false;
+    } else {
+      deleteBatchBtn.classList.add('disabled');
+      deleteBatchBtn.disabled = true;
+    }
+  }
+  
+  checkboxes.forEach(cb => {
+    cb.addEventListener('change', updateSelectedCount);
+  });
+  
+  selectAllBtns.forEach(btn => {
+    btn.addEventListener('change', function() {
+      const row = this.closest('.card');
+      const empleadoCheckboxes = row.querySelectorAll('.cita-checkbox');
+      empleadoCheckboxes.forEach(cb => {
+        cb.checked = this.checked;
+      });
+      updateSelectedCount();
+    });
+  });
+  
+  if (searchInput) {
+    searchInput.addEventListener('keyup', function() {
+      const searchTerm = this.value.toLowerCase();
+      const rows = document.querySelectorAll('.cita-row');
+      rows.forEach(row => {
+        const cliente = row.getAttribute('data-cliente') || '';
+        if (cliente.includes(searchTerm)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+  }
+  
+  if (estadoFilter) {
+    estadoFilter.addEventListener('change', function() {
+      const estado = this.value;
+      const rows = document.querySelectorAll('.cita-row');
+      rows.forEach(row => {
+        const rowEstado = row.getAttribute('data-estado') || '';
+        if (!estado || rowEstado === estado) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+  }
+  
+  if (deleteBatchBtn) {
+    deleteBatchBtn.addEventListener('click', function() {
+      if (deleteBatchBtn.classList.contains('disabled')) return;
+      
+      const selected = [];
+      document.querySelectorAll('.cita-checkbox:checked').forEach(cb => {
+        selected.push(cb.value);
+      });
+      
+      if (selected.length === 0) return;
+      
+      if (confirm(`¿Estás seguro de eliminar ${selected.length} cita${selected.length !== 1 ? 's' : ''}? Esta acción no se puede deshacer.`)) {
+        fetch('/operaciones/citas/batch-delete/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: JSON.stringify({ ids: selected })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            location.reload();
+          } else {
+            alert('Error: ' + data.error);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error al eliminar las citas');
+        });
+      }
+    });
+  }
+});
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}
