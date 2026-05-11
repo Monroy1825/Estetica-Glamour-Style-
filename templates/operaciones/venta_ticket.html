@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ticket del Cliente</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -83,7 +82,6 @@
 
     .ticket-row .label {
       color: #666;
-      white-space: nowrap;
     }
 
     .ticket-row .value {
@@ -91,6 +89,13 @@
       font-weight: bold;
       color: #222;
       word-break: break-word;
+    }
+
+    .items-header {
+      font-weight: bold;
+      margin-bottom: 8px;
+      font-size: 13px;
+      text-decoration: underline;
     }
 
     .total-row {
@@ -187,69 +192,60 @@
   </style>
 </head>
 <body>
-  <div style="display:flex; flex-direction:column; align-items:center; gap:16px; width:100%; max-width:380px;">
+  <div class="ticket-wrapper">
 
     <div class="ticket">
-      <div class="salon-name">Estética Glamour Style</div>
+      <div class="salon-name">Estetica Glamour Style</div>
       <div class="salon-sub">Ticket de Venta</div>
 
       <hr class="divider">
 
       <div class="ticket-row">
-        <span class="label">📅 Fecha</span>
+        <span class="label">Fecha</span>
         <span class="value">{{ venta.fecha|date:"d/m/Y H:i" }}</span>
       </div>
 
       <hr class="divider">
 
       <div class="ticket-row">
-        <span class="label">👤 Cliente</span>
+        <span class="label">Cliente</span>
         <span class="value">{{ venta.cliente.nombre }}</span>
       </div>
       <div class="ticket-row">
-        <span class="label">💇 Empleado</span>
+        <span class="label">Empleado</span>
         <span class="value">{{ venta.empleado.nombre }}</span>
       </div>
 
       <hr class="divider">
 
-      <div style="margin-bottom: 8px;">
-        <strong>📋 DETALLE DE SERVICIOS:</strong>
-      </div>
+      <div class="items-header">Detalle de servicios:</div>
 
       {% for v in ventas %}
       <div class="ticket-row">
         <span class="label">
           {% if v.producto %}
-            📦 {{ v.producto.nombre }}
-          {% elif v.cita %}
-            ✂️ {{ v.cita.servicio.nombre }}
-            {% if v.cita.servicios_adicionales.all %}
-              <small style="font-size: 10px;"> + extras</small>
-            {% endif %}
+            {{ v.producto.nombre }}
+          {% elif v.cita and v.cita.servicio %}
+            {{ v.cita.servicio.nombre }}
           {% else %}
-            {{ v.get_tipo_display }}
+            Venta
           {% endif %}
         </span>
-        <span class="value">${{ v.total }}</span>
+        <span class="value">${{ v.total|floatformat:2 }}</span>
       </div>
 
-      <!-- Mostrar servicios adicionales si existen -->
+      {# Servicios adicionales de la cita #}
       {% if v.cita and v.cita.servicios_adicionales.all %}
         {% for extra in v.cita.servicios_adicionales.all %}
-        <div class="ticket-row" style="margin-left: 15px;">
-          <span class="label" style="font-size: 11px; color: #666;">
-            ➕ {{ extra.servicio.nombre }}
-          </span>
-          <span class="value" style="font-size: 11px; color: #666;">
-            Incluido
-          </span>
+        <div class="ticket-row">
+          <span class="label" style="margin-left: 15px;">+ {{ extra.servicio.nombre }}</span>
+          <span class="value">Incluido</span>
         </div>
         {% endfor %}
       {% endif %}
       {% empty %}
       <div class="ticket-row">
-        <span class="label" style="color: #999;">No hay servicios pendientes</span>
+        <span class="label">No hay servicios pendientes</span>
         <span class="value">$0</span>
       </div>
       {% endfor %}
@@ -257,52 +253,71 @@
       <hr class="divider">
 
       <div class="ticket-row">
-        <span class="label">💳 Método de pago</span>
-        <span class="value">{{ venta.get_metodo_pago_display }}</span>
+        <span class="label">Metodo de pago</span>
+        <span class="value">{{ venta.get_metodo_pago_display|capfirst }}</span>
       </div>
       <div class="ticket-row">
-        <span class="label">📊 Estatus</span>
+        <span class="label">Estatus</span>
         <span class="value">
           {% if venta.estatus == 'pendiente' %}
-            <span style="color: #ffc107;">⏳ Pendiente</span>
+            Pendiente
           {% else %}
-            <span style="color: #28a745;">✅ Pagada</span>
+            Pagada
           {% endif %}
         </span>
       </div>
 
       <div class="total-row">
         <span>TOTAL A PAGAR</span>
-        <span>${{ total }}</span>
+        <span>${{ total|floatformat:2 }}</span>
       </div>
 
-      <p class="gracias">¡Gracias por su preferencia!</p>
+      <p class="gracias">Gracias por su preferencia!</p>
     </div>
 
     <div class="btn-actions">
       {% if hay_pendientes %}
       <form method="POST" action="{% url 'operaciones:confirmar_pago' cliente.id %}" style="flex:1">
         {% csrf_token %}
-        <button type="submit" class="btn btn-pagar" style="width:100%;">
-          <i class="bi bi-check-circle"></i>  PAGADO
-        </button>
+        <button type="submit" class="btn btn-pagar">Pagado</button>
       </form>
       {% endif %}
-      <a href="{% url 'operaciones:venta_list' %}" class="btn btn-back">
-        <i class="bi bi-arrow-left"></i> Volver
-      </a>
-      <button onclick="window.print()" class="btn btn-print">
-        <i class="bi bi-printer"></i> Imprimir
-      </button>
+      <a href="{% url 'operaciones:venta_list' %}" class="btn btn-back">Volver</a>
+      <button onclick="window.print()" class="btn btn-print">Imprimir</button>
     </div>
 
     {% if not hay_pendientes and ventas %}
     <div class="alert-info">
-      <i class="bi bi-info-circle"></i> No hay ventas pendientes para este cliente.
-      <br>Las ventas ya han sido pagadas.
+      No hay ventas pendientes para este cliente.
     </div>
     {% endif %}
 
   </div>
 </body>
+<script>
+    // Verificar si debe imprimir automáticamente
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const debeImprimir = urlParams.get('imprimir');
+        
+        if (debeImprimir === '1') {
+            // Pequeña pausa para asegurar que el DOM esté listo
+            setTimeout(function() {
+                window.print();
+                
+                // Opcional: Mostrar mensaje y redirigir después de imprimir
+                var imprimiendo = true;
+                window.onafterprint = function() {
+                    if (imprimiendo) {
+                        imprimiendo = false;
+                        // Redirigir al listado de ventas después de imprimir
+                        setTimeout(function() {
+                            window.location.href = "{% url 'operaciones:venta_list' %}";
+                        }, 500);
+                    }
+                };
+            }, 500);
+        }
+    });
+</script>
 </html>

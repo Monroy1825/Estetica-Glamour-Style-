@@ -1,36 +1,298 @@
 {% extends "base.html" %}
 {% block title %}Compras — Estética{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="mb-0"><i class="bi bi-cart3 me-2" style="color:#7b2d8b"></i>Compras</h4>
-  <a href="{% url 'operaciones:compra_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Nueva compra</a>
+
+<style>
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .page-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #111;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .page-icon {
+    width: 32px;
+    height: 32px;
+    background: #f3e8f7;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+  }
+  .btn-nueva {
+    background-color: #7b2d8b;
+    border: none;
+    border-radius: 99px;
+    padding: 0 24px;
+    height: 38px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+  }
+  .btn-nueva:hover {
+    background-color: #5e2069;
+    color: #fff;
+  }
+  .table-compras {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table-compras th {
+    text-align: left;
+    padding: 14px 12px;
+    background: #f8f5fa;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #666;
+    border-bottom: 1px solid #ede8f2;
+  }
+  .table-compras td {
+    padding: 14px 12px;
+    font-size: 13px;
+    color: #222;
+    border-bottom: 1px solid #f0eef2;
+    vertical-align: middle;
+  }
+  .table-compras tr:hover {
+    background-color: #fef9ff;
+  }
+  .producto-nombre {
+    font-weight: 600;
+    color: #2c3e50;
+  }
+  .producto-categoria {
+    font-size: 11px;
+    color: #888;
+    margin-top: 3px;
+  }
+  .badge-stock {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .stock-bajo {
+    background: #fff3cd;
+    color: #856404;
+  }
+  .stock-normal {
+    background: #d4edda;
+    color: #155724;
+  }
+  .precio {
+    font-weight: 600;
+    color: #7b2d8b;
+  }
+  .total {
+    font-weight: 700;
+    color: #2c3e50;
+  }
+  .btn-accion {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    text-decoration: none;
+    margin: 0 2px;
+  }
+  .btn-ver {
+    color: #6c757d;
+  }
+  .btn-ver:hover {
+    color: #7b2d8b;
+  }
+  .btn-editar {
+    color: #007bff;
+  }
+  .btn-editar:hover {
+    color: #0056b3;
+  }
+  .btn-eliminar {
+    color: #dc3545;
+  }
+  .btn-eliminar:hover {
+    color: #a71d2a;
+  }
+  .resumen-card {
+    background: #f8f5fa;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .resumen-item {
+    text-align: center;
+  }
+  .resumen-valor {
+    font-size: 24px;
+    font-weight: 700;
+    color: #7b2d8b;
+  }
+  .resumen-label {
+    font-size: 11px;
+    color: #888;
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+  }
+  .pagination {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+  }
+  .pagination .page-link {
+    padding: 6px 12px;
+    border: 1px solid #ede8f2;
+    border-radius: 6px;
+    color: #7b2d8b;
+    text-decoration: none;
+    font-size: 13px;
+  }
+  .pagination .page-link:hover {
+    background: #f3e8f7;
+  }
+  .pagination .active .page-link {
+    background: #7b2d8b;
+    color: white;
+    border-color: #7b2d8b;
+  }
+</style>
+
+<div class="page-header">
+  <div class="page-title">
+    <div class="page-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20 7L4 7M20 12L4 12M20 17L4 17M7 3L5 3C3.89543 3 3 3.89543 3 5L3 19C3 20.1046 3.89543 21 5 21L19 21C20.1046 21 21 20.1046 21 19L21 5C21 3.89543 20.1046 3 19 3L17 3" stroke="currentColor" stroke-linecap="round"/>
+      </svg>
+    </div>
+    Registro de Compras
+  </div>
+  <a href="{% url 'operaciones:compra_create' %}" class="btn-nueva">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-linecap="round"/>
+    </svg>
+    Nueva Compra
+  </a>
 </div>
+
+<!-- Tarjetas de resumen -->
+<div class="resumen-card">
+  <div class="resumen-item">
+    <div class="resumen-valor">{{ compras.paginator.count }}</div>
+    <div class="resumen-label">Total Compras</div>
+  </div>
+  <div class="resumen-item">
+    <div class="resumen-valor">${{ total_inversion|floatformat:0|default:"0" }}</div>
+    <div class="resumen-label">Inversión Total</div>
+  </div>
+  <div class="resumen-item">
+    <div class="resumen-valor">{{ proveedores_distintos|default:"0" }}</div>
+    <div class="resumen-label">Proveedores</div>
+  </div>
+</div>
+
 <div class="card shadow-sm">
   <div class="card-body p-0">
-    <table class="table table-hover mb-0">
-      <thead class="table-light">
-        <tr><th>Proveedor</th><th>Empleado</th><th>Fecha</th><th>Precio unitario</th><th>Cantidad</th><th>Total</th><th></th></tr>
+    <table class="table-compras">
+      <thead>
+        <tr>
+          <th>PRODUCTO</th>
+          <th>PROVEEDOR</th>
+          <th>EMPLEADO</th>
+          <th>FECHA</th>
+          <th>CANTIDAD</th>
+          <th>P.UNITARIO</th>
+          <th>TOTAL</th>
+          <th></th>
+        </tr>
       </thead>
       <tbody>
-        {% for c in compras %}
+        {% for compra in compras %}
         <tr>
-          <td>{{ c.proveedor }}</td>
-          <td>{{ c.empleado.nombre }}</td>
-          <td class="no-uppercase">{{ c.fecha|date:"d/m/Y" }}</td>
-          <td class="no-uppercase">${{ c.precio_unitario }}</td>
-          <td class="no-uppercase">{{ c.cantidad }}</td>
-          <td class="no-uppercase">${{ c.total_compra }}</td>
-          <td class="text-end">
-            <a href="{% url 'operaciones:compra_detail' c.pk %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-eye"></i></a>
-            <a href="{% url 'operaciones:compra_update' c.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'operaciones:compra_delete' c.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+          <td>
+            <div class="producto-nombre">{{ compra.producto.nombre }}</div>
+            <div class="producto-categoria">
+              {% if compra.producto.presentacion %}
+                {{ compra.producto.presentacion }}
+              {% else %}
+                Producto
+              {% endif %}
+            </div>
+          </td>
+          <td>
+            <strong>{{ compra.proveedor|default:"-" }}</strong>
+          </td>
+          <td>{{ compra.empleado.nombre }}</td>
+          <td style="white-space: nowrap;">{{ compra.fecha|date:"d/m/Y" }}</td>
+          <td>
+            <span class="badge-stock {% if compra.cantidad < 5 %}stock-bajo{% else %}stock-normal{% endif %}">
+              {{ compra.cantidad }} und
+            </span>
+          </td>
+          <td class="precio">${{ compra.precio_unitario|floatformat:2 }}</td>
+          <td class="total">${{ compra.total_compra|floatformat:2 }}</td>
+          <td class="text-end" style="white-space: nowrap;">
+            <a href="{% url 'operaciones:compra_detail' compra.pk %}" class="btn-accion btn-ver" title="Ver">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor"/>
+                <circle cx="12" cy="12" r="3" stroke="currentColor"/>
+              </svg>
+            </a>
+            <a href="{% url 'operaciones:compra_update' compra.pk %}" class="btn-accion btn-editar" title="Editar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 3l4 4L7 21H3v-4L17 3z" stroke="currentColor"/>
+              </svg>
+            </a>
+            <a href="{% url 'operaciones:compra_delete' compra.pk %}" class="btn-accion btn-eliminar" title="Eliminar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" stroke="currentColor"/>
+              </svg>
+            </a>
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="5" class="text-center text-muted py-4">Sin compras registradas.</td></tr>
+        <tr>
+          <td colspan="8" class="text-center py-5" style="color: #aaa;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 12px;">
+              <path d="M20 7L4 7M20 12L4 12M20 17L4 17M7 3L5 3C3.89543 3 3 3.89543 3 5L3 19C3 20.1046 3.89543 21 5 21L19 21C20.1046 21 21 20.1046 21 19L21 5C21 3.89543 20.1046 3 19 3L17 3" stroke="currentColor"/>
+            </svg>
+            <br>
+            No hay compras registradas
+            <br>
+            <a href="{% url 'operaciones:compra_create' %}" style="color: #7b2d8b; margin-top: 8px; display: inline-block;">Registrar primera compra</a>
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+
+{% if compras.has_other_pages %}
+<nav class="pagination">
+  {% if compras.has_previous %}
+    <a class="page-link" href="?page={{ compras.previous_page_number }}">‹ Anterior</a>
+  {% endif %}
+  <span class="page-link active">Pág. {{ compras.number }} / {{ compras.paginator.num_pages }}</span>
+  {% if compras.has_next %}
+    <a class="page-link" href="?page={{ compras.next_page_number }}">Siguiente ›</a>
+  {% endif %}
+</nav>
+{% endif %}
+
 {% endblock %}

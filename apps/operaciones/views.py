@@ -7,6 +7,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Sum, Count # Importante para los totales
 from .models import Cita, Venta, Compra, Cotizacion
 from .forms import CitaForm, VentaForm, CompraForm, CotizacionForm
+from django.utils import timezone 
 
 
 def _paginate(queryset, request):
@@ -238,22 +239,91 @@ def venta_create(request):
     if request.method == 'POST':
         form = VentaForm(request.POST)
         if form.is_valid():
+            cita = form.cleaned_data.get('cita')
             producto = form.cleaned_data.get('producto')
-            if producto is not None:
+            total = form.cleaned_data.get('total', 0)
+            
+            # Determinar el tipo de venta
+            if cita and producto:
+                tipo = 'mixto'
+            elif cita:
+                tipo = 'servicio'
+            elif producto:
+                tipo = 'producto'
+            else:
+                tipo = 'mixto'
+            
+            # Caso 1: Solo producto
+            if producto and not cita:
                 if producto.stock_actual <= 0:
-                    messages.error(request, f'Sin stock disponible para "{producto}". No se pudo registrar la venta.')
+                    messages.error(request, f'Sin stock disponible para "{producto.nombre}"')
                 else:
-                    venta = form.save()
+                    venta = form.save(commit=False)
+                    venta.tipo = tipo
+                    venta.save()
                     producto.stock_actual -= 1
                     producto.save()
                     messages.success(request, '¡Venta registrada con éxito!')
                     return redirect('operaciones:venta_list')
-            else:
-                form.save()
+            
+            # Caso 2: Solo servicio (cita)
+            elif cita and not producto:
+                venta = form.save(commit=False)
+                venta.tipo = tipo
+                venta.save()
                 messages.success(request, '¡Venta registrada con éxito!')
                 return redirect('operaciones:venta_list')
+            
+            # Caso 3: Ambos (cita y producto) - CREAR DOS VENTAS SEPARADAS
+            elif cita and producto:
+                # Obtener precios
+                precio_servicio = float(cita.servicio.precio_base)
+                precio_producto = float(producto.precio_venta)
+                
+                # Crear venta para el servicio
+                venta_servicio = Venta(
+                    cliente=form.cleaned_data['cliente'],
+                    empleado=form.cleaned_data['empleado'],
+                    cita=cita,
+                    producto=None,
+                    metodo_pago=form.cleaned_data['metodo_pago'],
+                    tipo='servicio',
+                    estatus=form.cleaned_data.get('estatus', 'pendiente'),
+                    total=precio_servicio,
+                    activo=True
+                )
+                venta_servicio.save()
+                
+                # Verificar stock del producto
+                if producto.stock_actual <= 0:
+                    messages.warning(request, f'Producto "{producto.nombre}" sin stock. Solo se registró el servicio.')
+                else:
+                    # Crear venta para el producto
+                    venta_producto = Venta(
+                        cliente=form.cleaned_data['cliente'],
+                        empleado=form.cleaned_data['empleado'],
+                        cita=None,
+                        producto=producto,
+                        metodo_pago=form.cleaned_data['metodo_pago'],
+                        tipo='producto',
+                        estatus=form.cleaned_data.get('estatus', 'pendiente'),
+                        total=precio_producto,
+                        activo=True
+                    )
+                    venta_producto.save()
+                    producto.stock_actual -= 1
+                    producto.save()
+                
+                messages.success(request, f'¡Ventas registradas! Servicio: ${precio_servicio}, Producto: ${precio_producto}')
+                return redirect('operaciones:venta_list')
+            
+            else:
+                messages.error(request, 'Debe seleccionar al menos una cita o un producto')
+                return render(request, 'operaciones/venta_form.html', {'titulo': 'Nueva Venta', 'form': form})
+                
     else:
         form = VentaForm()
+    
     return render(request, 'operaciones/venta_form.html', {'titulo': 'Nueva Venta', 'form': form})
 
 
@@ -315,11 +385,30 @@ def venta_ticket(request, pk):
 
 # --- Compras ---
 
+
+
 @login_required
 def compra_list(request):
-    qs = Compra.objects.filter(activo=True).select_related('empleado')
-    return render(request, 'operaciones/compra_list.html', {'compras': _paginate(qs, request)})
-
+    qs = Compra.objects.filter(activo=True).select_related('empleado', 'producto')
+    
+    # Calcular estadísticas
+    total_inversion = qs.aggregate(total=Sum('precio_unitario'))['total'] or 0
+    proveedores_distintos = qs.values('proveedor').distinct().count()
+    
+    paginator = Paginator(qs, 10)
+    page = request.GET.get('page')
+    try:
+        compras = paginator.page(page)
+    except PageNotAnInteger:
+        compras = paginator.page(1)
+    except EmptyPage:
+        compras = paginator.page(paginator.num_pages)
+    
+    return render(request, 'operaciones/compra_list.html', {
+        'compras': compras,
+        'total_inversion': total_inversion,
+        'proveedores_distintos': proveedores_distintos,
+    })
 
 @login_required
 def compra_create(request):
@@ -440,11 +529,10 @@ def proveedor_list(request):
 # confirmar pago
 @login_required
 def confirmar_pago(request, cliente_id):
-    """Cambiar todas las ventas pendientes del cliente a pagadas"""
+    """Confirmar pago de todas las ventas pendientes de un cliente"""
     if request.method == 'POST':
         from django.db.models import Sum
         
-        # Obtener ventas pendientes
         ventas = Venta.objects.filter(
             cliente_id=cliente_id,
             estatus='pendiente',
@@ -455,14 +543,91 @@ def confirmar_pago(request, cliente_id):
             cantidad = ventas.count()
             total = ventas.aggregate(total=Sum('total'))['total']
             
-            # Cambiar estatus a 'pagada'
             ventas.update(estatus='pagada')
             
             messages.success(
                 request, 
-                f'✅ Pago confirmado. {cantidad} venta(s) pagada(s). Total: ${total}'
+                f'Pago confirmado correctamente. {cantidad} venta(s) pagada(s). Total: ${total}'
             )
         else:
-            messages.warning(request, '⚠️ No hay ventas pendientes para este cliente.')
+            messages.warning(request, 'No hay ventas pendientes para este cliente.')
     
     return redirect('operaciones:venta_list')
+
+
+## ajuste para vista convinada en el ticket de venta 
+
+@login_required
+def venta_combinada_create(request):
+    if request.method == 'POST':
+        form = VentaCombinadaForm(request.POST)
+        if form.is_valid():
+            # Crear cabecera
+            venta = VentaCabecera.objects.create(
+                cliente=form.cleaned_data['cliente'],
+                empleado=form.cleaned_data['empleado'],
+                metodo_pago=form.cleaned_data['metodo_pago'],
+                estatus='pendiente'
+            )
+            
+            total = 0
+            
+            # Agregar servicio de la cita
+            if form.cleaned_data['cita']:
+                cita = form.cleaned_data['cita']
+                precio = float(cita.servicio.precio_base)
+                VentaDetalle.objects.create(
+                    venta=venta,
+                    tipo='servicio',
+                    servicio=cita.servicio,
+                    cita=cita,
+                    descripcion=cita.servicio.nombre,
+                    cantidad=1,
+                    precio_unitario=precio,
+                    subtotal=precio
+                )
+                total += precio
+                
+                # Servicios adicionales
+                for extra in cita.servicios_adicionales.all():
+                    precio_extra = float(extra.servicio.precio_base)
+                    VentaDetalle.objects.create(
+                        venta=venta,
+                        tipo='servicio',
+                        servicio=extra.servicio,
+                        cita=cita,
+                        descripcion=f'+ {extra.servicio.nombre}',
+                        cantidad=1,
+                        precio_unitario=precio_extra,
+                        subtotal=precio_extra
+                    )
+                    total += precio_extra
+            
+            # Agregar producto
+            if form.cleaned_data['producto']:
+                producto = form.cleaned_data['producto']
+                precio = float(producto.precio_venta)
+                VentaDetalle.objects.create(
+                    venta=venta,
+                    tipo='producto',
+                    producto=producto,
+                    descripcion=producto.nombre,
+                    cantidad=1,
+                    precio_unitario=precio,
+                    subtotal=precio
+                )
+                total += precio
+                producto.stock_actual -= 1
+                producto.save()
+            
+            # Actualizar total de la venta
+            venta.subtotal = total
+            venta.total = total
+            venta.save()
+            
+            messages.success(request, f'Venta {venta.folio} creada exitosamente. Total: ${total}')
+            return redirect('operaciones:venta_list')
+    else:
+        form = VentaCombinadaForm()
+    
+    return render(request, 'operaciones/venta_combinada_form.html', {'form': form})
