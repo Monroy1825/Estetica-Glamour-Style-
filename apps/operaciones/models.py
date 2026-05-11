@@ -19,6 +19,12 @@ class Cita(models.Model):
     fecha_fin = models.DateTimeField()
     duracion_horas = models.FloatField(default=1.0, verbose_name='Duración estimada (horas)')
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    turno = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='Número de turno',
+        help_text='Turno asignado al cliente para esta cita'
+    )
     activo = models.BooleanField(default=True)
    
     permitir_multiple = models.BooleanField(
@@ -37,7 +43,6 @@ class Cita(models.Model):
 
 
 class CitaServicioAdicional(models.Model):
-    """Servicios extra que se agregan a una cita existente."""
     cita = models.ForeignKey(Cita, on_delete=models.CASCADE, related_name='servicios_adicionales')
     servicio = models.ForeignKey('servicios.Servicio', on_delete=models.CASCADE)
     nota = models.CharField(max_length=200, blank=True)
@@ -68,6 +73,14 @@ class Venta(models.Model):
         ('cancelada', 'Cancelada'),
     ]
 
+    cita = models.ForeignKey(
+        'Cita',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='ventas',
+        verbose_name='Cita relacionada'
+    )
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='ventas')
     empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE, related_name='ventas')
     cita = models.ForeignKey('Cita', on_delete=models.SET_NULL, null=True, blank=True, related_name='ventas_cita')
@@ -92,8 +105,8 @@ class Venta(models.Model):
 class Compra(models.Model):
     empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE, related_name='compras')
     producto = models.ForeignKey(
-        Producto, 
-        on_delete=models.CASCADE, 
+        Producto,
+        on_delete=models.CASCADE,
         related_name='compras',
         verbose_name='Producto'
     )

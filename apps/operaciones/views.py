@@ -1,13 +1,15 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Q
+from django.db.models import Q, Sum, Count
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
-from django.db.models import Sum, Count # Importante para los totales
+from django.utils import timezone
+from datetime import datetime
+import json
+
 from .models import Cita, Venta, Compra, Cotizacion
 from .forms import CitaForm, VentaForm, CompraForm, CotizacionForm
-from django.utils import timezone 
 
 
 def _paginate(queryset, request):
@@ -19,7 +21,6 @@ def _paginate(queryset, request):
         return paginator.page(1)
     except EmptyPage:
         return paginator.page(paginator.num_pages)
-
 
 # --- Citas ---
 
@@ -58,37 +59,9 @@ def horarios_ocupados(request):
 
 @login_required
 def cita_list(request):
-    # Importar los modelos necesarios
-    from apps.empleados.models import Empleado
-    from apps.clientes.models import Cliente
-    
-    # Agrupar por empleado
-    empleados_con_citas = []
-    empleados = Empleado.objects.filter(activo=True)
-    
-    for empleado in empleados:
-        citas_empleado = Cita.objects.filter(
-            activo=True, 
-            empleado=empleado
-        ).select_related('cliente', 'servicio').order_by('-fecha_inicio')
-        
-        if citas_empleado.exists():
-            # Obtener clientes únicos de este empleado
-            clientes = Cliente.objects.filter(
-                citas__empleado=empleado,
-                citas__activo=True
-            ).distinct()
-            
-            empleados_con_citas.append({
-                'empleado': empleado,
-                'citas': citas_empleado,
-                'clientes': clientes,
-                'total_citas': citas_empleado.count()
-            })
-    
-    return render(request, 'operaciones/cita_list.html', {
-        'empleados_con_citas': empleados_con_citas
-    })
+    qs = Cita.objects.filter(activo=True).select_related('cliente', 'empleado', 'servicio')
+    return render(request, 'operaciones/cita_list.html', {'citas': _paginate(qs, request)})
+
 
 @login_required
 def cita_create(request):
@@ -99,7 +72,6 @@ def cita_create(request):
             fecha_inicio = form.cleaned_data['fecha_inicio']
             fecha_fin = form.cleaned_data['fecha_fin']
 
-            # VALIDAR CRUCE DE HORARIOS
             citas_conflicto = Cita.objects.filter(
                 empleado_id=empleado_id,
                 activo=True,
@@ -114,7 +86,6 @@ def cita_create(request):
                     'form': form
                 })
 
-            # GUARDAR BIEN (AQUI ESTA LA CLAVE)
             cita = form.save(commit=False)
             cita.fecha_inicio = fecha_inicio
             cita.fecha_fin = fecha_fin
@@ -130,7 +101,6 @@ def cita_create(request):
 
             messages.success(request, '¡La cita se ha creado exitosamente!')
             return redirect('operaciones:cita_list')
-
     else:
         initial = {}
         cliente_id = request.GET.get('cliente')
@@ -148,14 +118,8 @@ def cita_create(request):
         'cliente_id': request.GET.get('cliente'),
     })
 
-
 def _get_horarios_ocupados():
-    """Devuelve un dict con los horarios ocupados por empleado y fecha."""
-    import json
-    from datetime import datetime
-    citas = Cita.objects.filter(activo=True).values(
-        'empleado_id', 'fecha_inicio'
-    )
+    citas = Cita.objects.filter(activo=True).values('empleado_id', 'fecha_inicio')
     ocupados = {}
     for c in citas:
         emp_id = str(c['empleado_id'])
@@ -167,44 +131,24 @@ def _get_horarios_ocupados():
         ocupados[clave].append(hora)
     return json.dumps(ocupados)
 
-
 @login_required
 def cita_detail(request, pk):
     cita = get_object_or_404(Cita.objects.select_related('cliente', 'empleado', 'servicio'), pk=pk)
     return render(request, 'operaciones/cita_detail.html', {'cita': cita})
 
-
 @login_required
 def cita_update(request, pk):
     cita = get_object_or_404(Cita, pk=pk)
-
     if request.method == 'POST':
         form = CitaForm(request.POST, instance=cita)
         if form.is_valid():
-
-            empleado_id = form.cleaned_data['empleado'].id
-            fecha_inicio = form.cleaned_data['fecha_inicio']
-            fecha_fin = form.cleaned_data['fecha_fin']
-
-            # La validación de conflicto se maneja en CitaForm.clean()
-
             cita = form.save(commit=False)
-            cita.fecha_inicio = fecha_inicio
-            cita.fecha_fin = fecha_fin
             cita.save()
-
             messages.success(request, '¡Cita actualizada correctamente!')
             return redirect('operaciones:cita_list')
-
     else:
         form = CitaForm(instance=cita)
-
-    return render(request, 'operaciones/cita_form.html', {
-        'titulo': 'Editar Cita',
-        'form': form,
-        'cita_id': cita.pk,
-    })
-
+    return render(request, 'operaciones/cita_form.html', {'titulo': 'Editar Cita', 'form': form, 'cita_id': cita.pk})
 
 @login_required
 def cita_delete(request, pk):
@@ -212,18 +156,9 @@ def cita_delete(request, pk):
     if request.method == 'POST':
         cita.activo = False
         cita.save()
-        messages.success(request, 'La cita ha sido eliminada del sistema.')
+        messages.success(request, 'La cita ha sido eliminada.')
         return redirect('operaciones:cita_list')
     return render(request, 'operaciones/cita_confirm_delete.html', {'cita': cita})
-
-
-@login_required
-def get_precio_cita(request, cita_id):
-    try:
-        cita = Cita.objects.select_related('servicio').get(pk=cita_id)
-        return JsonResponse({'precio': float(cita.servicio.precio_base), 'servicio': str(cita.servicio)})
-    except Cita.DoesNotExist:
-        return JsonResponse({'precio': 0, 'servicio': ''})
 
 
 # --- Ventas ---
@@ -233,7 +168,6 @@ def venta_list(request):
     qs = Venta.objects.filter(activo=True).select_related('cliente', 'empleado', 'producto')
     return render(request, 'operaciones/venta_list.html', {'ventas': _paginate(qs, request)})
 
-
 @login_required
 def venta_create(request):
     if request.method == 'POST':
@@ -241,36 +175,17 @@ def venta_create(request):
         if form.is_valid():
             cita = form.cleaned_data.get('cita')
             producto = form.cleaned_data.get('producto')
-            total = form.cleaned_data.get('total', 0)
-            
-            # Determinar el tipo de venta
-            if cita and producto:
-                tipo = 'mixto'
-            elif cita:
-                tipo = 'servicio'
-            elif producto:
-                tipo = 'producto'
-            else:
-                tipo = 'mixto'
-            
-            # Caso 1: Solo producto
-            if producto and not cita:
+            if producto is not None:
                 if producto.stock_actual <= 0:
-                    messages.error(request, f'Sin stock disponible para "{producto.nombre}"')
+                    messages.error(request, f'Sin stock disponible para "{producto}". No se pudo registrar la venta.')
                 else:
-                    venta = form.save(commit=False)
-                    venta.tipo = tipo
-                    venta.save()
+                    venta = form.save()
                     producto.stock_actual -= 1
                     producto.save()
                     messages.success(request, '¡Venta registrada con éxito!')
                     return redirect('operaciones:venta_list')
-            
-            # Caso 2: Solo servicio (cita)
-            elif cita and not producto:
-                venta = form.save(commit=False)
-                venta.tipo = tipo
-                venta.save()
+            else:
+                form.save()
                 messages.success(request, '¡Venta registrada con éxito!')
                 return redirect('operaciones:venta_list')
             
@@ -326,12 +241,10 @@ def venta_create(request):
     
     return render(request, 'operaciones/venta_form.html', {'titulo': 'Nueva Venta', 'form': form})
 
-
 @login_required
 def venta_detail(request, pk):
     venta = get_object_or_404(Venta.objects.select_related('cliente', 'empleado', 'producto'), pk=pk)
     return render(request, 'operaciones/venta_detail.html', {'venta': venta})
-
 
 @login_required
 def venta_update(request, pk):
@@ -340,12 +253,11 @@ def venta_update(request, pk):
         form = VentaForm(request.POST, instance=venta)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Datos de venta actualizados.')
+            messages.success(request, 'Venta actualizada.')
             return redirect('operaciones:venta_list')
     else:
         form = VentaForm(instance=venta)
     return render(request, 'operaciones/venta_form.html', {'titulo': 'Editar Venta', 'form': form})
-
 
 @login_required
 def venta_delete(request, pk):
@@ -353,34 +265,9 @@ def venta_delete(request, pk):
     if request.method == 'POST':
         venta.activo = False
         venta.save()
-        messages.success(request, 'El registro de venta ha sido eliminado.')
+        messages.success(request, 'Venta eliminada.')
         return redirect('operaciones:venta_list')
     return render(request, 'operaciones/venta_confirm_delete.html', {'venta': venta})
-
-
-@login_required
-def venta_ticket(request, pk):
-    venta = get_object_or_404(Venta.objects.select_related('cliente', 'empleado', 'producto'), pk=pk)
-    
-    # Mostrar SOLO ventas PENDIENTES del cliente
-    ventas = Venta.objects.filter(
-        cliente=venta.cliente,
-        activo=True,
-        estatus='pendiente'  # Solo pendientes
-    ).select_related('producto', 'cita__servicio').prefetch_related('cita__servicios_adicionales').order_by('fecha')
-    
-    total = sum(v.total for v in ventas)
-    
-    # Verificar si hay ventas pendientes para mostrar el botón
-    hay_pendientes = ventas.exists()
-    
-    return render(request, 'operaciones/venta_ticket.html', {
-        'venta': venta,
-        'ventas': ventas,
-        'total': total,
-        'cliente': venta.cliente,
-        'hay_pendientes': hay_pendientes,  # Para controlar el botón
-    })
 
 
 # --- Compras ---
@@ -389,26 +276,9 @@ def venta_ticket(request, pk):
 
 @login_required
 def compra_list(request):
-    qs = Compra.objects.filter(activo=True).select_related('empleado', 'producto')
-    
-    # Calcular estadísticas
-    total_inversion = qs.aggregate(total=Sum('precio_unitario'))['total'] or 0
-    proveedores_distintos = qs.values('proveedor').distinct().count()
-    
-    paginator = Paginator(qs, 10)
-    page = request.GET.get('page')
-    try:
-        compras = paginator.page(page)
-    except PageNotAnInteger:
-        compras = paginator.page(1)
-    except EmptyPage:
-        compras = paginator.page(paginator.num_pages)
-    
-    return render(request, 'operaciones/compra_list.html', {
-        'compras': compras,
-        'total_inversion': total_inversion,
-        'proveedores_distintos': proveedores_distintos,
-    })
+    qs = Compra.objects.filter(activo=True).select_related('empleado')
+    return render(request, 'operaciones/compra_list.html', {'compras': _paginate(qs, request)})
+
 
 @login_required
 def compra_create(request):
@@ -417,23 +287,19 @@ def compra_create(request):
         if form.is_valid():
             producto = form.cleaned_data['producto']
             cantidad = form.cleaned_data['cantidad']
-            compra = form.save(commit=False)
-            compra.cantidad = cantidad
-            compra.save()
+            compra = form.save()
             producto.stock_actual += cantidad
             producto.save()
-            messages.success(request, '¡Compra registrada correctamente!')
+            messages.success(request, '¡Compra registrada!')
             return redirect('operaciones:compra_list')
     else:
         form = CompraForm()
     return render(request, 'operaciones/compra_form.html', {'titulo': 'Nueva Compra', 'form': form})
 
-
 @login_required
 def compra_detail(request, pk):
-    compra = get_object_or_404(Compra.objects.select_related('empleado'), pk=pk)
+    compra = get_object_or_404(Compra.objects.select_related('empleado', 'producto'), pk=pk)
     return render(request, 'operaciones/compra_detail.html', {'compra': compra})
-
 
 @login_required
 def compra_update(request, pk):
@@ -441,15 +307,12 @@ def compra_update(request, pk):
     if request.method == 'POST':
         form = CompraForm(request.POST, instance=compra)
         if form.is_valid():
-            compra = form.save(commit=False)
-            compra.cantidad = form.cleaned_data['cantidad']
-            compra.save()
+            form.save()
             messages.success(request, 'Compra actualizada.')
             return redirect('operaciones:compra_list')
     else:
         form = CompraForm(instance=compra)
     return render(request, 'operaciones/compra_form.html', {'titulo': 'Editar Compra', 'form': form})
-
 
 @login_required
 def compra_delete(request, pk):
@@ -457,10 +320,9 @@ def compra_delete(request, pk):
     if request.method == 'POST':
         compra.activo = False
         compra.save()
-        messages.success(request, 'Registro de compra eliminado.')
+        messages.success(request, 'Compra eliminada.')
         return redirect('operaciones:compra_list')
     return render(request, 'operaciones/compra_confirm_delete.html', {'compra': compra})
-
 
 
 # --- Cotizaciones ---
@@ -470,25 +332,24 @@ def cotizacion_list(request):
     qs = Cotizacion.objects.filter(activo=True).select_related('cliente', 'servicio', 'producto')
     return render(request, 'operaciones/cotizacion_list.html', {'cotizaciones': _paginate(qs, request)})
 
-
 @login_required
 def cotizacion_create(request):
     if request.method == 'POST':
         form = CotizacionForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, '¡Cotización generada exitosamente!')
+            messages.success(request, '¡Cotización generada!')
             return redirect('operaciones:cotizacion_list')
     else:
         form = CotizacionForm()
     return render(request, 'operaciones/cotizacion_form.html', {'titulo': 'Nueva Cotización', 'form': form})
 
-
 @login_required
 def cotizacion_detail(request, pk):
-    cotizacion = get_object_or_404(Cotizacion.objects.select_related('cliente', 'servicio', 'producto'), pk=pk)
+    cotizacion = get_object_or_404(
+        Cotizacion.objects.select_related('cliente', 'servicio', 'producto'), pk=pk
+    )
     return render(request, 'operaciones/cotizacion_detail.html', {'cotizacion': cotizacion})
-
 
 @login_required
 def cotizacion_update(request, pk):
@@ -501,8 +362,9 @@ def cotizacion_update(request, pk):
             return redirect('operaciones:cotizacion_list')
     else:
         form = CotizacionForm(instance=cotizacion)
-    return render(request, 'operaciones/cotizacion_form.html', {'titulo': 'Editar Cotización', 'form': form})
-
+    return render(request, 'operaciones/cotizacion_form.html', {
+        'titulo': 'Editar Cotización', 'form': form
+    })
 
 @login_required
 def cotizacion_delete(request, pk):
@@ -515,7 +377,7 @@ def cotizacion_delete(request, pk):
     return render(request, 'operaciones/cotizacion_confirm_delete.html', {'cotizacion': cotizacion})
 
 
-# --- Proveedores (Catálogo Agrupado) ---
+# --- Proveedores ---
 
 @login_required
 def proveedor_list(request):

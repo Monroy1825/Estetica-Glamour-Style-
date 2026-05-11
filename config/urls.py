@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
-from .views import dashboard, dashboard_chart_data
+from .views import dashboard
 from apps.operaciones import views as operaciones_views
 
 urlpatterns = [
@@ -14,6 +14,5 @@ urlpatterns = [
     path('reportes/', include('apps.operaciones.urls_reportes')),
     path('proveedores/', operaciones_views.proveedor_list, name='proveedor_list'),
 
-    path('dashboard/chart-data/', dashboard_chart_data, name='dashboard_chart_data'),
     path('', dashboard, name='dashboard'),
 ]

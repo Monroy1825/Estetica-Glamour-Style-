@@ -54,7 +54,7 @@ class CitaForm(forms.ModelForm):
 
         fecha_str = fecha.strftime("%Y-%m-%d")
         fecha_inicio = datetime.strptime(f"{fecha_str} {inicio_str}", "%Y-%m-%d %H:%M")
-        fecha_fin = fecha_inicio + timedelta(hours=float(duracion))
+        fecha_fin = datetime.strptime(f"{fecha_str} {fin_str}", "%Y-%m-%d %H:%M")
 
         cleaned_data['fecha_inicio'] = fecha_inicio
         cleaned_data['fecha_fin'] = fecha_fin
@@ -71,7 +71,6 @@ class CitaForm(forms.ModelForm):
             )
             if self.instance and self.instance.pk:
                 conflictos = conflictos.exclude(pk=self.instance.pk)
-
             if conflictos.exists():
                 self.add_error(
                     'horario',
@@ -95,10 +94,23 @@ class VentaForm(forms.ModelForm):
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'}),
     )
+    cita = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        label='Cita relacionada (opcional)',
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from .models import Cita
+        self.fields['cita'].queryset = Cita.objects.filter(
+            activo=True, estado__in=['confirmada', 'completada']
+        ).select_related('cliente', 'servicio').order_by('-fecha_inicio')
 
     class Meta:
         model = Venta
-        fields = ['cliente', 'empleado', 'cita', 'producto', 'metodo_pago', 'tipo', 'estatus', 'total']
+        fields = ['cliente', 'empleado', 'producto', 'metodo_pago', 'tipo', 'estatus', 'vigencia_hasta', 'total']
         widgets = {
             'cliente': forms.Select(attrs={'class': 'form-select'}),
             'empleado': forms.Select(attrs={'class': 'form-select'}),
@@ -134,20 +146,22 @@ class CompraForm(forms.ModelForm):
 
     class Meta:
         model = Compra
-        fields = ['producto', 'cantidad', 'empleado', 'proveedor', 'precio_unitario'] 
+        fields = ['producto', 'cantidad', 'empleado', 'proveedor', 'precio_unitario']
         widgets = {
             'empleado': forms.Select(attrs={'class': 'form-select'}),
-            'proveedor': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del proveedor', 'style': 'text-transform: uppercase'}),
-            'precio_unitario': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
+            'proveedor': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre del proveedor',
+                'style': 'text-transform: uppercase'
+            }),
+            'precio_unitario': forms.NumberInput(attrs={
+                'class': 'form-control', 'min': '0', 'step': '0.01'
+            }),
         }
 
-    def clean(self):
-        cleaned_data = super().clean()
-        for field_name, value in cleaned_data.items():
-            field = self.fields.get(field_name)
-            if isinstance(value, str) and field_name != 'email' and not isinstance(field, forms.ChoiceField):
-                cleaned_data[field_name] = value.upper()
-        return cleaned_data
+
+    def clean_proveedor(self):
+        return self.cleaned_data.get('proveedor', '').upper()
 
 
 # =========================
