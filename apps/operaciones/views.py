@@ -226,85 +226,113 @@ def venta_list(request):
 
 @login_required
 def venta_create(request):
+    from apps.clientes.models import Cliente
+    from apps.empleados.models import Empleado
+    from apps.servicios.models import Producto
+    
+    citas_disponibles = Cita.objects.filter(
+        activo=True, 
+        estado__in=['confirmada', 'pendiente']
+    ).select_related('cliente', 'empleado', 'servicio').order_by('-fecha_inicio')
+    
+    clientes = Cliente.objects.filter(activo=True)
+    empleados = Empleado.objects.filter(activo=True)
+    productos = Producto.objects.filter(activo=True, stock_actual__gt=0)
+    
     if request.method == 'POST':
-        form = VentaForm(request.POST)
-        if form.is_valid():
-            cita = form.cleaned_data.get('cita')
-            producto = form.cleaned_data.get('producto')
-            cliente = form.cleaned_data['cliente']
+        cliente_id = request.POST.get('cliente') or request.POST.get('cliente_producto')
+        empleado_id = request.POST.get('empleado') or request.POST.get('empleado_producto') or request.POST.get('empleado_producto_nuevo')
+        cita_id = request.POST.get('cita')
+        metodo_pago = request.POST.get('metodo_pago')
+        total = float(request.POST.get('total', 0))
+        productos_json = request.POST.get('productos_json', '[]')
+        tipo_cliente = request.POST.get('tipo_cliente', 'registrado')
+        
+        import json
+        productos_data = json.loads(productos_json) if productos_json else []
+        
+        # Manejar cliente nuevo
+        if tipo_cliente == 'nuevo':
+            nombre_nuevo = request.POST.get('cliente_nuevo_nombre', '').strip().upper()
+            telefono_nuevo = request.POST.get('cliente_nuevo_telefono', '')
+            email_nuevo = request.POST.get('cliente_nuevo_email', '')
             
-            session_key = f'ticket_ventas_{cliente.id}'
-            ids_sesion = request.session.get(session_key, [])
-
-            if cita and producto:
-                precio_servicio = float(cita.servicio.precio_base)
-                precio_producto = float(producto.precio_venta)
-                
-                venta_servicio = Venta(
-                    cliente=cliente,
-                    empleado=form.cleaned_data['empleado'],
-                    cita=cita,
-                    producto=None,
-                    metodo_pago=form.cleaned_data['metodo_pago'],
-                    tipo='servicio',
-                    estatus=form.cleaned_data.get('estatus', 'pendiente'),
-                    total=precio_servicio,
+            if nombre_nuevo:
+                # Crear nuevo cliente
+                cliente = Cliente.objects.create(
+                    nombre=nombre_nuevo,
+                    telefono=telefono_nuevo or '0000000000',
+                    email=email_nuevo,
                     activo=True
                 )
-                venta_servicio.save()
-                ids_sesion.append(venta_servicio.pk)
-                
-                if producto.stock_actual > 0:
-                    venta_producto = Venta(
-                        cliente=cliente,
-                        empleado=form.cleaned_data['empleado'],
-                        cita=None,
-                        producto=producto,
-                        metodo_pago=form.cleaned_data['metodo_pago'],
-                        tipo='producto',
-                        estatus=form.cleaned_data.get('estatus', 'pendiente'),
-                        total=precio_producto,
-                        activo=True
-                    )
-                    venta_producto.save()
-                    ids_sesion.append(venta_producto.pk)
-                    producto.stock_actual -= 1
-                    producto.save()
-                    
-                request.session[session_key] = ids_sesion
-                messages.success(request, f'¡Ventas registradas!')
-                return redirect('operaciones:venta_list')
-
-            elif producto:
-                if producto.stock_actual <= 0:
-                    messages.error(request, f'Sin stock disponible para "{producto.nombre}".')
-                else:
-                    venta = form.save(commit=False)
-                    venta.tipo = 'producto'
-                    venta.save()
-                    ids_sesion.append(venta.pk)
-                    request.session[session_key] = ids_sesion
-                    producto.stock_actual -= 1
-                    producto.save()
-                    messages.success(request, '¡Venta registrada con éxito!')
-                return redirect('operaciones:venta_list')
-
-            elif cita:
-                venta = form.save(commit=False)
-                venta.tipo = 'servicio'
-                venta.save()
-                ids_sesion.append(venta.pk)
-                request.session[session_key] = ids_sesion
-                messages.success(request, '¡Venta registrada con éxito!')
-                return redirect('operaciones:venta_list')
-
+                cliente_id = cliente.id
             else:
-                messages.error(request, 'Debe seleccionar al menos una cita o un producto')
-                
-    else:
-        form = VentaForm()
+                messages.error(request, 'Debe ingresar el nombre del cliente')
+                return render(request, 'operaciones/venta_form.html', {
+                    'titulo': 'Nueva Venta',
+                    'citas_disponibles': citas_disponibles,
+                    'clientes': clientes,
+                    'empleados': empleados,
+                    'productos': productos,
+                })
+        else:
+            cliente = get_object_or_404(Cliente, pk=cliente_id)
+        
+        empleado = get_object_or_404(Empleado, pk=empleado_id)
+        cita = None
+        if cita_id:
+            cita = get_object_or_404(Cita, pk=cita_id)
+        
+        session_key = f'ticket_ventas_{cliente.id}'
+        ids_sesion = request.session.get(session_key, [])
+        
+        # Crear venta del servicio si hay cita
+        if cita:
+            venta_servicio = Venta(
+                cliente=cliente,
+                empleado=empleado,
+                cita=cita,
+                producto=None,
+                metodo_pago=metodo_pago,
+                tipo='servicio',
+                estatus='pendiente',
+                total=float(cita.servicio.precio_base),
+                activo=True
+            )
+            venta_servicio.save()
+            ids_sesion.append(venta_servicio.pk)
+        
+        # Crear ventas de los productos
+        for prod_data in productos_data:
+            producto = get_object_or_404(Producto, pk=prod_data['id'])
+            if producto.stock_actual >= prod_data['cantidad']:
+                venta_producto = Venta(
+                    cliente=cliente,
+                    empleado=empleado,
+                    cita=None,
+                    producto=producto,
+                    metodo_pago=metodo_pago,
+                    tipo='producto',
+                    estatus='pendiente',
+                    total=float(producto.precio_venta) * prod_data['cantidad'],
+                    activo=True
+                )
+                venta_producto.save()
+                ids_sesion.append(venta_producto.pk)
+                producto.stock_actual -= prod_data['cantidad']
+                producto.save()
+        
+        request.session[session_key] = ids_sesion
+        messages.success(request, '¡Venta(s) registrada(s) con éxito!')
+        return redirect('operaciones:venta_list')
     
-    return render(request, 'operaciones/venta_form.html', {'titulo': 'Nueva Venta', 'form': form})
+    return render(request, 'operaciones/venta_form.html', {
+        'titulo': 'Nueva Venta',
+        'citas_disponibles': citas_disponibles,
+        'clientes': clientes,
+        'empleados': empleados,
+        'productos': productos,
+    })
 
 @login_required
 def venta_detail(request, pk):

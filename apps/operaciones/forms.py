@@ -94,18 +94,12 @@ class VentaForm(forms.ModelForm):
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'}),
     )
-    cita = forms.ModelChoiceField(
-        queryset=None,
-        required=False,
-        label='Cita relacionada (opcional)',
-        widget=forms.Select(attrs={'class': 'form-select'}),
-    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         from .models import Cita
         self.fields['cita'].queryset = Cita.objects.filter(
-            activo=True, estado__in=['confirmada', 'completada']
+            activo=True
         ).select_related('cliente', 'servicio').order_by('-fecha_inicio')
 
     class Meta:
@@ -158,7 +152,6 @@ class CompraForm(forms.ModelForm):
                 'class': 'form-control', 'min': '0', 'step': '0.01'
             }),
         }
-
 
     def clean_proveedor(self):
         return self.cleaned_data.get('proveedor', '').upper()
