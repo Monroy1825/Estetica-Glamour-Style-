@@ -7,16 +7,12 @@
     --primary: #7b2d8b;
     --primary-dark: #5e2069;
     --primary-light: #f3e8f7;
-    --success: #28a745;
-    --warning: #ffc107;
-    --info: #17a2b8;
     --gray-100: #f8f9fa;
     --gray-200: #e9ecef;
     --gray-600: #6c757d;
     --gray-800: #343a40;
   }
 
-  /* Header */
   .report-header-modern {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     border-radius: 20px;
@@ -35,7 +31,7 @@
   }
   .report-header-modern h2 {
     color: white;
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 700;
     margin: 0 0 8px 0;
   }
@@ -45,14 +41,12 @@
     font-size: 14px;
   }
 
-  /* Tarjeta de filtros */
   .filters-card-modern {
     background: white;
     border-radius: 20px;
     padding: 24px;
     margin-bottom: 28px;
     border: 1px solid var(--gray-200);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
   }
   .filters-title-modern {
     font-size: 13px;
@@ -60,7 +54,6 @@
     color: var(--primary);
     margin-bottom: 20px;
     text-transform: uppercase;
-    letter-spacing: 1px;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -81,7 +74,6 @@
     font-weight: 600;
     color: var(--gray-600);
     margin-bottom: 6px;
-    letter-spacing: 0.5px;
   }
   .filter-item select {
     width: 100%;
@@ -89,16 +81,10 @@
     border: 1.5px solid var(--gray-200);
     border-radius: 12px;
     font-size: 13px;
-    background: white;
-    transition: all 0.2s;
-  }
-  .filter-item select:hover {
-    border-color: var(--primary);
   }
   .filter-item select:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(123,45,139,0.1);
   }
   .btn-clean {
     background: var(--gray-200);
@@ -112,7 +98,6 @@
     align-items: center;
     gap: 8px;
     text-decoration: none;
-    transition: all 0.2s;
   }
   .btn-clean:hover {
     background: var(--gray-600);
@@ -130,11 +115,9 @@
     align-items: center;
     gap: 8px;
     text-decoration: none;
-    transition: all 0.2s;
   }
   .btn-pdf-modern:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(220,53,69,0.3);
     color: white;
   }
   .range-badge {
@@ -150,7 +133,6 @@
     color: var(--primary);
   }
 
-  /* Estadísticas */
   .stats-grid-modern {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -164,7 +146,6 @@
     border: 1px solid var(--gray-200);
     transition: all 0.3s ease;
     position: relative;
-    overflow: hidden;
   }
   .stat-card-modern::before {
     content: "";
@@ -176,43 +157,39 @@
     background: var(--primary);
   }
   .stat-card-modern:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 28px rgba(123,45,139,0.15);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(123,45,139,0.12);
   }
   .stat-icon-modern {
-    width: 52px;
-    height: 52px;
+    width: 48px;
+    height: 48px;
     background: var(--primary-light);
-    border-radius: 16px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
   }
   .stat-icon-modern i {
-    font-size: 26px;
+    font-size: 24px;
     color: var(--primary);
   }
   .stat-value-modern {
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 800;
     color: var(--gray-800);
-    line-height: 1.1;
   }
   .stat-label-modern {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--gray-600);
-    margin-top: 8px;
-    font-weight: 500;
+    margin-top: 6px;
   }
 
-  /* Tabla */
   .table-container-modern {
     background: white;
     border-radius: 20px;
     border: 1px solid var(--gray-200);
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
   }
   .compras-table-modern {
     width: 100%;
@@ -220,83 +197,56 @@
   }
   .compras-table-modern th {
     background: var(--gray-100);
-    padding: 15px 16px;
+    padding: 14px 16px;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
     color: var(--gray-600);
-    border-bottom: 1px solid var(--gray-200);
   }
   .compras-table-modern td {
-    padding: 14px 16px;
+    padding: 12px 16px;
     font-size: 13px;
-    color: var(--gray-800);
     border-bottom: 1px solid var(--gray-200);
-    vertical-align: middle;
   }
   .compras-table-modern tbody tr:hover {
     background: var(--primary-light);
   }
   .table-footer-modern {
     background: var(--gray-100);
-    padding: 16px 20px;
+    padding: 14px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 12px;
   }
   .total-grande {
     font-size: 20px;
     font-weight: 800;
     color: var(--primary);
   }
-  .empty-state {
-    text-align: center;
-    padding: 60px;
-    color: var(--gray-600);
-  }
-  .empty-state i {
-    font-size: 64px;
-    margin-bottom: 16px;
-    opacity: 0.5;
-  }
 
   @media (max-width: 768px) {
     .stats-grid-modern {
       grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
     }
     .filter-grid {
       flex-direction: column;
     }
-    .filter-item {
-      width: 100%;
-    }
-    .compras-table-modern th, .compras-table-modern td {
-      padding: 10px 12px;
-    }
   }
 </style>
 
-<!-- Header -->
 <div class="report-header-modern">
-  <h2>
-    <i class="bi bi-cart-check"></i> Reporte de Compras
-  </h2>
+  <h2><i class="bi bi-cart-check"></i> Reporte de Compras</h2>
   <p>Análisis detallado de adquisiciones e inventario</p>
 </div>
 
-<!-- Filtros -->
 <div class="filters-card-modern">
   <div class="filters-title-modern">
-    <i class="bi bi-funnel"></i>
-    Filtrar por rango de meses
+    <i class="bi bi-funnel"></i> Filtrar por rango de meses
   </div>
   <form method="get" class="filter-grid">
     <div class="filter-item">
-      <label><i class="bi bi-calendar"></i> AÑO</label>
+      <label>AÑO</label>
       <select name="anio" onchange="this.form.submit()">
         {% for y in years %}
         <option value="{{ y }}" {% if y == anio_seleccionado %}selected{% endif %}>{{ y }}</option>
@@ -304,7 +254,7 @@
       </select>
     </div>
     <div class="filter-item">
-      <label><i class="bi bi-calendar-week"></i> DESDE (MES)</label>
+      <label>DESDE (MES)</label>
       <select name="mes_desde" onchange="this.form.submit()">
         <option value="">Todos</option>
         {% for num, nombre in meses %}
@@ -313,7 +263,7 @@
       </select>
     </div>
     <div class="filter-item">
-      <label><i class="bi bi-calendar-week"></i> HASTA (MES)</label>
+      <label>HASTA (MES)</label>
       <select name="mes_hasta" onchange="this.form.submit()">
         <option value="">Todos</option>
         {% for num, nombre in meses %}
@@ -324,64 +274,41 @@
     <div class="filter-item">
       <label>&nbsp;</label>
       <div style="display: flex; gap: 10px;">
-        <a href="{% url 'reporte_compras' %}" class="btn-clean">
-          <i class="bi bi-eraser"></i> Limpiar
-        </a>
-        <a href="{% url 'reporte_compras_pdf' %}?mes_desde={{ mes_desde }}&mes_hasta={{ mes_hasta }}&anio={{ anio_seleccionado }}" class="btn-pdf-modern">
-          <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
-        </a>
+        <a href="{% url 'reporte_compras' %}" class="btn-clean"><i class="bi bi-eraser"></i> Limpiar</a>
+        <a href="{% url 'reporte_compras_pdf' %}?mes_desde={{ mes_desde }}&mes_hasta={{ mes_hasta }}&anio={{ anio_seleccionado }}" class="btn-pdf-modern"><i class="bi bi-file-earmark-pdf"></i> Exportar PDF</a>
       </div>
     </div>
   </form>
-  
   {% if mes_desde and mes_hasta %}
   <div class="range-badge">
-    <i class="bi bi-calendar-range"></i>
-    {{ nombre_mes_desde }} - {{ nombre_mes_hasta }} {{ anio_seleccionado }}
-  </div>
-  {% elif mes_desde %}
-  <div class="range-badge">
-    <i class="bi bi-calendar"></i>
-    {{ nombre_mes_desde }} {{ anio_seleccionado }}
+    <i class="bi bi-calendar-range"></i> {{ nombre_mes_desde }} - {{ nombre_mes_hasta }} {{ anio_seleccionado }}
   </div>
   {% endif %}
 </div>
 
-<!-- Estadísticas -->
 <div class="stats-grid-modern">
   <div class="stat-card-modern">
-    <div class="stat-icon-modern">
-      <i class="bi bi-cart-check"></i>
-    </div>
+    <div class="stat-icon-modern"><i class="bi bi-cart-check"></i></div>
     <div class="stat-value-modern">{{ total_compras|default:"0" }}</div>
     <div class="stat-label-modern">Total Compras</div>
   </div>
   <div class="stat-card-modern">
-    <div class="stat-icon-modern">
-      <i class="bi bi-currency-dollar"></i>
-    </div>
+    <div class="stat-icon-modern"><i class="bi bi-currency-dollar"></i></div>
     <div class="stat-value-modern">${{ total_inversion|default:"0"|floatformat:0 }}</div>
     <div class="stat-label-modern">Inversión Total</div>
   </div>
   <div class="stat-card-modern">
-    <div class="stat-icon-modern">
-      <i class="bi bi-building"></i>
-    </div>
+    <div class="stat-icon-modern"><i class="bi bi-building"></i></div>
     <div class="stat-value-modern">{{ proveedores_distintos|default:"0" }}</div>
     <div class="stat-label-modern">Proveedores</div>
   </div>
   <div class="stat-card-modern">
-    <div class="stat-icon-modern">
-      <i class="bi bi-calculator"></i>
-    </div>
-    <div class="stat-value-modern">
-      ${{ promedio_compra|default:"0"|floatformat:0 }}
-    </div>
+    <div class="stat-icon-modern"><i class="bi bi-calculator"></i></div>
+    <div class="stat-value-modern">${{ promedio_compra|default:"0"|floatformat:0 }}</div>
     <div class="stat-label-modern">Promedio por Compra</div>
   </div>
 </div>
 
-<!-- Tabla de compras -->
 <div class="table-container-modern">
   <table class="compras-table-modern">
     <thead>
@@ -399,40 +326,25 @@
     <tbody>
       {% for compra in compras %}
       <tr>
-        <td>{{ compra.pk }}</td>
-        <td>{{ compra.fecha|date:"d/m/Y H:i" }}<br><small class="text-muted">{{ compra.fecha|date:"H:i" }}</small></td>
+        <td>{{ forloop.counter }}</td>
+        <td style="white-space:nowrap">{{ compra.fecha|date:"d/m/Y H:i" }}</td>
         <td><strong>{{ compra.producto }}</strong></td>
         <td>{{ compra.proveedor }}</td>
         <td>{{ compra.empleado }}</td>
-        <td><span style="font-weight: 600;">{{ compra.cantidad }}</span> <small>und</small></td>
-        <td class="text-primary">${{ compra.precio_unitario|floatformat:2 }}</td>
-        <td class="fw-bold" style="color: var(--primary);">${{ compra.total_compra|floatformat:2 }}</td>
+        <td>{{ compra.cantidad }} und</td>
+        <td>${{ compra.precio_unitario|floatformat:2 }}</td>
+        <td style="color:#7b2d8b; font-weight:700;">${{ compra.total_compra|floatformat:2 }}</td>
       </tr>
       {% empty %}
       <tr>
-        <td colspan="8" class="empty-state">
-          <i class="bi bi-inbox"></i>
-          <p>No hay compras en el rango seleccionado</p>
-        </td>
+        <td colspan="8" class="text-center py-5">No hay compras en el rango seleccionado</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-  
   <div class="table-footer-modern">
-    <div>
-      <i class="bi bi-calendar-check"></i>
-      {% if mes_desde and mes_hasta %}
-        Rango: <strong>{{ nombre_mes_desde }} - {{ nombre_mes_hasta }} {{ anio_seleccionado }}</strong>
-      {% elif mes_desde %}
-        Mes: <strong>{{ nombre_mes_desde }} {{ anio_seleccionado }}</strong>
-      {% else %}
-        Año: <strong>{{ anio_seleccionado }}</strong>
-      {% endif %}
-    </div>
-    <div class="total-grande">
-        INVERSIÓN TOTAL: ${{ total_inversion|default:"0"|floatformat:2 }}
-    </div>
+    <div><i class="bi bi-calendar-check"></i> Rango: <strong>{{ nombre_mes_desde }} - {{ nombre_mes_hasta }} {{ anio_seleccionado }}</strong></div>
+    <div class="total-grande">💰 INVERSIÓN TOTAL: ${{ total_inversion|default:"0"|floatformat:2 }}</div>
   </div>
 </div>
 

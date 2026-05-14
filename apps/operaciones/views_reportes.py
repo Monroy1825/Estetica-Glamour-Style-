@@ -165,6 +165,7 @@ def reporte_compras(request):
     
     compras = compras.order_by('-fecha')
     
+    # Calcular estadísticas
     total_compras = compras.count()
     total_inversion = 0
     for c in compras:
@@ -173,8 +174,10 @@ def reporte_compras(request):
     proveedores_distintos = compras.values('proveedor').distinct().count()
     promedio_compra = total_inversion / total_compras if total_compras > 0 else 0
     
+    # Obtener nombres de meses
     nombre_mes_desde = dict(MESES).get(int(mes_desde) if mes_desde else None, '')
     nombre_mes_hasta = dict(MESES).get(int(mes_hasta) if mes_hasta else None, '')
+    
     years = range(anio - 2, anio + 1)
     
     return render(request, 'reportes/reporte_compras.html', {

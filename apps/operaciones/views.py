@@ -321,9 +321,32 @@ def venta_delete(request, pk):
 
 @login_required
 def compra_list(request):
-    qs = Compra.objects.filter(activo=True).select_related('empleado')
-    return render(request, 'operaciones/compra_list.html', {'compras': _paginate(qs, request)})
-
+    qs = Compra.objects.filter(activo=True).select_related('empleado', 'producto')
+    
+    # Calcular estadísticas
+    total_compras = qs.count()
+    total_inversion = 0
+    for c in qs:
+        total_inversion += float(c.precio_unitario) * c.cantidad
+    proveedores_distintos = qs.values('proveedor').distinct().count()
+    total_productos = qs.values('producto').distinct().count()
+    
+    paginator = Paginator(qs, 10)
+    page = request.GET.get('page')
+    try:
+        compras = paginator.page(page)
+    except PageNotAnInteger:
+        compras = paginator.page(1)
+    except EmptyPage:
+        compras = paginator.page(paginator.num_pages)
+    
+    return render(request, 'operaciones/compra_list.html', {
+        'compras': compras,
+        'total_compras': total_compras,
+        'total_inversion': total_inversion,
+        'proveedores_distintos': proveedores_distintos,
+        'total_productos': total_productos,
+    })
 
 @login_required
 def compra_create(request):

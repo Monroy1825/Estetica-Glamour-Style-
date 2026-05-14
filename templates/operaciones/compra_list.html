@@ -1,36 +1,351 @@
 {% extends "base.html" %}
-{% block title %}Compras — Estética{% endblock %}
+{% block title %}Compras — Estética Glamour{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="mb-0"><i class="bi bi-cart3 me-2" style="color:#7b2d8b"></i>Compras</h4>
-  <a href="{% url 'operaciones:compra_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Nueva compra</a>
+
+<style>
+  :root {
+    --primary: #7b2d8b;
+    --primary-dark: #5e2069;
+    --primary-light: #f3e8f7;
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-600: #6c757d;
+    --gray-800: #343a40;
+  }
+
+  /* Header */
+  .compras-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+  .compras-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .compras-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 22px;
+  }
+  .compras-title h4 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--gray-800);
+  }
+  .compras-title p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--gray-600);
+  }
+  .btn-new-compra {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+  .btn-new-compra:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(123,45,139,0.3);
+    color: white;
+  }
+
+  /* Tarjetas de estadísticas - 3 cuadritos */
+  .stats-compras {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+  .stat-compra {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    border: 1px solid var(--gray-200);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-compra::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--primary);
+  }
+  .stat-compra:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(123,45,139,0.12);
+  }
+  .stat-compra-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--primary-light);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  .stat-compra-icon i {
+    font-size: 24px;
+    color: var(--primary);
+  }
+  .stat-compra-value {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--gray-800);
+    line-height: 1.2;
+  }
+  .stat-compra-label {
+    font-size: 12px;
+    color: var(--gray-600);
+    margin-top: 6px;
+    font-weight: 500;
+  }
+
+  /* Tabla */
+  .compras-table-container {
+    background: white;
+    border-radius: 20px;
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  }
+  .compras-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .compras-table th {
+    background: var(--gray-100);
+    padding: 15px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--gray-600);
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .compras-table td {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--gray-800);
+    border-bottom: 1px solid var(--gray-200);
+    vertical-align: middle;
+  }
+  .compras-table tbody tr:hover {
+    background: var(--primary-light);
+  }
+
+  /* Botones de acción */
+  .action-buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .btn-action {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .btn-view {
+    background: var(--gray-100);
+    color: var(--gray-600);
+  }
+  .btn-view:hover {
+    background: var(--primary);
+    color: white;
+  }
+  .btn-edit {
+    background: #e3f2fd;
+    color: #1565c0;
+  }
+  .btn-edit:hover {
+    background: #1565c0;
+    color: white;
+  }
+  .btn-delete {
+    background: #ffebee;
+    color: #c62828;
+  }
+  .btn-delete:hover {
+    background: #c62828;
+    color: white;
+  }
+
+  /* Paginación */
+  .pagination-custom {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+  }
+  .page-link-custom {
+    padding: 8px 14px;
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    color: var(--gray-600);
+    text-decoration: none;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .page-link-custom:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  .page-link-custom.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+  }
+
+  @media (max-width: 768px) {
+    .stats-compras {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .compras-table th, .compras-table td {
+      padding: 10px 12px;
+    }
+  }
+</style>
+
+<div class="compras-header">
+  <div class="compras-title">
+    <div class="compras-icon">
+      <i class="bi bi-cart3"></i>
+    </div>
+    <div>
+      <h4>Registro de Compras</h4>
+      <p>Gestión de adquisiciones e inventario</p>
+    </div>
+  </div>
+  <a href="{% url 'operaciones:compra_create' %}" class="btn-new-compra">
+    <i class="bi bi-plus-lg"></i> Nueva Compra
+  </a>
 </div>
-<div class="card shadow-sm">
-  <div class="card-body p-0">
-    <table class="table table-hover mb-0">
-      <thead class="table-light">
-        <tr><th>Proveedor</th><th>Empleado</th><th>Fecha</th><th>Precio unitario</th><th>Cantidad</th><th>Total</th><th></th></tr>
-      </thead>
-      <tbody>
-        {% for c in compras %}
-        <tr>
-          <td>{{ c.proveedor }}</td>
-          <td>{{ c.empleado.nombre }}</td>
-          <td>{{ c.fecha|date:"d/m/Y" }}</td>
-          <td>${{ c.precio_unitario }}</td>
-          <td>{{ c.cantidad }}</td>
-          <td>${{ c.total_compra }}</td>
-          <td class="text-end">
-            <a href="{% url 'operaciones:compra_detail' c.pk %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-eye"></i></a>
-            <a href="{% url 'operaciones:compra_update' c.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'operaciones:compra_delete' c.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="5" class="text-center text-muted py-4">Sin compras registradas.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+
+<!-- Estadísticas - 3 cuadritos -->
+<div class="stats-compras">
+  <div class="stat-compra">
+    <div class="stat-compra-icon">
+      <i class="bi bi-cart3"></i>
+    </div>
+    <div class="stat-compra-value">{{ total_compras|default:"0" }}</div>
+    <div class="stat-compra-label">Total Compras</div>
+  </div>
+  <div class="stat-compra">
+    <div class="stat-compra-icon">
+      <i class="bi bi-currency-dollar"></i>
+    </div>
+    <div class="stat-compra-value">${{ total_inversion|default:"0"|floatformat:0 }}</div>
+    <div class="stat-compra-label">Inversión Total</div>
+  </div>
+  <div class="stat-compra">
+    <div class="stat-compra-icon">
+      <i class="bi bi-building"></i>
+    </div>
+    <div class="stat-compra-value">{{ proveedores_distintos|default:"0" }}</div>
+    <div class="stat-compra-label">Proveedores</div>
   </div>
 </div>
+
+<!-- Tabla de compras -->
+<div class="compras-table-container">
+  <table class="compras-table">
+    <thead>
+      <tr>
+        <th>Proveedor</th>
+        <th>Empleado</th>
+        <th>Fecha</th>
+        <th>Precio Unit.</th>
+        <th>Cantidad</th>
+        <th>Total</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in compras %}
+      <tr>
+        <td><strong>{{ c.proveedor|default:"—" }}</strong></td>
+        <td>{{ c.empleado.nombre }}</td>
+        <td style="white-space: nowrap;">{{ c.fecha|date:"d/m/Y H:i" }}</td>
+        <td>${{ c.precio_unitario|floatformat:2 }}</td>
+        <td>{{ c.cantidad }} und</td>
+        <td style="font-weight: 700; color: var(--primary);">${{ c.total_compra|floatformat:2 }}</td>
+        <td>
+          <div class="action-buttons">
+            <a href="{% url 'operaciones:compra_detail' c.pk %}" class="btn-action btn-view" title="Ver">
+              <i class="bi bi-eye"></i>
+            </a>
+            <a href="{% url 'operaciones:compra_update' c.pk %}" class="btn-action btn-edit" title="Editar">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="{% url 'operaciones:compra_delete' c.pk %}" class="btn-action btn-delete" title="Eliminar">
+              <i class="bi bi-trash"></i>
+            </a>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="7" class="text-center py-5" style="color: var(--gray-600);">
+          <i class="bi bi-inbox" style="font-size: 48px;"></i>
+          <p class="mt-2 mb-0">No hay compras registradas</p>
+          <a href="{% url 'operaciones:compra_create' %}" class="btn btn-sm btn-primary mt-2">Registrar primera compra</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Paginación -->
+{% if compras.has_other_pages %}
+<div class="pagination-custom">
+  {% if compras.has_previous %}
+    <a href="?page={{ compras.previous_page_number }}" class="page-link-custom">
+      <i class="bi bi-chevron-left"></i> Anterior
+    </a>
+  {% endif %}
+  
+  <span class="page-link-custom active">
+    {{ compras.number }} / {{ compras.paginator.num_pages }}
+  </span>
+  
+  {% if compras.has_next %}
+    <a href="?page={{ compras.next_page_number }}" class="page-link-custom">
+      Siguiente <i class="bi bi-chevron-right"></i>
+    </a>
+  {% endif %}
+</div>
+{% endif %}
+
 {% endblock %}
