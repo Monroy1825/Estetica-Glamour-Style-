@@ -176,6 +176,22 @@
       font-family: sans-serif;
     }
 
+    /* Estilo para el mensaje de comprobante de pago */
+    .alert-success {
+      background: #d4edda;
+      color: #155724;
+      text-align: center;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-family: sans-serif;
+    }
+    .alert-success i {
+      font-size: 16px;
+      margin-right: 5px;
+    }
+
     @media print {
       body {
         background: white;
@@ -183,6 +199,7 @@
       }
       .btn-actions { display: none; }
       .alert-info { display: none; }
+      .alert-success { display: none; }
       .ticket {
         box-shadow: none;
         border-radius: 0;
@@ -190,11 +207,24 @@
       }
     }
   </style>
+
+  <!-- Bootstrap Icons (para el icono del check) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body>
   <div class="ticket-wrapper">
 
     <div class="ticket">
+
+      <!-- Mensaje de comprobante de pago -->
+      {% if not hay_pendientes and ventas %}
+      <div class="alert-success">
+        <i class="bi bi-check-circle-fill"></i> 
+        <strong>¡PAGO CONFIRMADO!</strong><br>
+        Este es tu comprobante de pago.
+      </div>
+      {% endif %}
+
       <div class="salon-name">Estetica Glamour Style</div>
       <div class="salon-sub">Ticket de Venta</div>
 
@@ -214,6 +244,16 @@
       <div class="ticket-row">
         <span class="label">Empleado</span>
         <span class="value">{{ venta.empleado.nombre }}</span>
+      </div>
+
+      <!-- Folio y número de ticket -->
+      <div class="ticket-row">
+        <span class="label">Folio</span>
+        <span class="value">#{{ folio|default:"N/A" }}</span>
+      </div>
+      <div class="ticket-row">
+        <span class="label">Ticket</span>
+        <span class="value">#{% if forloop %}{{ forloop.counter }}{% else %}1{% endif %}</span>
       </div>
 
       <hr class="divider">
@@ -301,16 +341,13 @@
         const debeImprimir = urlParams.get('imprimir');
         
         if (debeImprimir === '1') {
-            // Pequeña pausa para asegurar que el DOM esté listo
             setTimeout(function() {
                 window.print();
                 
-                // Opcional: Mostrar mensaje y redirigir después de imprimir
                 var imprimiendo = true;
                 window.onafterprint = function() {
                     if (imprimiendo) {
                         imprimiendo = false;
-                        // Redirigir al listado de ventas después de imprimir
                         setTimeout(function() {
                             window.location.href = "{% url 'operaciones:venta_list' %}";
                         }, 500);

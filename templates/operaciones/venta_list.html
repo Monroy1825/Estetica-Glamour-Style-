@@ -13,7 +13,8 @@
     --gray-800: #343a40;
   }
 
-  .sales-header {
+  /* Header */
+  .ventas-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -21,12 +22,12 @@
     flex-wrap: wrap;
     gap: 15px;
   }
-  .sales-title {
+  .ventas-title {
     display: flex;
     align-items: center;
     gap: 12px;
   }
-  .sales-icon {
+  .ventas-icon {
     width: 48px;
     height: 48px;
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
@@ -37,18 +38,18 @@
     color: white;
     font-size: 22px;
   }
-  .sales-title h4 {
+  .ventas-title h4 {
     font-size: 22px;
     font-weight: 700;
     margin: 0;
     color: var(--gray-800);
   }
-  .sales-title p {
+  .ventas-title p {
     margin: 0;
     font-size: 13px;
     color: var(--gray-600);
   }
-  .btn-new-sale {
+  .btn-new-venta {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: white;
     border: none;
@@ -62,24 +63,145 @@
     text-decoration: none;
     transition: all 0.3s ease;
   }
-  .btn-new-sale:hover {
+  .btn-new-venta:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(123,45,139,0.3);
     color: white;
   }
 
-  .sales-table-container {
+  /* Tarjetas de estadísticas */
+  .stats-ventas {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+  .stat-venta {
+    background: white;
+    border-radius: 20px;
+    padding: 18px 20px;
+    border: 1px solid var(--gray-200);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-venta::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--primary);
+  }
+  .stat-venta:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(123,45,139,0.12);
+  }
+  .stat-venta-icon {
+    width: 45px;
+    height: 45px;
+    background: var(--primary-light);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  .stat-venta-icon i {
+    font-size: 22px;
+    color: var(--primary);
+  }
+  .stat-venta-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--gray-800);
+    line-height: 1.1;
+  }
+  .stat-venta-label {
+    font-size: 11px;
+    color: var(--gray-600);
+    margin-top: 6px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Barra de acciones masivas */
+  .batch-actions {
+    background: white;
+    border-radius: 12px;
+    padding: 12px 20px;
+    margin-bottom: 20px;
+    border: 1px solid #ede8f2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .selected-count {
+    font-size: 13px;
+    color: #7b2d8b;
+    font-weight: 600;
+  }
+  .btn-delete-batch {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-delete-batch:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+  }
+  .btn-delete-batch.disabled {
+    background: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+  }
+  .search-filter {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .search-filter input {
+    padding: 8px 12px;
+    border: 1px solid #ede8f2;
+    border-radius: 8px;
+    font-size: 13px;
+    width: 200px;
+  }
+  .search-filter select {
+    padding: 8px 12px;
+    border: 1px solid #ede8f2;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .checkbox-col {
+    width: 35px;
+    text-align: center;
+  }
+
+  /* Tabla */
+  .ventas-table-container {
     background: white;
     border-radius: 20px;
     border: 1px solid var(--gray-200);
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0,0,0,0.04);
   }
-  .sales-table {
+  .ventas-table {
     width: 100%;
     border-collapse: collapse;
   }
-  .sales-table th {
+  .ventas-table th {
     background: var(--gray-100);
     padding: 15px 16px;
     font-size: 11px;
@@ -89,49 +211,37 @@
     color: var(--gray-600);
     border-bottom: 1px solid var(--gray-200);
   }
-  .sales-table td {
+  .ventas-table td {
     padding: 14px 16px;
     font-size: 13px;
     color: var(--gray-800);
     border-bottom: 1px solid var(--gray-200);
     vertical-align: middle;
   }
-  .sales-table tbody tr:hover {
+  .ventas-table tbody tr:hover {
     background: var(--primary-light);
   }
 
-  .badge-tipo {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-  }
-  .badge-servicio {
-    background: #e3f2fd;
-    color: #1565c0;
-  }
-  .badge-producto {
-    background: #e8f5e9;
-    color: #2e7d32;
-  }
-  .badge-mixto {
-    background: #f3e5f5;
-    color: #7b1fa2;
-  }
   .badge-estatus-pagada {
     background: #d4edda;
     color: #155724;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
   }
   .badge-estatus-pendiente {
     background: #fff3cd;
     color: #856404;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
   }
   .badge-estatus-cancelada {
     background: #f8d7da;
     color: #721c24;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
   }
 
   .action-buttons {
@@ -209,18 +319,19 @@
   }
 
   @media (max-width: 768px) {
-    .sales-table th, .sales-table td {
-      padding: 10px 12px;
+    .stats-ventas {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
     }
-    .action-buttons {
-      gap: 4px;
+    .search-filter {
+      flex-direction: column;
     }
   }
 </style>
 
-<div class="sales-header">
-  <div class="sales-title">
-    <div class="sales-icon">
+<div class="ventas-header">
+  <div class="ventas-title">
+    <div class="ventas-icon">
       <i class="bi bi-receipt"></i>
     </div>
     <div>
@@ -228,15 +339,60 @@
       <p>Gestión y seguimiento de transacciones</p>
     </div>
   </div>
-  <a href="{% url 'operaciones:venta_create' %}" class="btn-new-sale">
+  <a href="{% url 'operaciones:venta_create' %}" class="btn-new-venta">
     <i class="bi bi-plus-lg"></i> Nueva Venta
   </a>
 </div>
 
-<div class="sales-table-container">
-  <table class="sales-table">
+<!-- Estadísticas -->
+<div class="stats-ventas">
+  <div class="stat-venta">
+    <div class="stat-venta-icon"><i class="bi bi-receipt"></i></div>
+    <div class="stat-venta-value">{{ total_ventas|default:"0" }}</div>
+    <div class="stat-venta-label">Total Ventas</div>
+  </div>
+  <div class="stat-venta">
+    <div class="stat-venta-icon"><i class="bi bi-currency-dollar"></i></div>
+    <div class="stat-venta-value">${{ total_ingresos|default:"0"|floatformat:0 }}</div>
+    <div class="stat-venta-label">Ingresos Totales</div>
+  </div>
+  <div class="stat-venta">
+    <div class="stat-venta-icon"><i class="bi bi-check-circle"></i></div>
+    <div class="stat-venta-value">{{ ventas_pagadas|default:"0" }}</div>
+    <div class="stat-venta-label">Ventas Pagadas</div>
+  </div>
+  <div class="stat-venta">
+    <div class="stat-venta-icon"><i class="bi bi-clock-history"></i></div>
+    <div class="stat-venta-value">{{ ventas_pendientes|default:"0" }}</div>
+    <div class="stat-venta-label">Ventas Pendientes</div>
+  </div>
+</div>
+
+<!-- Barra de acciones -->
+<div class="batch-actions">
+  <div class="search-filter">
+    <input type="text" id="searchInput" placeholder="Buscar cliente..." class="form-control form-control-sm">
+    <select id="estatusFilter" class="form-select form-select-sm" style="width: auto;">
+      <option value="">Todos los estatus</option>
+      <option value="pagada">Pagada</option>
+      <option value="pendiente">Pendiente</option>
+      <option value="cancelada">Cancelada</option>
+    </select>
+  </div>
+  <div class="batch-actions-right" style="display: flex; gap: 12px; align-items: center;">
+    <span class="selected-count" id="selectedCount">0 seleccionadas</span>
+    <button id="deleteBatchBtn" class="btn-delete-batch disabled">
+      <i class="bi bi-trash"></i> Eliminar seleccionadas
+    </button>
+  </div>
+</div>
+
+<!-- Tabla de ventas -->
+<div class="ventas-table-container">
+  <table class="ventas-table">
     <thead>
       <tr>
+        <th class="checkbox-col"><input type="checkbox" id="selectAll"></th>
         <th>Cliente</th>
         <th>Fecha</th>
         <th>Tipo</th>
@@ -248,46 +404,25 @@
     </thead>
     <tbody>
       {% for v in ventas %}
-      <tr>
-        <td><strong>{{ v.cliente }}</strong><br><small class="text-muted">{{ v.empleado }}</small></td>
-        <td style="white-space: nowrap;">{{ v.fecha|date:"d/m/Y" }}<br><small class="text-muted">{{ v.fecha|date:"H:i" }}</small></td>
-        <td>
-          <span class="badge-tipo badge-{% if v.tipo == 'servicio' %}servicio{% elif v.tipo == 'producto' %}producto{% else %}mixto{% endif %}">
-            {{ v.get_tipo_display }}
-          </span>
-        </td>
+      <tr class="venta-row" data-id="{{ v.pk }}" data-cliente="{{ v.cliente.nombre|lower }}" data-estatus="{{ v.estatus }}">
+        <td class="checkbox-col"><input type="checkbox" class="venta-checkbox" value="{{ v.pk }}"></td>
+        <td><strong>{{ v.cliente.nombre }}</strong><br><small class="text-muted">{{ v.empleado.nombre }}</small></td>
+        <td style="white-space: nowrap;">{{ v.fecha|date:"d/m/Y H:i" }}</td>
+        <td><span class="badge-estatus-{{ v.estatus }}">{{ v.get_tipo_display }}</span></td>
         <td>{{ v.get_metodo_pago_display }}</td>
         <td style="font-weight: 700; color: var(--primary);">${{ v.total|floatformat:2 }}</td>
-        <td>
-          <span class="badge-tipo badge-estatus-{{ v.estatus }}">
-            {{ v.get_estatus_display }}
-          </span>
-        </td>
+        <td><span class="badge-estatus-{{ v.estatus }}">{{ v.get_estatus_display }}</span></td>
         <td>
           <div class="action-buttons">
-            <a href="{% url 'operaciones:venta_ticket' v.pk %}" class="btn-action btn-ticket" title="Ticket">
-              <i class="bi bi-receipt"></i>
-            </a>
-            <a href="{% url 'operaciones:venta_detail' v.pk %}" class="btn-action btn-view" title="Ver">
-              <i class="bi bi-eye"></i>
-            </a>
-            <a href="{% url 'operaciones:venta_update' v.pk %}" class="btn-action btn-edit" title="Editar">
-              <i class="bi bi-pencil"></i>
-            </a>
-            <a href="{% url 'operaciones:venta_delete' v.pk %}" class="btn-action btn-delete" title="Eliminar">
-              <i class="bi bi-trash"></i>
-            </a>
+            <a href="{% url 'operaciones:venta_ticket' v.pk %}" class="btn-action btn-ticket" title="Ticket"><i class="bi bi-receipt"></i></a>
+            <a href="{% url 'operaciones:venta_detail' v.pk %}" class="btn-action btn-view" title="Ver"><i class="bi bi-eye"></i></a>
+            <a href="{% url 'operaciones:venta_update' v.pk %}" class="btn-action btn-edit" title="Editar"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'operaciones:venta_delete' v.pk %}" class="btn-action btn-delete" title="Eliminar"><i class="bi bi-trash"></i></a>
           </div>
         </td>
       </tr>
       {% empty %}
-      <tr>
-        <td colspan="7" class="text-center py-5" style="color: var(--gray-600);">
-          <i class="bi bi-inbox" style="font-size: 48px;"></i>
-          <p class="mt-2 mb-0">No hay ventas registradas</p>
-          <a href="{% url 'operaciones:venta_create' %}" class="btn btn-sm btn-primary mt-2">Registrar primera venta</a>
-        </td>
-      </tr>
+      <tr><td colspan="8" class="text-center py-5">No hay ventas registradas</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -295,22 +430,104 @@
 
 {% if ventas.has_other_pages %}
 <div class="pagination-custom">
-  {% if ventas.has_previous %}
-    <a href="?page={{ ventas.previous_page_number }}" class="page-link-custom">
-      <i class="bi bi-chevron-left"></i> Anterior
-    </a>
-  {% endif %}
-  
-  <span class="page-link-custom active">
-    {{ ventas.number }} / {{ ventas.paginator.num_pages }}
-  </span>
-  
-  {% if ventas.has_next %}
-    <a href="?page={{ ventas.next_page_number }}" class="page-link-custom">
-      Siguiente <i class="bi bi-chevron-right"></i>
-    </a>
-  {% endif %}
+  {% if ventas.has_previous %}<a href="?page={{ ventas.previous_page_number }}" class="page-link-custom"><i class="bi bi-chevron-left"></i> Anterior</a>{% endif %}
+  <span class="page-link-custom active">{{ ventas.number }} / {{ ventas.paginator.num_pages }}</span>
+  {% if ventas.has_next %}<a href="?page={{ ventas.next_page_number }}" class="page-link-custom">Siguiente <i class="bi bi-chevron-right"></i></a>{% endif %}
 </div>
 {% endif %}
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const checkboxes = document.querySelectorAll('.venta-checkbox');
+  const selectAll = document.getElementById('selectAll');
+  const deleteBatchBtn = document.getElementById('deleteBatchBtn');
+  const selectedCountSpan = document.getElementById('selectedCount');
+  const searchInput = document.getElementById('searchInput');
+  const estatusFilter = document.getElementById('estatusFilter');
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  function updateSelectedCount() {
+    const selected = document.querySelectorAll('.venta-checkbox:checked').length;
+    selectedCountSpan.textContent = `${selected} seleccionada${selected !== 1 ? 's' : ''}`;
+    if (selected > 0) {
+      deleteBatchBtn.classList.remove('disabled');
+      deleteBatchBtn.disabled = false;
+    } else {
+      deleteBatchBtn.classList.add('disabled');
+      deleteBatchBtn.disabled = true;
+    }
+  }
+
+  if (selectAll) {
+    selectAll.addEventListener('change', function() {
+      checkboxes.forEach(cb => cb.checked = this.checked);
+      updateSelectedCount();
+    });
+  }
+
+  checkboxes.forEach(cb => {
+    cb.addEventListener('change', updateSelectedCount);
+  });
+
+  if (searchInput) {
+    searchInput.addEventListener('keyup', function() {
+      const term = this.value.toLowerCase();
+      document.querySelectorAll('.venta-row').forEach(row => {
+        const cliente = row.getAttribute('data-cliente') || '';
+        row.style.display = cliente.includes(term) ? '' : 'none';
+      });
+    });
+  }
+
+  if (estatusFilter) {
+    estatusFilter.addEventListener('change', function() {
+      const estatus = this.value;
+      document.querySelectorAll('.venta-row').forEach(row => {
+        const rowEstatus = row.getAttribute('data-estatus') || '';
+        if (!estatus || rowEstatus === estatus) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+  }
+
+  if (deleteBatchBtn) {
+    deleteBatchBtn.addEventListener('click', function() {
+      if (deleteBatchBtn.classList.contains('disabled')) return;
+      const selected = [];
+      document.querySelectorAll('.venta-checkbox:checked').forEach(cb => selected.push(cb.value));
+      if (selected.length === 0) return;
+      if (confirm(`¿Eliminar ${selected.length} venta${selected.length !== 1 ? 's' : ''}?`)) {
+        fetch('/operaciones/ventas/batch-delete/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: JSON.stringify({ ids: selected })
+        })
+        .then(response => response.json())
+        .then(data => { if (data.success) location.reload(); else alert('Error: ' + data.error); })
+        .catch(error => { console.error('Error:', error); alert('Error al eliminar'); });
+      }
+    });
+  }
+});
+</script>
 {% endblock %}

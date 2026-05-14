@@ -199,9 +199,30 @@ def get_precio_cita(request, cita_id):
 
 @login_required
 def venta_list(request):
-       # v1.2 - mejora en listado de ventas
-    qs = Venta.objects.filter(activo=True).select_related('cliente', 'empleado', 'producto')
-    return render(request, 'operaciones/venta_list.html', {'ventas': _paginate(qs, request)})
+    qs = Venta.objects.filter(activo=True).select_related('cliente', 'empleado', 'producto', 'cita__servicio')
+    
+    # Calcular estadísticas
+    total_ventas = qs.count()
+    total_ingresos = qs.aggregate(total=Sum('total'))['total'] or 0
+    ventas_pagadas = qs.filter(estatus='pagada').count()
+    ventas_pendientes = qs.filter(estatus='pendiente').count()
+    
+    paginator = Paginator(qs, 10)
+    page = request.GET.get('page')
+    try:
+        ventas = paginator.page(page)
+    except PageNotAnInteger:
+        ventas = paginator.page(1)
+    except EmptyPage:
+        ventas = paginator.page(paginator.num_pages)
+    
+    return render(request, 'operaciones/venta_list.html', {
+        'ventas': ventas,
+        'total_ventas': total_ventas,
+        'total_ingresos': total_ingresos,
+        'ventas_pagadas': ventas_pagadas,
+        'ventas_pendientes': ventas_pendientes,
+    })
 
 @login_required
 def venta_create(request):
@@ -210,12 +231,17 @@ def venta_create(request):
         if form.is_valid():
             cita = form.cleaned_data.get('cita')
             producto = form.cleaned_data.get('producto')
+            cliente = form.cleaned_data['cliente']
+            
+            session_key = f'ticket_ventas_{cliente.id}'
+            ids_sesion = request.session.get(session_key, [])
 
             if cita and producto:
                 precio_servicio = float(cita.servicio.precio_base)
                 precio_producto = float(producto.precio_venta)
+                
                 venta_servicio = Venta(
-                    cliente=form.cleaned_data['cliente'],
+                    cliente=cliente,
                     empleado=form.cleaned_data['empleado'],
                     cita=cita,
                     producto=None,
@@ -226,11 +252,11 @@ def venta_create(request):
                     activo=True
                 )
                 venta_servicio.save()
-                if producto.stock_actual <= 0:
-                    messages.warning(request, f'Producto "{producto.nombre}" sin stock. Solo se registró el servicio.')
-                else:
+                ids_sesion.append(venta_servicio.pk)
+                
+                if producto.stock_actual > 0:
                     venta_producto = Venta(
-                        cliente=form.cleaned_data['cliente'],
+                        cliente=cliente,
                         empleado=form.cleaned_data['empleado'],
                         cita=None,
                         producto=producto,
@@ -241,29 +267,39 @@ def venta_create(request):
                         activo=True
                     )
                     venta_producto.save()
+                    ids_sesion.append(venta_producto.pk)
                     producto.stock_actual -= 1
                     producto.save()
-                messages.success(request, f'¡Ventas registradas! Servicio: ${precio_servicio}, Producto: ${precio_producto}')
+                    
+                request.session[session_key] = ids_sesion
+                messages.success(request, f'¡Ventas registradas!')
                 return redirect('operaciones:venta_list')
 
             elif producto:
                 if producto.stock_actual <= 0:
-                    messages.error(request, f'Sin stock disponible para "{producto}". No se pudo registrar la venta.')
+                    messages.error(request, f'Sin stock disponible para "{producto.nombre}".')
                 else:
-                    venta = form.save()
+                    venta = form.save(commit=False)
+                    venta.tipo = 'producto'
+                    venta.save()
+                    ids_sesion.append(venta.pk)
+                    request.session[session_key] = ids_sesion
                     producto.stock_actual -= 1
                     producto.save()
                     messages.success(request, '¡Venta registrada con éxito!')
-                    return redirect('operaciones:venta_list')
+                return redirect('operaciones:venta_list')
 
             elif cita:
-                form.save()
+                venta = form.save(commit=False)
+                venta.tipo = 'servicio'
+                venta.save()
+                ids_sesion.append(venta.pk)
+                request.session[session_key] = ids_sesion
                 messages.success(request, '¡Venta registrada con éxito!')
                 return redirect('operaciones:venta_list')
 
             else:
                 messages.error(request, 'Debe seleccionar al menos una cita o un producto')
-                return render(request, 'operaciones/venta_form.html', {'titulo': 'Nueva Venta', 'form': form})
                 
     else:
         form = VentaForm()
@@ -279,15 +315,56 @@ def venta_detail(request, pk):
 def venta_ticket(request, pk):
     venta = get_object_or_404(Venta.objects.select_related('cliente', 'empleado', 'producto', 'cita__servicio'), pk=pk)
     cliente = venta.cliente
-    ventas = Venta.objects.filter(cliente=cliente, activo=True).select_related('producto', 'cita__servicio').order_by('-fecha')
+    
+    # Verificar si es un comprobante de pago
+    es_comprobante = request.GET.get('pagado') == '1'
+    
+    # Obtener los IDs de las ventas de esta sesión
+    session_key = f'ticket_ventas_{cliente.id}'
+    ids_sesion = request.session.get(session_key, [])
+    
+    if es_comprobante:
+        # Mostrar las ventas que se pagaron en esta sesión
+        ventas = Venta.objects.filter(
+            id__in=ids_sesion,
+            activo=True
+        ).select_related('producto', 'cita__servicio').prefetch_related('cita__servicios_adicionales')
+        
+        # Limpiar la sesión
+        request.session[session_key] = []
+        hay_pendientes = False
+    else:
+        # Si no hay IDs en sesión, mostrar las ventas pendientes del cliente
+        if ids_sesion:
+            ventas = Venta.objects.filter(
+                id__in=ids_sesion,
+                activo=True,
+                estatus='pendiente'
+            ).select_related('producto', 'cita__servicio').prefetch_related('cita__servicios_adicionales')
+        else:
+            # Si no hay sesión, mostrar todas las ventas pendientes del cliente
+            ventas = Venta.objects.filter(
+                cliente=cliente,
+                activo=True,
+                estatus='pendiente'
+            ).select_related('producto', 'cita__servicio').prefetch_related('cita__servicios_adicionales')
+        
+        hay_pendientes = ventas.exists()
+    
     total = sum(v.total for v in ventas)
-    hay_pendientes = ventas.filter(estatus='pendiente').exists()
+    
+    # Generar folio
+    from datetime import datetime
+    folio = f"{cliente.id}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    
     return render(request, 'operaciones/venta_ticket.html', {
         'venta': venta,
         'ventas': ventas,
         'total': total,
-        'hay_pendientes': hay_pendientes,
         'cliente': cliente,
+        'hay_pendientes': hay_pendientes,
+        'es_comprobante': es_comprobante,
+        'folio': folio,
     })
 
 
@@ -473,12 +550,26 @@ def confirmar_pago(request, cliente_id):
             cantidad = ventas.count()
             total = ventas.aggregate(total=Sum('total'))['total']
             
+            # Cambiar estatus a pagada
             ventas.update(estatus='pagada')
+            
+            # Obtener el ID de la primera venta para el ticket (usar cualquier venta del cliente)
+            primera_venta = ventas.first()
+            
+            # Si por alguna razón no hay venta, buscar cualquier venta del cliente
+            if not primera_venta:
+                primera_venta = Venta.objects.filter(cliente_id=cliente_id, activo=True).first()
             
             messages.success(
                 request, 
                 f'Pago confirmado correctamente. {cantidad} venta(s) pagada(s). Total: ${total}'
             )
+            
+            # Redirigir al ticket
+            if primera_venta:
+                return redirect(f'/operaciones/ventas/{primera_venta.pk}/ticket/?imprimir=1&pagado=1')
+            else:
+                return redirect('operaciones:venta_list')
         else:
             messages.warning(request, 'No hay ventas pendientes para este cliente.')
     
@@ -593,6 +684,30 @@ def cita_batch_delete(request):
         })
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+    
+
+@login_required
+@require_POST
+def venta_batch_delete(request):
+    """Eliminar múltiples ventas a la vez"""
+    try:
+        data = json.loads(request.body)
+        ids = data.get('ids', [])
+        
+        if not ids:
+            return JsonResponse({'success': False, 'error': 'No se seleccionaron ventas'})
+        
+        # Eliminar (desactivar) las ventas
+        ventas_eliminadas = Venta.objects.filter(pk__in=ids, activo=True).update(activo=False)
+        
+        return JsonResponse({
+            'success': True,
+            'eliminadas': ventas_eliminadas,
+            'mensaje': f'Se eliminaron {ventas_eliminadas} venta(s) correctamente'
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
     
 
 
