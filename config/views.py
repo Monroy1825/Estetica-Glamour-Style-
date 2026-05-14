@@ -7,6 +7,7 @@ from django.db.models import Count, F
 from django.db.models.functions import TruncHour, TruncDate
 from datetime import timedelta, date
 import calendar as cal_lib
+import json
 from apps.clientes.models import Cliente
 from apps.operaciones.models import Cita, Venta
 from apps.servicios.models import Producto
@@ -18,14 +19,14 @@ def dashboard(request):
     mes_actual = now().month
 
     total_clientes = Cliente.objects.count()
-    citas_hoy = Cita.objects.filter(fecha_inicio__date=hoy, activo=True).count()
+    citas_hoy = Cita.objects.filter(fecha_inicio__date=date.today(), activo=True).count()
     ventas_mes = Venta.objects.filter(fecha__month=mes_actual, activo=True).count()
 
     citas_hoy_lista = (
         Cita.objects
-        .filter(fecha_inicio__date=hoy, activo=True)
+        .filter(fecha_inicio__date=date.today(), activo=True)
         .select_related('cliente', 'empleado', 'servicio')
-        .order_by('fecha_inicio')[:2]
+        .order_by('fecha_inicio')
     )
 
     ventas_recientes = (
@@ -39,6 +40,19 @@ def dashboard(request):
     citas_pendientes_hoy = Cita.objects.filter(fecha_inicio__date=hoy, estado='pendiente', activo=True).count()
     notificaciones = stock_bajo + citas_pendientes_hoy
 
+
+    labels_ventas = []
+    data_ventas = []
+    data_citas = []
+    for i in range(1, 32):
+        labels_ventas.append(str(i))
+        data_ventas.append(
+            Venta.objects.filter(fecha__day=i, fecha__month=hoy.month, activo=True).count()
+        )
+        data_citas.append(
+            Cita.objects.filter(fecha_inicio__day=i, fecha_inicio__month=hoy.month, activo=True).count()
+        )
+
     return render(request, 'dashboard.html', {
         'total_clientes': total_clientes,
         'citas_hoy': citas_hoy,
@@ -48,6 +62,9 @@ def dashboard(request):
         'ventas_recientes': ventas_recientes,
         'notificaciones': notificaciones,
         'citas_pendientes_hoy': citas_pendientes_hoy,
+        'labels_ventas': json.dumps(labels_ventas),
+        'data_ventas': json.dumps(data_ventas),
+        'data_citas': json.dumps(data_citas),
     })
 
 

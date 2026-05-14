@@ -54,7 +54,7 @@ class CitaForm(forms.ModelForm):
 
         fecha_str = fecha.strftime("%Y-%m-%d")
         fecha_inicio = datetime.strptime(f"{fecha_str} {inicio_str}", "%Y-%m-%d %H:%M")
-        fecha_fin = datetime.strptime(f"{fecha_str} {fin_str}", "%Y-%m-%d %H:%M")
+        fecha_fin = fecha_inicio + timedelta(hours=float(duracion))
 
         cleaned_data['fecha_inicio'] = fecha_inicio
         cleaned_data['fecha_fin'] = fecha_fin

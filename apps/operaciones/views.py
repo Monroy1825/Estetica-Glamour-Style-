@@ -161,6 +161,12 @@ def cita_delete(request, pk):
     return render(request, 'operaciones/cita_confirm_delete.html', {'cita': cita})
 
 
+@login_required
+def get_precio_cita(request, cita_id):
+    cita = get_object_or_404(Cita, pk=cita_id)
+    return JsonResponse({'precio': float(cita.servicio.precio_base)})
+
+
 # --- Ventas ---
 
 @login_required
@@ -176,27 +182,10 @@ def venta_create(request):
         if form.is_valid():
             cita = form.cleaned_data.get('cita')
             producto = form.cleaned_data.get('producto')
-            if producto is not None:
-                if producto.stock_actual <= 0:
-                    messages.error(request, f'Sin stock disponible para "{producto}". No se pudo registrar la venta.')
-                else:
-                    venta = form.save()
-                    producto.stock_actual -= 1
-                    producto.save()
-                    messages.success(request, '¡Venta registrada con éxito!')
-                    return redirect('operaciones:venta_list')
-            else:
-                form.save()
-                messages.success(request, '¡Venta registrada con éxito!')
-                return redirect('operaciones:venta_list')
-            
-            # Caso 3: Ambos (cita y producto) - CREAR DOS VENTAS SEPARADAS
-            elif cita and producto:
-                # Obtener precios
+
+            if cita and producto:
                 precio_servicio = float(cita.servicio.precio_base)
                 precio_producto = float(producto.precio_venta)
-                
-                # Crear venta para el servicio
                 venta_servicio = Venta(
                     cliente=form.cleaned_data['cliente'],
                     empleado=form.cleaned_data['empleado'],
@@ -209,12 +198,9 @@ def venta_create(request):
                     activo=True
                 )
                 venta_servicio.save()
-                
-                # Verificar stock del producto
                 if producto.stock_actual <= 0:
                     messages.warning(request, f'Producto "{producto.nombre}" sin stock. Solo se registró el servicio.')
                 else:
-                    # Crear venta para el producto
                     venta_producto = Venta(
                         cliente=form.cleaned_data['cliente'],
                         empleado=form.cleaned_data['empleado'],
@@ -229,10 +215,24 @@ def venta_create(request):
                     venta_producto.save()
                     producto.stock_actual -= 1
                     producto.save()
-                
                 messages.success(request, f'¡Ventas registradas! Servicio: ${precio_servicio}, Producto: ${precio_producto}')
                 return redirect('operaciones:venta_list')
-            
+
+            elif producto:
+                if producto.stock_actual <= 0:
+                    messages.error(request, f'Sin stock disponible para "{producto}". No se pudo registrar la venta.')
+                else:
+                    venta = form.save()
+                    producto.stock_actual -= 1
+                    producto.save()
+                    messages.success(request, '¡Venta registrada con éxito!')
+                    return redirect('operaciones:venta_list')
+
+            elif cita:
+                form.save()
+                messages.success(request, '¡Venta registrada con éxito!')
+                return redirect('operaciones:venta_list')
+
             else:
                 messages.error(request, 'Debe seleccionar al menos una cita o un producto')
                 return render(request, 'operaciones/venta_form.html', {'titulo': 'Nueva Venta', 'form': form})
@@ -246,6 +246,22 @@ def venta_create(request):
 def venta_detail(request, pk):
     venta = get_object_or_404(Venta.objects.select_related('cliente', 'empleado', 'producto'), pk=pk)
     return render(request, 'operaciones/venta_detail.html', {'venta': venta})
+
+@login_required
+def venta_ticket(request, pk):
+    venta = get_object_or_404(Venta.objects.select_related('cliente', 'empleado', 'producto', 'cita__servicio'), pk=pk)
+    cliente = venta.cliente
+    ventas = Venta.objects.filter(cliente=cliente, activo=True).select_related('producto', 'cita__servicio').order_by('-fecha')
+    total = sum(v.total for v in ventas)
+    hay_pendientes = ventas.filter(estatus='pendiente').exists()
+    return render(request, 'operaciones/venta_ticket.html', {
+        'venta': venta,
+        'ventas': ventas,
+        'total': total,
+        'hay_pendientes': hay_pendientes,
+        'cliente': cliente,
+    })
+
 
 @login_required
 def venta_update(request, pk):

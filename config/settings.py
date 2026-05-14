@@ -53,11 +53,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Si usas SQLite por defecto para pruebas rápidas, cámbialo aquí si PostgreSQL falla
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('POSTGRES_DB', default='salon_db'),
+        'USER': config('POSTGRES_USER', default='salon_user'),
+        'PASSWORD': config('POSTGRES_PASSWORD', default='salon_password'),
+        'HOST': config('POSTGRES_HOST', default='localhost'),
+        'PORT': config('POSTGRES_PORT', default='5432'),
     }
 }
 

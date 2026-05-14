@@ -1,65 +1,97 @@
-{% extends 'base.html' %}
-{% block title %}Dashboard — Estetica{% endblock %}
-
+{% extends "base.html" %}
+{% block title %}Dashboard — Estética{% endblock %}
 {% block content %}
 
 <div class="mb-3" style="padding-top:8px;">
-  <h5 class="fw-bold mb-0" style="color:#2d2d2d;">Bienvenida, {{ user.get_full_name|default:user.username }}</h5>
-  <div class="text-muted" style="font-size:0.8rem;">Panel de control</div>
+  <h5 class="fw-bold mb-0" style="color:#2d2d2d;">BIENVENIDA, {{ user.get_full_name|default:user.username }}</h5>
+  <div class="text-muted" style="font-size:0.8rem;">PANEL DE CONTROL</div>
 </div>
 
 <div class="row g-2 mb-3">
-
   <div class="col-6 col-md-3">
     <div class="card" style="border:1px solid #ede8f2;border-radius:14px;background:#fff;">
       <div class="card-body text-center" style="padding:10px 14px;">
-        <div class="text-muted mb-1" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.05em;">Total clientes</div>
+        <div class="text-muted mb-1" style="font-size:0.75rem;letter-spacing:.05em;">TOTAL CLIENTES</div>
         <div class="fw-bold" style="font-size:1.8rem;color:#7b2d8b;">{{ total_clientes }}</div>
       </div>
     </div>
   </div>
-
   <div class="col-6 col-md-3">
     <div class="card" style="border:1px solid #ede8f2;border-radius:14px;background:#fff;">
       <div class="card-body text-center" style="padding:10px 14px;">
-        <div class="text-muted mb-1" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.05em;">Citas hoy</div>
+        <div class="text-muted mb-1" style="font-size:0.75rem;letter-spacing:.05em;">CITAS HOY</div>
         <div class="fw-bold" style="font-size:1.8rem;color:#7b2d8b;">{{ citas_hoy }}</div>
       </div>
     </div>
   </div>
-
   <div class="col-6 col-md-3">
     <div class="card" style="border:1px solid #ede8f2;border-radius:14px;background:#fff;">
       <div class="card-body text-center" style="padding:10px 14px;">
-        <div class="text-muted mb-1" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.05em;">Ventas del mes</div>
+        <div class="text-muted mb-1" style="font-size:0.75rem;letter-spacing:.05em;">VENTAS DEL MES</div>
         <div class="fw-bold" style="font-size:1.8rem;color:#7b2d8b;">{{ ventas_mes }}</div>
       </div>
     </div>
   </div>
-
   <div class="col-6 col-md-3">
     <div class="card" style="border:1px solid #ede8f2;border-radius:14px;background:#fff;">
       <div class="card-body text-center" style="padding:10px 14px;">
-        <div class="text-muted mb-1" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.05em;">Stock bajo</div>
+        <div class="text-muted mb-1" style="font-size:0.75rem;letter-spacing:.05em;">STOCK BAJO</div>
         <div class="fw-bold" style="font-size:1.8rem;color:#e74c3c;">{{ stock_bajo }}</div>
       </div>
     </div>
   </div>
-
 </div>
 
-<!-- GRÁFICA -->
-<div class="card p-4">
-  <h5>Ventas por mes</h5>
-  <canvas id="ventasChart"></canvas>
-</div>
-
-<div class="row g-2">
-
+<div class="row g-3 mb-3">
   <div class="col-md-6">
     <div class="card h-100" style="border:1px solid #ede8f2;border-radius:14px;background:#fff;">
-      <div class="card-body" style="padding:12px 14px;">
-        <h6 class="fw-bold mb-2" style="color:#2d2d2d;font-size:0.85rem;">Citas de hoy</h6>
+      <div class="card-body" style="padding:14px;">
+        <h6 class="fw-bold mb-2" style="font-size:0.85rem;">VENTAS RECIENTES</h6>
+        <table class="table table-sm mb-0" style="font-size:0.8rem;">
+          <thead>
+            <tr style="color:#aaa;font-size:0.72rem;">
+              <th>CLIENTE</th>
+              <th>EMPLEADA</th>
+              <th class="text-end">TOTAL</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for venta in ventas_recientes %}
+            <tr>
+              <td>{{ venta.cliente.nombre }}</td>
+              <td>{{ venta.empleado.nombre }} ({{ venta.empleado.get_rol_display }})</td>
+              <td class="text-end" style="color:#7b2d8b;">${{ venta.total }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="text-muted">Sin ventas recientes.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card h-100" style="border:1px solid #ede8f2;border-radius:14px;background:#fff;">
+      <div class="card-body" style="padding:14px;">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="fw-bold mb-0" style="font-size:0.85rem;">RENDIMIENTO</h6>
+          <div class="d-flex gap-1">
+            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem;padding:2px 8px;">Día</button>
+            <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem;padding:2px 8px;">Semana</button>
+            <button class="btn btn-sm" style="font-size:0.7rem;padding:2px 8px;background:#7b2d8b;color:#fff;">Mes</button>
+          </div>
+        </div>
+        <canvas id="ventasChart" style="max-height:160px;"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card h-100" style="border:1px solid #ede8f2;border-radius:14px;background:#fff;">
+      <div class="card-body" style="padding:14px;">
+        <h6 class="fw-bold mb-2" style="font-size:0.85rem;">CITAS DE HOY</h6>
         {% if citas_hoy_lista %}
         <ul class="list-unstyled mb-0">
           {% for cita in citas_hoy_lista %}
@@ -68,7 +100,7 @@
               {{ cita.cliente.nombre|slice:":1"|upper }}
             </div>
             <div class="flex-grow-1">
-              <div style="font-size:0.82rem;font-weight:600;color:#2d2d2d;">{{ cita.cliente.nombre }}</div>
+              <div style="font-size:0.82rem;font-weight:600;">{{ cita.cliente.nombre }}</div>
               <div style="font-size:0.72rem;color:#888;">{{ cita.servicio.nombre }}</div>
             </div>
             <div class="text-end">
@@ -84,60 +116,70 @@
       </div>
     </div>
   </div>
-
   <div class="col-md-6">
     <div class="card h-100" style="border:1px solid #ede8f2;border-radius:14px;background:#fff;">
-      <div class="card-body" style="padding:12px 14px;">
-        <h6 class="fw-bold mb-2" style="color:#2d2d2d;font-size:0.85rem;">Accesos rapidos</h6>
+      <div class="card-body" style="padding:14px;">
+        <h6 class="fw-bold mb-2" style="font-size:0.85rem;">ACCESOS RAPIDOS</h6>
         <div class="row g-2">
           <div class="col-6">
-            <a href="{% url 'operaciones:cita_create' %}" class="d-flex flex-column align-items-center justify-content-center gap-1 text-decoration-none py-2 px-2 rounded" style="background:#f8f5fa;border:1px solid #ede8f2;color:#2d2d2d;" onmouseover="this.style.background='#f3e8f7'" onmouseout="this.style.background='#f8f5fa'">
-              <div style="width:34px;height:34px;background:#7b2d8b;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;margin:0 auto 4px;">+</div>
-              <span style="font-size:0.75rem;font-weight:500;">Nueva cita</span>
+            <a href="{% url 'operaciones:cita_create' %}" class="d-flex flex-column align-items-center justify-content-center p-3 text-decoration-none" style="border:1px solid #ede8f2;border-radius:12px;background:#faf8fc;">
+              <div style="width:36px;height:36px;border-radius:50%;background:#7b2d8b;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.2rem;margin-bottom:6px;">+</div>
+              <span style="font-size:0.75rem;color:#555;">NUEVA CITA</span>
             </a>
           </div>
           <div class="col-6">
-            <a href="{% url 'operaciones:venta_create' %}" class="d-flex flex-column align-items-center justify-content-center gap-1 text-decoration-none py-2 px-2 rounded" style="background:#f8f5fa;border:1px solid #ede8f2;color:#2d2d2d;" onmouseover="this.style.background='#f3e8f7'" onmouseout="this.style.background='#f8f5fa'">
-              <div style="width:34px;height:34px;background:#7b2d8b;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;margin:0 auto 4px;">+</div>
-              <span style="font-size:0.75rem;font-weight:500;">Nueva venta</span>
+            <a href="{% url 'operaciones:venta_create' %}" class="d-flex flex-column align-items-center justify-content-center p-3 text-decoration-none" style="border:1px solid #ede8f2;border-radius:12px;background:#faf8fc;">
+              <div style="width:36px;height:36px;border-radius:50%;background:#7b2d8b;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.2rem;margin-bottom:6px;">+</div>
+              <span style="font-size:0.75rem;color:#555;">NUEVA VENTA</span>
             </a>
           </div>
           <div class="col-6">
-            <a href="{% url 'clientes:create' %}" class="d-flex flex-column align-items-center justify-content-center gap-1 text-decoration-none py-2 px-2 rounded" style="background:#f8f5fa;border:1px solid #ede8f2;color:#2d2d2d;" onmouseover="this.style.background='#f3e8f7'" onmouseout="this.style.background='#f8f5fa'">
-              <div style="width:34px;height:34px;background:#7b2d8b;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;margin:0 auto 4px;">+</div>
-              <span style="font-size:0.75rem;font-weight:500;">Nuevo cliente</span>
+            <a href="{% url 'clientes:create' %}" class="d-flex flex-column align-items-center justify-content-center p-3 text-decoration-none" style="border:1px solid #ede8f2;border-radius:12px;background:#faf8fc;">
+              <div style="width:36px;height:36px;border-radius:50%;background:#7b2d8b;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.2rem;margin-bottom:6px;">+</div>
+              <span style="font-size:0.75rem;color:#555;">NUEVO CLIENTE</span>
             </a>
           </div>
           <div class="col-6">
-            <a href="{% url 'reporte_ventas' %}" class="d-flex flex-column align-items-center justify-content-center gap-1 text-decoration-none py-2 px-2 rounded" style="background:#f8f5fa;border:1px solid #ede8f2;color:#2d2d2d;" onmouseover="this.style.background='#f3e8f7'" onmouseout="this.style.background='#f8f5fa'">
-              <div style="width:34px;height:34px;background:#7b2d8b;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;margin:0 auto 4px;">+</div>
-              <span style="font-size:0.75rem;font-weight:500;">Ver reportes</span>
+            <a href="{% url 'reporte_ventas' %}" class="d-flex flex-column align-items-center justify-content-center p-3 text-decoration-none" style="border:1px solid #ede8f2;border-radius:12px;background:#faf8fc;">
+              <div style="width:36px;height:36px;border-radius:50%;background:#7b2d8b;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.2rem;margin-bottom:6px;">+</div>
+              <span style="font-size:0.75rem;color:#555;">VER REPORTES</span>
             </a>
           </div>
         </div>
       </div>
     </div>
   </div>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-const labels = JSON.parse(document.getElementById('labels-data').textContent);
-const data = JSON.parse(document.getElementById('data-data').textContent);
-
-const ctx = document.getElementById('ventasChart');
-
-new Chart(ctx, {
+  const ctx = document.getElementById('ventasChart');
+  new Chart(ctx, {
     type: 'bar',
     data: {
-        labels: labels,
-        datasets: [{
-            label: 'Ventas',
-            data: data,
-        }]
+      labels: {{ labels_ventas|safe }},
+      datasets: [
+        {
+          label: 'Ventas',
+          data: {{ data_ventas|safe }},
+          backgroundColor: '#7b2d8b',
+          borderRadius: 4,
+        },
+        {
+          label: 'Citas',
+          data: {{ data_citas|safe }},
+          backgroundColor: '#e0c8f0',
+          borderRadius: 4,
+        }
+      ]
     },
-});
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { display: true, position: 'top', labels: { font: { size: 10 } } } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+  });
 </script>
 
 {% endblock %}

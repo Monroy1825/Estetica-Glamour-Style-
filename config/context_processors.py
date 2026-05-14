@@ -14,7 +14,7 @@ def notificaciones(request):
         if p.stock_actual <= p.stock_minimo:
             lista.append({
                 'tipo': 'danger',
-                'icono': '📦',
+                'icono': 'bi bi-box-seam',
                 'mensaje': f'{p.nombre} tiene stock bajo ({p.stock_actual} unidades)',
                 'url': '/servicios/productos/'
             })
@@ -27,7 +27,7 @@ def notificaciones(request):
     for c in citas:
         lista.append({
             'tipo': 'warning',
-            'icono': '🗓️',
+            'icono': 'bi bi-calendar-check',
             'mensaje': f'Cita pendiente: {c.cliente} a las {c.fecha_inicio.strftime("%H:%M")}',
             'url': '/operaciones/citas/'
         })
@@ -40,7 +40,7 @@ def notificaciones(request):
     for c in cotizaciones:
         lista.append({
             'tipo': 'info',
-            'icono': '📋',
+            'icono': 'bi bi-file-text',
             'mensaje': f'Cotizacion de {c.cliente} esta vencida',
             'url': '/operaciones/cotizaciones/'
         })
