@@ -1,0 +1,44 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}Portal de Clientes — Glamour Style{% endblock %}
+{% block content %}
+
+<div class="text-center py-4 mb-4">
+  <div style="width:70px;height:70px;border-radius:50%;background:#7b2d8b;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+    <i class="bi bi-scissors" style="font-size:2rem;color:#fff;"></i>
+  </div>
+  <h1 style="font-size:1.8rem;font-weight:700;color:#2d2d2d;">Bienvenida a Glamour Style</h1>
+  <p class="text-muted" style="font-size:0.95rem;max-width:420px;margin:8px auto 0;">
+    Agenda tu cita en linea o consulta el estado de tus proximas visitas.
+  </p>
+</div>
+
+<div class="row g-3 justify-content-center" style="max-width:640px;margin:0 auto;">
+  <div class="col-md-6">
+    <a href="{% url 'portal:agendar' %}" class="text-decoration-none">
+      <div class="card-portal p-4 text-center h-100 d-flex flex-column align-items-center justify-content-center" style="transition:transform 0.15s;cursor:pointer;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='none'">
+        <div style="width:56px;height:56px;border-radius:50%;background:#f3e8f7;display:flex;align-items:center;justify-content:center;margin-bottom:12px;">
+          <i class="bi bi-calendar-plus" style="font-size:1.5rem;color:#7b2d8b;"></i>
+        </div>
+        <div style="font-weight:700;color:#2d2d2d;font-size:1rem;margin-bottom:6px;">Agendar Cita</div>
+        <div class="text-muted" style="font-size:0.82rem;">Reserva tu lugar con tu estilista favorita</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-6">
+    <a href="{% url 'portal:consultar' %}" class="text-decoration-none">
+      <div class="card-portal p-4 text-center h-100 d-flex flex-column align-items-center justify-content-center" style="transition:transform 0.15s;cursor:pointer;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='none'">
+        <div style="width:56px;height:56px;border-radius:50%;background:#f3e8f7;display:flex;align-items:center;justify-content:center;margin-bottom:12px;">
+          <i class="bi bi-search" style="font-size:1.5rem;color:#7b2d8b;"></i>
+        </div>
+        <div style="font-weight:700;color:#2d2d2d;font-size:1rem;margin-bottom:6px;">Consultar Mis Citas</div>
+        <div class="text-muted" style="font-size:0.82rem;">Revisa tus citas activas e historial</div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<div class="text-center mt-5" style="color:#aaa;font-size:0.78rem;">
+  <i class="bi bi-telephone me-1"></i>Llamanos para mas informacion
+</div>
+
+{% endblock %}

@@ -13,6 +13,7 @@ urlpatterns = [
     path('operaciones/', include('apps.operaciones.urls')),
     path('reportes/', include('apps.operaciones.urls_reportes')),
     path('proveedores/', operaciones_views.proveedor_list, name='proveedor_list'),
+    path('portal/', include('apps.portal.urls')),
 
     path('', dashboard, name='dashboard'),
 ]

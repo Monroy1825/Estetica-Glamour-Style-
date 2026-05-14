@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     'apps.empleados',
     'apps.servicios',
     'apps.operaciones',
+    'apps.portal',
 ]
 
 MIDDLEWARE = [
@@ -84,3 +85,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/auth/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/auth/login/'
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
