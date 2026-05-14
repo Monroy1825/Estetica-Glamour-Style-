@@ -230,6 +230,7 @@ def get_precio_cita(request, cita_id):
 
 @login_required
 def venta_list(request):
+       # v1.2 - mejora en listado de ventas
     qs = Venta.objects.filter(activo=True).select_related('cliente', 'empleado', 'producto')
     return render(request, 'operaciones/venta_list.html', {'ventas': _paginate(qs, request)})
 
@@ -664,3 +665,6 @@ def cita_batch_delete(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
     
+
+
+
