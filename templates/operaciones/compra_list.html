@@ -76,15 +76,18 @@
     gap: 20px;
     margin-bottom: 28px;
   }
-  .stat-compra {
-    background: white;
-    border-radius: 20px;
-    padding: 20px;
-    border: 1px solid var(--gray-200);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-  }
+ .stat-compra {
+  background: white;
+  border-radius: 20px;
+  padding: 20px;
+  border: 1px solid var(--gray-200);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;  /* ← Agrega esta línea */
+  text-decoration: none;
+  display: block;
+}
   .stat-compra::before {
     content: "";
     position: absolute;
@@ -252,29 +255,29 @@
   </a>
 </div>
 
-<!-- Estadísticas - 3 cuadritos -->
+<!-- Estadísticas - 3 cuadritos (clicables) -->
 <div class="stats-compras">
-  <div class="stat-compra">
+  <a href="{% url 'reporte_compras' %}" class="stat-compra" style="text-decoration: none; display: block; cursor: pointer;">
     <div class="stat-compra-icon">
       <i class="bi bi-cart3"></i>
     </div>
     <div class="stat-compra-value">{{ total_compras|default:"0" }}</div>
     <div class="stat-compra-label">Total Compras</div>
-  </div>
-  <div class="stat-compra">
+  </a>
+  <a href="{% url 'reporte_compras' %}" class="stat-compra" style="text-decoration: none; display: block; cursor: pointer;">
     <div class="stat-compra-icon">
       <i class="bi bi-currency-dollar"></i>
     </div>
     <div class="stat-compra-value">${{ total_inversion|default:"0"|floatformat:0 }}</div>
     <div class="stat-compra-label">Inversión Total</div>
-  </div>
-  <div class="stat-compra">
+  </a>
+  <a href="{% url 'reporte_compras' %}" class="stat-compra" style="text-decoration: none; display: block; cursor: pointer;">
     <div class="stat-compra-icon">
       <i class="bi bi-building"></i>
     </div>
     <div class="stat-compra-value">{{ proveedores_distintos|default:"0" }}</div>
     <div class="stat-compra-label">Proveedores</div>
-  </div>
+  </a>
 </div>
 
 <!-- Tabla de compras -->
