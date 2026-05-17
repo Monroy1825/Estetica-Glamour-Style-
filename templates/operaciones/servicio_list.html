@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-scissors me-2" style="color:#7b2d8b"></i>Servicios</h4>
+    <a href="{% url 'operaciones:servicio_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Nuevo Servicio</a>
+</div>
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr><th>Nombre</th><th>Precio Venta</th><th>Costo</th><th>Duración</th><th></th></tr>
+            </thead>
+            <tbody>
+            {% for servicio in servicios %}
+            <tr>
+                <td>{{ servicio.nombre }}</td>
+                <td>${{ servicio.precio_base }}</td>
+                <td>${{ servicio.precio_costo }}</td>
+                <td>{{ servicio.duracion_minutos }} min</td>
+                <td class="text-end">
+                    <a href="{% url 'operaciones:servicio_update' servicio.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
+                    <a href="{% url 'operaciones:servicio_delete' servicio.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-4">Sin servicios registrados.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

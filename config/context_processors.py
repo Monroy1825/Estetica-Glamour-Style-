@@ -1,5 +1,5 @@
 from apps.servicios.models import Producto
-from apps.operaciones.models import Cita, Cotizacion
+from apps.transacciones.models import Cita, Cotizacion
 from django.utils.timezone import now
 
 

@@ -9,7 +9,7 @@ from datetime import timedelta, date
 import calendar as cal_lib
 import json
 from apps.clientes.models import Cliente
-from apps.operaciones.models import Cita, Venta
+from apps.transacciones.models import Cita, Venta
 from apps.servicios.models import Producto
 
 
@@ -145,3 +145,51 @@ def dashboard_chart_data(request):
         citas_data = [citas_dict.get(d, 0) for d in dias]
 
     return JsonResponse({'labels': labels, 'ventas': ventas_data, 'citas': citas_data})
+
+
+# ========== NUEVA FUNCIÓN - AGREGAR AL FINAL ==========
+@login_required
+def reporte_margenes(request):
+    """Reporte de márgenes de ganancia por producto"""
+    
+    # Ventas de productos con su margen
+    ventas_productos = Venta.objects.filter(
+        activo=True,
+        producto__isnull=False,
+        estatus='pagada'
+    ).select_related('producto', 'cliente')
+    
+    # Agrupar por producto
+    productos_margen = []
+    for venta in ventas_productos:
+        # Calcular margen manualmente por si las propiedades no existen
+        costo = float(venta.producto.costo) if venta.producto else 0
+        precio_venta = float(venta.total)
+        margen = precio_venta - costo
+        porcentaje = ((precio_venta - costo) / costo * 100) if costo > 0 else 0
+        
+        productos_margen.append({
+            'producto': venta.producto.nombre,
+            'precio_venta': precio_venta,
+            'costo': costo,
+            'margen': margen,
+            'porcentaje': porcentaje,
+            'fecha': venta.fecha,
+            'cliente': venta.cliente.nombre,
+            'cantidad': 1
+        })
+    
+    # Ordenar por margen (mayor a menor)
+    productos_margen.sort(key=lambda x: x['margen'], reverse=True)
+    
+    # Estadísticas
+    total_ventas = ventas_productos.count()
+    margen_total = sum(p['margen'] for p in productos_margen)
+    promedio_margen = margen_total / total_ventas if total_ventas > 0 else 0
+    
+    return render(request, 'operaciones/reporte_margenes.html', {
+        'productos_margen': productos_margen,
+        'total_ventas': total_ventas,
+        'margen_total': margen_total,
+        'promedio_margen': promedio_margen,
+    })

@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 staticfiles/
 db.sqlite3
+.claude/

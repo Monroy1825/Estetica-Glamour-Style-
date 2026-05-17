@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Reporte de Márgenes de Ganancia</h1>
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card"><div class="card-body">Total Ingresos: ${{ total_ingresos }}</div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card"><div class="card-body">Costo Total: ${{ total_costo }}</div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card"><div class="card-body">Margen Total: ${{ margen_total }} ({{ margen_promedio|floatformat:1 }}%)</div></div>
+    </div>
+</div>
+
+<h2>Productos</h2>
+<table class="table table-hover">
+    <thead class="table-light">
+        <tr><th>Producto</th><th>Precio Venta</th><th>Costo</th><th>Margen</th><th>%</th><th>Vendidos</th></tr>
+    </thead>
+    <tbody>
+    {% for p in productos %}
+    <tr>
+        <td>{{ p.nombre }}</td>
+        <td>${{ p.precio_venta }}</td>
+        <td>${{ p.precio_costo }}</td>
+        <td>${{ p.margen_neto }}</td>
+        <td>{{ p.margen_porcentaje|floatformat:1 }}%</td>
+        <td>{{ p.cantidad_vendida }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6" class="text-center text-muted">Sin productos registrados.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<h2>Servicios</h2>
+<table class="table table-hover">
+    <thead class="table-light">
+        <tr><th>Servicio</th><th>Precio Venta</th><th>Costo</th><th>Margen</th><th>%</th><th>Realizados</th></tr>
+    </thead>
+    <tbody>
+    {% for s in servicios %}
+    <tr>
+        <td>{{ s.nombre }}</td>
+        <td>${{ s.precio_venta }}</td>
+        <td>${{ s.precio_costo }}</td>
+        <td>${{ s.margen_neto }}</td>
+        <td>{{ s.margen_porcentaje|floatformat:1 }}%</td>
+        <td>{{ s.cantidad_realizada }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6" class="text-center text-muted">Sin servicios registrados.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
