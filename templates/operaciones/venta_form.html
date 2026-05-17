@@ -352,66 +352,46 @@
     <div class="form-section">
       <div class="form-section-header">DATOS DEL CLIENTE</div>
       <div class="form-section-body">
-        <!-- Tipo de cliente -->
-        <div class="form-grid-2" style="margin-bottom: 16px;">
-          <div class="field-group">
-            <label>TIPO DE CLIENTE</label>
-            <select id="tipo_cliente_directa" name="tipo_cliente" class="form-select">
-              <option value="registrado">Cliente registrado</option>
-              <option value="nuevo">Cliente nuevo (venta directa)</option>
-            </select>
-          </div>
+        
+        <!-- Tipo de cliente - AHORA SOLO VENTA RÁPIDA -->
+        <div class="alert alert-info" style="background: #fff3e0; border: 1px solid #ffe0b2; border-radius: 10px; padding: 12px; margin-bottom: 20px;">
+          <i class="bi bi-lightning-charge" style="color: #e65100;"></i>
+          <strong style="color: #e65100;">Venta Rápida</strong>
+          <small style="color: #e65100; display: block;">Cliente ocasional, no requiere registro previo</small>
         </div>
         
-        <!-- Cliente registrado -->
-        <div id="cliente_registrado_div">
-          <div class="field-group">
-            <label>CLIENTE REGISTRADO</label>
-            <select name="cliente_producto" id="id_cliente_producto" class="form-select">
-              <option value="">---------</option>
-              {% for cliente in clientes %}
-              <option value="{{ cliente.id }}">{{ cliente.nombre }} - {{ cliente.telefono }}</option>
-              {% endfor %}
-            </select>
-          </div>
-        </div>
-        
-        <!-- Cliente nuevo (venta directa) -->
-        <div id="cliente_nuevo_div" style="display: none;">
-          <div class="cliente-nuevo-fields">
-            <div class="form-grid-2">
-              <div class="field-group">
-                <label>NOMBRE COMPLETO *</label>
-                <input type="text" name="cliente_nuevo_nombre" id="cliente_nuevo_nombre" class="form-control" placeholder="Ej: María Pérez">
-              </div>
-              <div class="field-group">
-                <label>TELÉFONO (opcional)</label>
-                <input type="text" name="cliente_nuevo_telefono" id="cliente_nuevo_telefono" class="form-control" placeholder="Ej: 5512345678">
-              </div>
+        <!-- Campos para cliente nuevo (venta rápida) -->
+        <div id="cliente_nuevo_div">
+          <div class="form-grid-2">
+            <div class="field-group">
+              <label>NOMBRE DEL CLIENTE *</label>
+              <input type="text" name="cliente_nuevo_nombre" id="cliente_nuevo_nombre" class="form-control" placeholder="Ej: María Pérez" required>
             </div>
-            <div class="form-grid-2">
-              <div class="field-group">
-                <label>EMAIL (opcional)</label>
-                <input type="email" name="cliente_nuevo_email" id="cliente_nuevo_email" class="form-control" placeholder="cliente@ejemplo.com">
-              </div>
+            <div class="field-group">
+              <label>TELÉFONO (opcional)</label>
+              <input type="text" name="cliente_nuevo_telefono" id="cliente_nuevo_telefono" class="form-control" placeholder="Ej: 5512345678">
             </div>
           </div>
-        </div>
-        
-        <div class="form-grid-2" style="margin-top: 16px;">
-          <div class="field-group">
-            <label>EMPLEADO</label>
-            <select name="empleado_producto" id="id_empleado_producto" class="form-select" required>
-              <option value="">---------</option>
-              {% for empleado in empleados %}
-              <option value="{{ empleado.id }}">{{ empleado.nombre }} ({{ empleado.get_rol_display }})</option>
-              {% endfor %}
-            </select>
+          <div class="form-grid-2">
+            <div class="field-group">
+              <label>EMAIL (opcional)</label>
+              <input type="email" name="cliente_nuevo_email" id="cliente_nuevo_email" class="form-control" placeholder="cliente@ejemplo.com">
+            </div>
+            <div class="field-group">
+              <label>EMPLEADO *</label>
+              <select name="empleado_producto_nuevo" id="id_empleado_producto_nuevo" class="form-select" required>
+                <option value="">---------</option>
+                {% for empleado in empleados %}
+                <option value="{{ empleado.id }}">{{ empleado.nombre }} ({{ empleado.get_rol_display }})</option>
+                {% endfor %}
+              </select>
+            </div>
           </div>
         </div>
       </div>
     </div>
     
+    <!-- Resto del formulario igual -->
     <div class="form-section">
       <div class="form-section-header">PRODUCTOS</div>
       <div class="form-section-body">
@@ -473,14 +453,18 @@
     
     <div class="form-section">
       <div class="form-section-header">TOTAL</div>
-      <div class="form-section-body d-flex align-items-center justify-content-between">
-        <div>
-          <div class="total-amount" id="total_directa_display">$0.00</div>
-          <input type="hidden" name="total" id="total_directa_input" value="0">
-        </div>
-        <div class="d-flex gap-2">
-          <a href="{% url 'operaciones:venta_list' %}" class="btn btn-cancelar">CANCELAR</a>
-          <button type="submit" class="btn btn-guardar">GUARDAR VENTA</button>
+      <div class="form-section-body">
+        <div class="total-card" style="background: linear-gradient(135deg, #7b2d8b 0%, #5e2069 100%); border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 14px; opacity: 0.8; color: white;">TOTAL</div>
+            <div style="font-size: 32px; font-weight: 800; color: white;" id="total_directa_display">$0.00</div>
+            <div style="font-size: 10px; opacity: 0.6; color: white;">Cantidad × Precio unitario</div>
+            <input type="hidden" name="total" id="total_directa_input" value="0">
+          </div>
+          <div class="d-flex gap-2">
+            <a href="{% url 'operaciones:venta_list' %}" class="btn-cancelar">CANCELAR</a>
+            <button type="submit" class="btn-guardar">GUARDAR VENTA</button>
+          </div>
         </div>
       </div>
     </div>

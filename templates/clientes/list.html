@@ -1,92 +1,431 @@
 {% extends "base.html" %}
-{% block title %}Clientes — Estética{% endblock %}
+{% block title %}Clientes — Estética Glamour{% endblock %}
 {% block content %}
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="mb-0">
-    <i class="bi bi-people me-2" style="color:#7b2d8b"></i>Clientes
-  </h4>
+<style>
+  .clientes-container {
+    display: flex;
+    gap: 24px;
+    min-height: calc(100vh - 200px);
+  }
+  
+  .clientes-list {
+    flex: 1;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #ede8f2;
+    overflow: hidden;
+  }
+  .clientes-list-header {
+    padding: 16px 20px;
+    background: #f8f5fa;
+    border-bottom: 1px solid #ede8f2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .clientes-list-header h5 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #7b2d8b;
+  }
+  
+  /* Tabs de filtro */
+  .clientes-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .tab-btn {
+    padding: 8px 20px;
+    background: #f8f5fa;
+    border: 1px solid #ede8f2;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    background: #7b2d8b;
+    color: white;
+    border-color: #7b2d8b;
+  }
+  .tab-btn:hover:not(.active) {
+    background: #f3e8f7;
+  }
+  
+  .cliente-item {
+    padding: 14px 20px;
+    border-bottom: 1px solid #f0eef2;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .cliente-item:hover {
+    background: #fef9ff;
+  }
+  .cliente-item.active {
+    background: #f3e8f7;
+    border-left: 3px solid #7b2d8b;
+  }
+  .cliente-nombre {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 14px;
+  }
+  .cliente-tipo {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+  .tipo-registrado {
+    background: #e3f2fd;
+    color: #1565c0;
+  }
+  .tipo-venta-rapida {
+    background: #fff3e0;
+    color: #e65100;
+  }
+  
+  /* Panel lateral */
+  .cliente-detail-panel {
+    width: 360px;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #ede8f2;
+    position: sticky;
+    top: 80px;
+    height: fit-content;
+  }
+  .panel-header {
+    padding: 20px;
+    background: #f8f5fa;
+    border-bottom: 1px solid #ede8f2;
+    text-align: center;
+  }
+  .panel-avatar {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #7b2d8b 0%, #5e2069 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    color: white;
+    font-size: 32px;
+    font-weight: 600;
+  }
+  .panel-nombre {
+    font-size: 18px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 4px;
+  }
+  .panel-tipo {
+    font-size: 11px;
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+  .panel-body {
+    padding: 20px;
+  }
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0eef2;
+  }
+  .info-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8b8b8b;
+  }
+  .info-value {
+    font-size: 13px;
+    color: #2c3e50;
+    font-weight: 500;
+  }
+  .panel-actions {
+    padding: 16px 20px 20px;
+    border-top: 1px solid #ede8f2;
+    display: flex;
+    gap: 10px;
+  }
+  .btn-edit {
+    flex: 1;
+    background: #7b2d8b;
+    color: white;
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+  }
+  .btn-edit:hover {
+    background: #5e2069;
+    color: white;
+  }
+  .btn-delete {
+    flex: 1;
+    background: #f8f5fa;
+    color: #dc3545;
+    border: 1px solid #ffebee;
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+  }
+  .btn-delete:hover {
+    background: #ffebee;
+  }
+  .empty-panel {
+    text-align: center;
+    padding: 40px 20px;
+    color: #aaa;
+  }
+  .search-box {
+    padding: 6px 12px;
+    border: 1px solid #ede8f2;
+    border-radius: 8px;
+    width: 200px;
+    font-size: 13px;
+  }
+  
+  @media (max-width: 768px) {
+    .clientes-container {
+      flex-direction: column;
+    }
+    .cliente-detail-panel {
+      width: 100%;
+      position: static;
+    }
+  }
+</style>
 
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="mb-0"><i class="bi bi-people me-2" style="color:#7b2d8b"></i>Clientes</h4>
   <a href="{% url 'clientes:create' %}" class="btn btn-primary btn-sm">
     <i class="bi bi-plus-lg me-1"></i>Nuevo cliente
   </a>
 </div>
 
-<!-- BUSCADOR -->
-<form method="get" class="mb-3">
-  <div class="input-group">
-    <input type="text" name="q" class="form-control" placeholder="Buscar por nombre..." value="{{ request.GET.q }}">
-    <button class="btn btn-outline-secondary" type="submit">
-      <i class="bi bi-search"></i>
-    </button>
+<div class="clientes-container">
+  <div class="clientes-list">
+    <div class="clientes-list-header">
+      <h5><i class="bi bi-person-vcard me-1"></i> Directorio de clientes</h5>
+      <input type="text" id="searchCliente" class="search-box" placeholder="Buscar cliente...">
+    </div>
+    
+    <!-- Filtros por tipo -->
+    <div class="clientes-tabs" style="padding: 12px 20px 0;">
+      <button class="tab-btn active" data-tipo="todos">Todos</button>
+      <button class="tab-btn" data-tipo="registrado">📋 Registrados</button>
+      <button class="tab-btn" data-tipo="venta_rapida">⚡ Venta rápida</button>
+    </div>
+    
+    <div id="clientesList">
+      {% for cliente in clientes %}
+      <div class="cliente-item" 
+           data-id="{{ cliente.id }}" 
+           data-nombre="{{ cliente.nombre }}" 
+           data-telefono="{{ cliente.telefono }}" 
+           data-email="{{ cliente.email }}"
+           data-tipo="{{ cliente.tipo_cliente }}"
+           data-fecha="{{ cliente.fecha_registro|date:'d/m/Y H:i' }}">
+        <div>
+          <div class="cliente-nombre">{{ cliente.nombre }}</div>
+        </div>
+        <div>
+          {% if cliente.tipo_cliente == 'registrado' %}
+          <span class="cliente-tipo tipo-registrado">📋 Registrado</span>
+          {% else %}
+          <span class="cliente-tipo tipo-venta-rapida">⚡ Venta rápida</span>
+          {% endif %}
+        </div>
+      </div>
+      {% empty %}
+      <div class="cliente-item" style="justify-content: center; color: #aaa;">
+        No hay clientes registrados
+      </div>
+      {% endfor %}
+    </div>
   </div>
-</form>
-
-<div class="card shadow-sm">
-  <div class="card-body p-0">
-    <table class="table table-hover mb-0">
-      <thead class="table-light">
-        <tr>
-          <th>Nombre</th>
-          <th>Teléfono</th>
-          <th>Email</th>
-          <th>Registro</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for c in clientes %}
-        <tr>
-          <td>{{ c.nombre }}</td>
-          <td>{{ c.telefono }}</td>
-          <td class="no-uppercase">{{ c.email }}</td>
-          <td class="no-uppercase">{{ c.fecha_registro|date:"d/m/Y" }}</td>
-          <td class="text-end">
-            <a href="{% url 'clientes:detail' c.pk %}" class="btn btn-sm btn-outline-secondary me-1">
-              <i class="bi bi-eye"></i>
-            </a>
-            <a href="{% url 'clientes:update' c.pk %}" class="btn btn-sm btn-outline-primary me-1">
-              <i class="bi bi-pencil"></i>
-            </a>
-            <a href="{% url 'clientes:delete' c.pk %}" class="btn btn-sm btn-outline-danger">
-              <i class="bi bi-trash"></i>
-            </a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="5" class="text-center text-muted py-4">
-            Sin clientes registrados.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  
+  <!-- Panel lateral -->
+  <div class="cliente-detail-panel" id="detailPanel">
+    <div class="panel-header">
+      <div class="panel-avatar" id="panelAvatar">👤</div>
+      <div class="panel-nombre" id="panelNombre">Selecciona un cliente</div>
+      <div><span class="panel-tipo" id="panelTipo">---</span></div>
+    </div>
+    <div class="panel-body">
+      <div class="info-row">
+        <span class="info-label">Teléfono</span>
+        <span class="info-value" id="panelTelefono">---</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Email</span>
+        <span class="info-value" id="panelEmail">---</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Fecha registro</span>
+        <span class="info-value" id="panelFecha">---</span>
+      </div>
+    </div>
+    <div class="panel-actions" id="panelActions" style="display: none;">
+      <a href="#" id="editLink" class="btn-edit">
+        <i class="bi bi-pencil me-1"></i> Editar
+      </a>
+      <a href="#" id="deleteLink" class="btn-delete">
+        <i class="bi bi-trash me-1"></i> Eliminar
+      </a>
+    </div>
+    <div class="empty-panel" id="emptyPanel">
+      <i class="bi bi-person-circle" style="font-size: 48px; opacity: 0.3;"></i>
+      <p class="mt-2 mb-0">Haz clic en un cliente<br>para ver sus detalles</p>
+    </div>
   </div>
 </div>
 
-{% if clientes.has_other_pages %}
-<nav class="mt-3">
-  <ul class="pagination pagination-sm justify-content-center">
-    {% if clientes.has_previous %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ clientes.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">«</a>
-      </li>
-    {% endif %}
-
-    <li class="page-item disabled">
-      <a class="page-link no-uppercase">
-        Pág. {{ clientes.number }} / {{ clientes.paginator.num_pages }}
-      </a>
-    </li>
-
-    {% if clientes.has_next %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ clientes.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">»</a>
-      </li>
-    {% endif %}
-  </ul>
-</nav>
-{% endif %}
-
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const clientesList = document.querySelectorAll('.cliente-item');
+  const panelAvatar = document.getElementById('panelAvatar');
+  const panelNombre = document.getElementById('panelNombre');
+  const panelTipo = document.getElementById('panelTipo');
+  const panelTelefono = document.getElementById('panelTelefono');
+  const panelEmail = document.getElementById('panelEmail');
+  const panelFecha = document.getElementById('panelFecha');
+  const panelActions = document.getElementById('panelActions');
+  const emptyPanel = document.getElementById('emptyPanel');
+  const editLink = document.getElementById('editLink');
+  const deleteLink = document.getElementById('deleteLink');
+  const searchInput = document.getElementById('searchCliente');
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  
+  function getInitials(nombre) {
+    if (!nombre) return '?';
+    const partes = nombre.split(' ');
+    if (partes.length >= 2) {
+      return (partes[0].charAt(0) + partes[1].charAt(0)).toUpperCase();
+    }
+    return nombre.charAt(0).toUpperCase();
+  }
+  
+  function showClienteDetail(clienteId, data) {
+    panelAvatar.textContent = getInitials(data.nombre);
+    panelNombre.textContent = data.nombre;
+    
+    if (data.tipo === 'registrado') {
+      panelTipo.textContent = '📋 Cliente Registrado';
+      panelTipo.style.background = '#e3f2fd';
+      panelTipo.style.color = '#1565c0';
+    } else {
+      panelTipo.textContent = '⚡ Venta Rápida (Ocasional)';
+      panelTipo.style.background = '#fff3e0';
+      panelTipo.style.color = '#e65100';
+    }
+    
+    panelTelefono.textContent = data.telefono || 'No registrado';
+    panelEmail.textContent = data.email || 'No registrado';
+    panelFecha.textContent = data.fecha || 'No registrada';
+    
+    editLink.href = `/clientes/${clienteId}/editar/`;
+    deleteLink.href = `/clientes/${clienteId}/eliminar/`;
+    
+    panelActions.style.display = 'flex';
+    emptyPanel.style.display = 'none';
+    
+    clientesList.forEach(item => {
+      item.classList.remove('active');
+      if (item.getAttribute('data-id') == clienteId) {
+        item.classList.add('active');
+      }
+    });
+  }
+  
+  function clearPanel() {
+    panelAvatar.textContent = '👤';
+    panelNombre.textContent = 'Selecciona un cliente';
+    panelTipo.textContent = '---';
+    panelTelefono.textContent = '---';
+    panelEmail.textContent = '---';
+    panelFecha.textContent = '---';
+    panelActions.style.display = 'none';
+    emptyPanel.style.display = 'block';
+    
+    clientesList.forEach(item => {
+      item.classList.remove('active');
+    });
+  }
+  
+  // Click en cliente
+  clientesList.forEach(item => {
+    item.addEventListener('click', function(e) {
+      const data = {
+        nombre: this.getAttribute('data-nombre'),
+        telefono: this.getAttribute('data-telefono'),
+        email: this.getAttribute('data-email'),
+        tipo: this.getAttribute('data-tipo'),
+        fecha: this.getAttribute('data-fecha')
+      };
+      showClienteDetail(this.getAttribute('data-id'), data);
+    });
+  });
+  
+  // Búsqueda
+  if (searchInput) {
+    searchInput.addEventListener('keyup', function() {
+      const searchTerm = this.value.toLowerCase();
+      clientesList.forEach(item => {
+        const nombre = item.getAttribute('data-nombre') || '';
+        if (nombre.toLowerCase().includes(searchTerm)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+  }
+  
+  // Filtro por tipo
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+      tabBtns.forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      
+      const tipo = this.getAttribute('data-tipo');
+      
+      clientesList.forEach(item => {
+        if (tipo === 'todos') {
+          item.style.display = 'flex';
+        } else {
+          const itemTipo = item.getAttribute('data-tipo');
+          if (itemTipo === tipo) {
+            item.style.display = 'flex';
+          } else {
+            item.style.display = 'none';
+          }
+        }
+      });
+    });
+  });
+  
+  if (clientesList.length === 0) {
+    clearPanel();
+  }
+});
+</script>
 {% endblock %}

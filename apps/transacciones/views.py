@@ -286,11 +286,12 @@ def venta_create(request):
         metodo_pago = request.POST.get('metodo_pago')
         total = float(request.POST.get('total', 0))
         productos_json = request.POST.get('productos_json', '[]')
-        tipo_cliente = request.POST.get('tipo_cliente', 'registrado')
+        tipo_venta = request.POST.get('tipo_venta', 'cita')
         
         productos_data = json.loads(productos_json) if productos_json else []
         
-        if tipo_cliente == 'nuevo':
+        # Crear cliente para venta directa
+        if tipo_venta == 'directa':
             nombre_nuevo = request.POST.get('cliente_nuevo_nombre', '').strip().upper()
             telefono_nuevo = request.POST.get('cliente_nuevo_telefono', '')
             email_nuevo = request.POST.get('cliente_nuevo_email', '')
@@ -300,6 +301,7 @@ def venta_create(request):
                     nombre=nombre_nuevo,
                     telefono=telefono_nuevo or '0000000000',
                     email=email_nuevo,
+                    tipo_cliente='venta_rapida',
                     activo=True
                 )
                 cliente_id = cliente.id
@@ -313,6 +315,15 @@ def venta_create(request):
                     'productos': productos,
                 })
         else:
+            if not cliente_id:
+                messages.error(request, 'Debe seleccionar una cita')
+                return render(request, 'operaciones/venta_form.html', {
+                    'titulo': 'Nueva Venta',
+                    'citas_disponibles': citas_disponibles,
+                    'clientes': clientes,
+                    'empleados': empleados,
+                    'productos': productos,
+                })
             cliente = get_object_or_404(Cliente, pk=cliente_id)
         
         empleado = get_object_or_404(Empleado, pk=empleado_id)
@@ -363,6 +374,7 @@ def venta_create(request):
         messages.success(request, '¡Venta(s) registrada(s) con éxito!')
         return redirect('operaciones:venta_list')
     
+    # IMPORTANTE: Este return es para cuando la solicitud es GET
     return render(request, 'operaciones/venta_form.html', {
         'titulo': 'Nueva Venta',
         'citas_disponibles': citas_disponibles,
