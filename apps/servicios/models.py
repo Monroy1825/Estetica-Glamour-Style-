@@ -10,8 +10,11 @@ class Servicio(models.Model):
         ('maquillaje', 'Maquillaje'),
     ]
     nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True, default='')
     categoria = models.CharField(max_length=20, choices=CATEGORIA_CHOICES)
     precio_base = models.DecimalField(max_digits=8, decimal_places=2)
+    precio_costo = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    duracion_minutos = models.PositiveIntegerField(default=60, verbose_name='Duración (minutos)')
     activo = models.BooleanField(default=True)
 
     class Meta:
@@ -30,6 +33,7 @@ class Servicio(models.Model):
 
 class Producto(models.Model):
     nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True, default='')
     marca = models.CharField(max_length=100, blank=True)
     tamano = models.CharField(
         max_length=100,

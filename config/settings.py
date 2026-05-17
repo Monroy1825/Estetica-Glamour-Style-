@@ -1,9 +1,8 @@
-from pathlib import Path
+﻿from pathlib import Path
 from decouple import config, Csv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Modificado con valores por defecto para evitar errores si no encuentra el archivo .env
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-clave-temporal-123')
 DEBUG = config('DEBUG', default=True, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv())
@@ -15,11 +14,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # apps propias
     'apps.clientes',
     'apps.empleados',
     'apps.servicios',
-    'apps.operaciones',
+    'apps.transacciones',
     'apps.portal',
 ]
 
