@@ -379,7 +379,7 @@
             </div>
             <div class="field-group">
               <label>EMPLEADO *</label>
-              <select name="empleado_producto_nuevo" id="id_empleado_producto_nuevo" class="form-select" required>
+              <select name="empleado_directa" id="id_empleado_directa" class="form-select" required>
                 <option value="">---------</option>
                 {% for empleado in empleados %}
                 <option value="{{ empleado.id }}">{{ empleado.nombre }} ({{ empleado.get_rol_display }})</option>
@@ -419,7 +419,7 @@
             <tr><th>Producto</th><th>Cantidad</th><th>Precio Unit.</th><th>Subtotal</th><th></th></tr>
           </thead>
           <tbody id="productosAgregadosDirecta">
-            <tr><td colspan="5" style="text-align: center; color: #aaa;">No hay productos agregados</td></tr>
+            <tr><td colspan="5" style="text-align: center; color: #aaa;">No hay productos agregados</td></td>
           </tbody>
         </table>
       </div>
@@ -640,7 +640,7 @@ function renderizarTablaProductosDirecta() {
   });
   
   if (productosDirecta.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #aaa;">No hay productos agregados</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #aaa;">No hay productos agregados</td></td>';
   }
   actualizarTotalDirecta();
 }
@@ -700,47 +700,16 @@ document.getElementById('btnAgregarProductoDirecta')?.addEventListener('click', 
   document.getElementById('cantidad_producto_directa').value = '1';
 });
 
-// Toggle cliente registrado/nuevo en venta directa
-const tipoCliente = document.getElementById('tipo_cliente_directa');
-const clienteRegistradoDiv = document.getElementById('cliente_registrado_div');
-const clienteNuevoDiv = document.getElementById('cliente_nuevo_div');
-
-if (tipoCliente) {
-  tipoCliente.addEventListener('change', function() {
-    if (this.value === 'registrado') {
-      clienteRegistradoDiv.style.display = 'block';
-      clienteNuevoDiv.style.display = 'none';
-    } else {
-      clienteRegistradoDiv.style.display = 'none';
-      clienteNuevoDiv.style.display = 'block';
-    }
-  });
-}
-
 // Validar formulario directa antes de enviar
 document.getElementById('formDirecta')?.addEventListener('submit', function(e) {
-  const tipoClienteVal = document.getElementById('tipo_cliente_directa').value;
-  let clienteValido = false;
-  
-  if (tipoClienteVal === 'registrado') {
-    const cliente = document.getElementById('id_cliente_producto').value;
-    if (!cliente) {
-      e.preventDefault();
-      alert('Seleccione un cliente registrado');
-      return;
-    }
-    clienteValido = true;
-  } else {
-    const nombreCliente = document.getElementById('cliente_nuevo_nombre').value.trim();
-    if (!nombreCliente) {
-      e.preventDefault();
-      alert('Ingrese el nombre del cliente');
-      return;
-    }
-    clienteValido = true;
+  const nombreCliente = document.getElementById('cliente_nuevo_nombre').value.trim();
+  if (!nombreCliente) {
+    e.preventDefault();
+    alert('Ingrese el nombre del cliente');
+    return;
   }
   
-  const empleado = document.getElementById('id_empleado_producto').value;
+  const empleado = document.getElementById('id_empleado_directa').value;
   if (!empleado) {
     e.preventDefault();
     alert('Seleccione un empleado');

@@ -281,10 +281,9 @@ def venta_create(request):
     
     if request.method == 'POST':
         cliente_id = request.POST.get('cliente') or request.POST.get('cliente_producto')
-        empleado_id = request.POST.get('empleado') or request.POST.get('empleado_producto') or request.POST.get('empleado_producto_nuevo')
+        empleado_id = request.POST.get('empleado') or request.POST.get('empleado_producto') or request.POST.get('empleado_directa')
         cita_id = request.POST.get('cita')
         metodo_pago = request.POST.get('metodo_pago')
-        total = float(request.POST.get('total', 0))
         productos_json = request.POST.get('productos_json', '[]')
         tipo_venta = request.POST.get('tipo_venta', 'cita')
         
@@ -297,12 +296,15 @@ def venta_create(request):
             email_nuevo = request.POST.get('cliente_nuevo_email', '')
             
             if nombre_nuevo:
-                cliente = Cliente.objects.create(
+                # Buscar si ya existe un cliente con ese nombre
+                cliente, created = Cliente.objects.get_or_create(
                     nombre=nombre_nuevo,
-                    telefono=telefono_nuevo or '0000000000',
-                    email=email_nuevo,
-                    tipo_cliente='venta_rapida',
-                    activo=True
+                    defaults={
+                        'telefono': telefono_nuevo or '0000000000',
+                        'email': email_nuevo,
+                        'tipo_cliente': 'venta_rapida',
+                        'activo': True
+                    }
                 )
                 cliente_id = cliente.id
             else:
@@ -334,6 +336,7 @@ def venta_create(request):
         session_key = f'ticket_ventas_{cliente.id}'
         ids_sesion = request.session.get(session_key, [])
         
+        # Crear venta del servicio (si hay cita)
         if cita:
             venta_servicio = Venta(
                 cliente=cliente,
@@ -344,15 +347,18 @@ def venta_create(request):
                 tipo='servicio',
                 estatus='pendiente',
                 total=float(cita.servicio.precio_base),
-                activo=True,
+                activo=True,  # <-- IMPORTANTE
                 origen='cita'
             )
             venta_servicio.save()
             ids_sesion.append(venta_servicio.pk)
+            print(f"✅ Venta servicio creada: ID {venta_servicio.id} - Cliente: {cliente.nombre}")
         
+        # Crear ventas de los productos
         for prod_data in productos_data:
             producto = get_object_or_404(Producto, pk=prod_data['id'])
-            if producto.stock_actual >= prod_data['cantidad']:
+            cantidad = prod_data['cantidad']
+            if producto.stock_actual >= cantidad:
                 venta_producto = Venta(
                     cliente=cliente,
                     empleado=empleado,
@@ -361,20 +367,20 @@ def venta_create(request):
                     metodo_pago=metodo_pago,
                     tipo='producto',
                     estatus='pendiente',
-                    total=float(producto.precio_venta) * prod_data['cantidad'],
-                    activo=True,
+                    total=float(producto.precio_venta) * cantidad,
+                    activo=True,  # <-- IMPORTANTE
                     origen='venta_directa'
                 )
                 venta_producto.save()
                 ids_sesion.append(venta_producto.pk)
-                producto.stock_actual -= prod_data['cantidad']
+                producto.stock_actual -= cantidad
                 producto.save()
+                print(f"✅ Venta producto creada: ID {venta_producto.id} - Producto: {producto.nombre}")
         
         request.session[session_key] = ids_sesion
         messages.success(request, '¡Venta(s) registrada(s) con éxito!')
         return redirect('operaciones:venta_list')
     
-    # IMPORTANTE: Este return es para cuando la solicitud es GET
     return render(request, 'operaciones/venta_form.html', {
         'titulo': 'Nueva Venta',
         'citas_disponibles': citas_disponibles,

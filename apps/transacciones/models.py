@@ -115,10 +115,10 @@ class Venta(models.Model):
     estatus = models.CharField(max_length=20, choices=ESTATUS_CHOICES, default='pendiente')
     vigencia_hasta = models.DateField(null=True, blank=True)
     total = models.FloatField()
-    activo = models.BooleanField(default=True)
+    activo = models.BooleanField(default=True)  # ✅ IMPORTANTE: default=True
     origen = models.CharField(max_length=20, choices=ORIGEN_CHOICES, default='venta_directa', verbose_name='Origen de la venta')
     
-    # ✅ CAMPOS NUEVOS (auditoría)
+    # Campos de auditoría
     created_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='ventas_creadas')
     updated_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='ventas_actualizadas')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -257,7 +257,7 @@ class VentaDetalle(models.Model):
     descripcion = models.CharField(max_length=200)
     cantidad = models.IntegerField(default=1)
     precio_unitario = models.FloatField()
-    precio_costo_unitario = models.FloatField(default=0)   # ✅ NUEVO CAMPO
+    precio_costo_unitario = models.FloatField(default=0)
     subtotal = models.FloatField()
     activo = models.BooleanField(default=True)
 
