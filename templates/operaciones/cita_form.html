@@ -167,12 +167,9 @@
           {% endif %}
         </div>
         <div class="field-group">
-          <label>ESTADO</label>
-          {{ form.estado }}
-          {% if form.estado.errors %}
-            <div class="text-danger small mt-1">{{ form.estado.errors|join:", " }}</div>
-          {% endif %}
-        </div>
+    <label>ESTADO</label>
+    <input type="text" class="form-control" value="Pendiente" readonly>
+    {{ form.estado.as_hidden }}
       </div>
       <div class="form-grid-2" style="margin-bottom:16px">
         <div class="field-group">

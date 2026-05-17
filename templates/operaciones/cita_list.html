@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Citas — Estética{% endblock %}
+{% block title %}Citas — Estética Glamour{% endblock %}
 {% block content %}
 
 <style>
@@ -43,15 +43,9 @@
     color: #6c757d;
     cursor: not-allowed;
   }
-  .btn-delete-batch.disabled:hover {
-    transform: none;
-  }
   .checkbox-col {
     width: 35px;
     text-align: center;
-  }
-  .select-all {
-    cursor: pointer;
   }
   .search-filter {
     display: flex;
@@ -71,6 +65,87 @@
     border-radius: 8px;
     font-size: 13px;
   }
+
+  .action-buttons {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .btn-action {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    text-decoration: none;
+  }
+  .btn-action:hover {
+    transform: translateY(-2px);
+  }
+  .btn-confirmar {
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+  .btn-confirmar:hover {
+    background: #2e7d32;
+    color: white;
+  }
+  .btn-completar {
+    background: #e3f2fd;
+    color: #1565c0;
+  }
+  .btn-completar:hover {
+    background: #1565c0;
+    color: white;
+  }
+  .btn-cancelar {
+    background: #ffebee;
+    color: #c62828;
+  }
+  .btn-cancelar:hover {
+    background: #c62828;
+    color: white;
+  }
+  .btn-reagendar {
+    background: #fff3e0;
+    color: #e65100;
+  }
+  .btn-reagendar:hover {
+    background: #e65100;
+    color: white;
+  }
+  .btn-view {
+    background: #e0e0e0;
+    color: #424242;
+  }
+  .btn-view:hover {
+    background: #7b2d8b;
+    color: white;
+  }
+
+  input[type="date"] {
+    padding: 10px 12px;
+    border: 1px solid #ede8f2;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+  input[type="date"]:invalid {
+    border-color: #dc3545;
+  }
+  
+  /* Modal styles */
+  .modal {
+    z-index: 1050;
+  }
+  .modal-backdrop {
+    z-index: 1040;
+  }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -78,7 +153,6 @@
   <a href="{% url 'operaciones:cita_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Nueva cita</a>
 </div>
 
-<!-- Barra de acciones masivas -->
 <div class="batch-actions">
   <div class="search-filter">
     <input type="text" id="searchInput" placeholder="Buscar cliente..." class="form-control form-control-sm">
@@ -120,7 +194,6 @@
     </div>
   </div>
   
-  <!-- Lista de clientes asignados -->
   <div class="collapse" id="clientes-{{ forloop.counter }}">
     <div class="card-body bg-light">
       <h6 class="mb-3"><i class="bi bi-person-vcard"></i> Clientes asignados a {{ grupo.empleado.nombre }}:</h6>
@@ -156,7 +229,7 @@
           <th>Fecha</th>
           <th>Duración</th>
           <th>Estado</th>
-          <th></th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -173,14 +246,38 @@
           <td class="no-uppercase">{{ cita.fecha_inicio|date:"d/m/Y H:i" }}</td>
           <td class="no-uppercase">{{ cita.duracion_horas }} hr</td>
           <td>
-            <span class="badge {% if cita.estado == 'pendiente' %}bg-warning{% elif cita.estado == 'confirmada' %}bg-info{% elif cita.estado == 'completada' %}bg-success{% else %}bg-danger{% endif %} no-uppercase">
+            <span class="badge estado-badge {% if cita.estado == 'pendiente' %}bg-warning{% elif cita.estado == 'confirmada' %}bg-info{% elif cita.estado == 'completada' %}bg-success{% else %}bg-danger{% endif %} no-uppercase">
               {{ cita.get_estado_display }}
             </span>
           </td>
           <td class="text-end">
-            <a href="{% url 'operaciones:cita_detail' cita.pk %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-eye"></i></a>
-            <a href="{% url 'operaciones:cita_update' cita.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'operaciones:cita_delete' cita.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+            <div class="action-buttons">
+              {% if cita.estado == 'pendiente' %}
+              <button class="btn-action btn-confirmar" onclick="cambiarEstado({{ cita.pk }}, 'confirmada')" title="Confirmar">
+                <i class="bi bi-check-lg"></i>
+              </button>
+              {% endif %}
+              
+              {% if cita.estado == 'confirmada' %}
+              <button class="btn-action btn-completar" onclick="cambiarEstado({{ cita.pk }}, 'completada')" title="Completar">
+                <i class="bi bi-check2-circle"></i>
+              </button>
+              {% endif %}
+              
+              {% if cita.estado != 'cancelada' and cita.estado != 'completada' %}
+              <button class="btn-action btn-cancelar" onclick="cambiarEstado({{ cita.pk }}, 'cancelada')" title="Cancelar">
+                <i class="bi bi-x-lg"></i>
+              </button>
+              {% endif %}
+              
+              <button class="btn-action btn-reagendar" onclick="abrirModalReagendar({{ cita.pk }}, '{{ cita.fecha_inicio|date:"Y-m-d" }}', '{{ cita.fecha_inicio|date:"H:i" }}', {{ cita.empleado.id }})" title="Reagendar">
+                <i class="bi bi-calendar-plus"></i>
+              </button>
+              
+              <a href="{% url 'operaciones:cita_detail' cita.pk %}" class="btn-action btn-view" title="Ver detalles">
+                <i class="bi bi-eye"></i>
+              </a>
+            </div>
           </td>
         </tr>
         {% endfor %}
@@ -198,7 +295,189 @@
 </div>
 {% endfor %}
 
+<!-- Modal fuera de los bucles -->
+<div class="modal fade" id="modalReagendar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header" style="background: #7b2d8b; color: white;">
+        <h5 class="modal-title"><i class="bi bi-calendar-plus"></i> Reagendar Cita</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label>Nueva Fecha</label>
+          <input type="date" id="nueva_fecha" class="form-control">
+        </div>
+        <div class="mb-3">
+          <label>Nueva Hora</label>
+          <select id="nueva_hora" class="form-select">
+            <option value="10:00">10:00 AM</option>
+            <option value="11:00">11:00 AM</option>
+            <option value="12:00">12:00 PM</option>
+            <option value="13:00">01:00 PM</option>
+            <option value="17:00">05:00 PM</option>
+            <option value="18:00">06:00 PM</option>
+            <option value="19:00">07:00 PM</option>
+            <option value="20:00">08:00 PM</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label>Empleado</label>
+          <select id="nuevo_empleado" class="form-select">
+            <option value="">Mismo empleado</option>
+            {% for e in empleados %}
+            <option value="{{ e.id }}">{{ e.nombre }} ({{ e.get_rol_display }})</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" id="btnGuardarReagendar" class="btn btn-primary">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+function mostrarNotificacion(mensaje, tipo) {
+  const notificacion = document.createElement('div');
+  notificacion.className = `alert alert-${tipo === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+  notificacion.style.position = 'fixed';
+  notificacion.style.top = '20px';
+  notificacion.style.right = '20px';
+  notificacion.style.zIndex = '9999';
+  notificacion.style.minWidth = '300px';
+  notificacion.innerHTML = mensaje + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+  document.body.appendChild(notificacion);
+  setTimeout(() => notificacion.remove(), 3000);
+}
+
+function cambiarEstado(citaId, nuevoEstado) {
+  let mensaje = '';
+  if (nuevoEstado === 'confirmada') mensaje = '¿Confirmar esta cita?';
+  else if (nuevoEstado === 'completada') mensaje = '¿Completar esta cita? Se generará una venta automáticamente.';
+  else if (nuevoEstado === 'cancelada') mensaje = '¿Cancelar esta cita?';
+  
+  if (!confirm(mensaje)) return;
+  
+  fetch(`/operaciones/citas/${citaId}/cambiar-estado/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({ estado: nuevoEstado })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      const row = document.querySelector(`tr[data-id="${citaId}"]`);
+      if (row) {
+        const badgeSpan = row.querySelector('.estado-badge');
+        if (badgeSpan) {
+          badgeSpan.className = `badge estado-badge ${data.badge_class}`;
+          badgeSpan.textContent = data.estado_display;
+        }
+        row.setAttribute('data-estado', nuevoEstado);
+      }
+      mostrarNotificacion('Estado actualizado correctamente', 'success');
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      mostrarNotificacion('Error: ' + data.error, 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    mostrarNotificacion('Error al cambiar estado', 'error');
+  });
+}
+
+// Variables globales para el modal
+let citaIdActual = null;
+
+function abrirModalReagendar(citaId, fechaActual, horaActual, empleadoId) {
+  citaIdActual = citaId;
+  const fechaInput = document.getElementById('nueva_fecha');
+  const horaSelect = document.getElementById('nueva_hora');
+  const empleadoSelect = document.getElementById('nuevo_empleado');
+  
+  const hoy = new Date();
+  const año = hoy.getFullYear();
+  const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+  const dia = String(hoy.getDate()).padStart(2, '0');
+  const fechaMinima = `${año}-${mes}-${dia}`;
+  
+  fechaInput.min = fechaMinima;
+  fechaInput.value = fechaActual;
+  horaSelect.value = horaActual;
+  empleadoSelect.value = empleadoId;
+  
+  const modal = new bootstrap.Modal(document.getElementById('modalReagendar'));
+  modal.show();
+}
+
+document.getElementById('btnGuardarReagendar').addEventListener('click', function() {
+  const nuevaFecha = document.getElementById('nueva_fecha').value;
+  const nuevaHora = document.getElementById('nueva_hora').value;
+  const nuevoEmpleadoId = document.getElementById('nuevo_empleado').value;
+  
+  const hoy = new Date();
+  const año = hoy.getFullYear();
+  const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+  const dia = String(hoy.getDate()).padStart(2, '0');
+  const fechaMinima = `${año}-${mes}-${dia}`;
+  
+  if (nuevaFecha < fechaMinima) {
+    mostrarNotificacion('No se puede reagendar a una fecha anterior a hoy', 'error');
+    return;
+  }
+  
+  fetch(`/operaciones/citas/${citaIdActual}/reagendar/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({
+      fecha: nuevaFecha,
+      hora: nuevaHora,
+      empleado_id: nuevoEmpleadoId || null
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      const modal = bootstrap.Modal.getInstance(document.getElementById('modalReagendar'));
+      modal.hide();
+      mostrarNotificacion('Cita reagendada correctamente', 'success');
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      mostrarNotificacion('Error: ' + data.error, 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    mostrarNotificacion('Error al reagendar', 'error');
+  });
+});
+
+// DOMContentLoaded para checkboxes y filtros
 document.addEventListener('DOMContentLoaded', function() {
   const checkboxes = document.querySelectorAll('.cita-checkbox');
   const selectAllBtns = document.querySelectorAll('.select-all-empleado');
@@ -207,25 +486,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const searchInput = document.getElementById('searchInput');
   const estadoFilter = document.getElementById('estadoFilter');
   
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  }
-  
   function updateSelectedCount() {
     const selected = document.querySelectorAll('.cita-checkbox:checked').length;
     selectedCountSpan.textContent = `${selected} seleccionada${selected !== 1 ? 's' : ''}`;
-    
     if (selected > 0) {
       deleteBatchBtn.classList.remove('disabled');
       deleteBatchBtn.disabled = false;
@@ -256,11 +519,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const rows = document.querySelectorAll('.cita-row');
       rows.forEach(row => {
         const cliente = row.getAttribute('data-cliente') || '';
-        if (cliente.includes(searchTerm)) {
-          row.style.display = '';
-        } else {
-          row.style.display = 'none';
-        }
+        row.style.display = cliente.includes(searchTerm) ? '' : 'none';
       });
     });
   }
@@ -271,11 +530,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const rows = document.querySelectorAll('.cita-row');
       rows.forEach(row => {
         const rowEstado = row.getAttribute('data-estado') || '';
-        if (!estado || rowEstado === estado) {
-          row.style.display = '';
-        } else {
-          row.style.display = 'none';
-        }
+        row.style.display = (!estado || rowEstado === estado) ? '' : 'none';
       });
     });
   }
@@ -283,15 +538,12 @@ document.addEventListener('DOMContentLoaded', function() {
   if (deleteBatchBtn) {
     deleteBatchBtn.addEventListener('click', function() {
       if (deleteBatchBtn.classList.contains('disabled')) return;
-      
       const selected = [];
       document.querySelectorAll('.cita-checkbox:checked').forEach(cb => {
         selected.push(cb.value);
       });
-      
       if (selected.length === 0) return;
-      
-      if (confirm(`¿Estás seguro de eliminar ${selected.length} cita${selected.length !== 1 ? 's' : ''}? Esta acción no se puede deshacer.`)) {
+      if (confirm(`¿Estás seguro de eliminar ${selected.length} cita${selected.length !== 1 ? 's' : ''}?`)) {
         fetch('/operaciones/citas/batch-delete/', {
           method: 'POST',
           headers: {
@@ -302,11 +554,8 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-          if (data.success) {
-            location.reload();
-          } else {
-            alert('Error: ' + data.error);
-          }
+          if (data.success) location.reload();
+          else alert('Error: ' + data.error);
         })
         .catch(error => {
           console.error('Error:', error);

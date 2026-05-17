@@ -60,4 +60,11 @@ urlpatterns = [
     
     # VENTA DESDE CITA (NUEVO)
     path('citas/<int:cita_id>/crear-venta/', views.VentaFromCitaView.as_view(), name='venta_from_cita'),
+
+    # Agrega al final del archivo
+    path('citas/<int:pk>/cambiar-estado/', views.cita_cambiar_estado, name='cita_cambiar_estado'),
+    path('citas/<int:pk>/reagendar/', views.cita_reagendar, name='cita_reagendar'),
 ]
+
+
+

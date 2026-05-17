@@ -10,6 +10,7 @@ from django.urls import reverse_lazy
 from datetime import datetime
 import json
 
+
 from .models import Cita, Venta, Compra, Cotizacion, VentaCabecera, VentaDetalle
 from apps.servicios.models import Producto, Servicio
 from .forms import CitaForm, VentaForm, CompraForm, CotizacionForm, VentaCombinadaForm
@@ -68,6 +69,7 @@ def cita_list(request):
     
     empleados_con_citas = []
     empleados = Empleado.objects.filter(activo=True)
+    todos_empleados = empleados  # Para el modal de reagendar
     
     for empleado in empleados:
         citas_empleado = Cita.objects.filter(
@@ -89,7 +91,8 @@ def cita_list(request):
             })
     
     return render(request, 'operaciones/cita_list.html', {
-        'empleados_con_citas': empleados_con_citas
+        'empleados_con_citas': empleados_con_citas,
+        'empleados': todos_empleados,
     })
 
 @login_required
@@ -983,3 +986,112 @@ def reporte_margenes_mejorado(request):
         'margen_total': margen_total,
         'margen_promedio': margen_promedio,
     })
+
+
+
+
+# ========== ACCIONES RÁPIDAS PARA CITAS ==========
+
+@login_required
+def cita_cambiar_estado(request, pk):
+    """Cambiar estado de una cita vía AJAX"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            nuevo_estado = data.get('estado')
+            cita = get_object_or_404(Cita, pk=pk, activo=True)
+            
+            estados_validos = ['pendiente', 'confirmada', 'completada', 'cancelada']
+            if nuevo_estado not in estados_validos:
+                return JsonResponse({'success': False, 'error': 'Estado no válido'})
+            
+            cita.estado = nuevo_estado
+            cita.save()
+            
+            # Si se completa la cita, generar venta automática
+            if nuevo_estado == 'completada':
+                venta_existente = Venta.objects.filter(cita=cita, activo=True).first()
+                if not venta_existente:
+                    precio_base = float(cita.servicio.precio_base)
+                    Venta.objects.create(
+                        cliente=cita.cliente,
+                        empleado=cita.empleado,
+                        cita=cita,
+                        metodo_pago='efectivo',
+                        tipo='servicio',
+                        estatus='pagada',
+                        total=precio_base,
+                        activo=True,
+                        origen='cita'
+                    )
+            
+            return JsonResponse({
+                'success': True,
+                'nuevo_estado': nuevo_estado,
+                'estado_display': cita.get_estado_display(),
+                'badge_class': get_badge_class(nuevo_estado)
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Método no permitido'})
+
+@login_required
+def cita_reagendar(request, pk):
+    """Reagendar una cita vía AJAX"""
+    if request.method == 'POST':
+        try:
+            import json
+            from datetime import datetime
+            from django.utils import timezone
+            
+            data = json.loads(request.body)
+            cita = get_object_or_404(Cita, pk=pk, activo=True)
+            
+            nueva_fecha = data.get('fecha')
+            nueva_hora = data.get('hora')
+            nuevo_empleado_id = data.get('empleado_id')
+            
+            if nueva_fecha and nueva_hora:
+                # Crear datetime con zona horaria usando make_aware
+                fecha_hora_naive = datetime.strptime(f"{nueva_fecha} {nueva_hora}", "%Y-%m-%d %H:%M")
+                fecha_hora = timezone.make_aware(fecha_hora_naive)
+                
+                # Obtener la fecha/hora actual
+                ahora = timezone.now()
+                
+                if fecha_hora < ahora:
+                    return JsonResponse({
+                        'success': False, 
+                        'error': 'No se puede reagendar a una fecha u hora anterior a la actual'
+                    })
+                
+                cita.fecha_inicio = fecha_hora
+                cita.fecha_fin = fecha_hora + timezone.timedelta(hours=cita.duracion_horas)
+            
+            if nuevo_empleado_id:
+                from apps.empleados.models import Empleado
+                cita.empleado = get_object_or_404(Empleado, pk=nuevo_empleado_id)
+            
+            cita.save()
+            
+            return JsonResponse({
+                'success': True,
+                'nueva_fecha': cita.fecha_inicio.strftime('%d/%m/%Y %H:%M'),
+                'empleado_nombre': cita.empleado.nombre
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Método no permitido'})
+
+
+def get_badge_class(estado):
+    """Retorna la clase CSS para el badge según el estado"""
+    clases = {
+        'pendiente': 'bg-warning',
+        'confirmada': 'bg-info',
+        'completada': 'bg-success',
+        'cancelada': 'bg-danger'
+    }
+    return clases.get(estado, 'bg-secondary')

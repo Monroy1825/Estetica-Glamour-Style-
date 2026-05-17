@@ -3,7 +3,8 @@ from django.core.mail import send_mail
 from datetime import datetime, timedelta
 from .forms import CitaPublicaForm, ConsultaForm
 from apps.clientes.models import Cliente
-from apps.operaciones.models import Cita
+
+from apps.transacciones.models import Cita
 
 
 def portal_index(request):

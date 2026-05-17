@@ -404,3 +404,55 @@ def reporte_stock_pdf(request):
     response = HttpResponse(buffer, content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="reporte_stock.pdf"'
     return response
+
+#rango de filtro de reporte citas desde hasta 
+@login_required
+def reporte_citas(request):
+    hoy = timezone.now()
+    
+    mes_desde = request.GET.get('mes_desde')
+    mes_hasta = request.GET.get('mes_hasta')
+    anio = int(request.GET.get('anio', hoy.year))
+    
+    if not mes_desde and not mes_hasta:
+        mes_desde = str(hoy.month)
+        mes_hasta = str(hoy.month)
+    
+    citas = Cita.objects.filter(activo=True, fecha_inicio__year=anio).select_related(
+        'cliente', 'empleado', 'servicio'
+    )
+    
+    if mes_desde and mes_hasta:
+        citas = citas.filter(
+            Q(fecha_inicio__month__gte=int(mes_desde), fecha_inicio__month__lte=int(mes_hasta))
+        )
+    elif mes_desde:
+        citas = citas.filter(fecha_inicio__month=int(mes_desde))
+    elif mes_hasta:
+        citas = citas.filter(fecha_inicio__month=int(mes_hasta))
+    
+    citas = citas.order_by('-fecha_inicio')
+    
+    total_citas = citas.count()
+    citas_completadas = citas.filter(estado='completada').count()
+    citas_pendientes = citas.filter(estado='pendiente').count()
+    
+    # Obtener nombres de meses
+    nombre_mes_desde = dict(MESES).get(int(mes_desde) if mes_desde else None, '')
+    nombre_mes_hasta = dict(MESES).get(int(mes_hasta) if mes_hasta else None, '')
+    
+    years = range(anio - 2, anio + 1)
+    
+    return render(request, 'reportes/reporte_citas.html', {
+        'citas': citas,
+        'meses': MESES,
+        'years': years,
+        'mes_desde': mes_desde,
+        'mes_hasta': mes_hasta,
+        'anio_seleccionado': anio,
+        'nombre_mes_desde': nombre_mes_desde,
+        'nombre_mes_hasta': nombre_mes_hasta,
+        'total_citas': total_citas,
+        'citas_completadas': citas_completadas,
+        'citas_pendientes': citas_pendientes,
+    })
