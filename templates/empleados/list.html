@@ -1,45 +1,457 @@
 {% extends "base.html" %}
-{% block title %}Empleados — Estética{% endblock %}
+{% block title %}Empleados — Estética Glamour{% endblock %}
 {% block content %}
+
+<style>
+  .employees-container {
+    display: flex;
+    gap: 24px;
+    min-height: calc(100vh - 200px);
+  }
+  
+  /* Lista de empleados */
+  .employees-list {
+    flex: 1;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #ede8f2;
+    overflow: hidden;
+  }
+  .employees-list-header {
+    padding: 16px 20px;
+    background: #f8f5fa;
+    border-bottom: 1px solid #ede8f2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .employees-list-header h5 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #7b2d8b;
+  }
+  .employee-item {
+    padding: 14px 20px;
+    border-bottom: 1px solid #f0eef2;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .employee-item:hover {
+    background: #fef9ff;
+  }
+  .employee-item.active {
+    background: #f3e8f7;
+    border-left: 3px solid #7b2d8b;
+  }
+  .employee-name {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 14px;
+  }
+  .employee-role {
+    font-size: 12px;
+    color: #7b2d8b;
+    background: #f3e8f7;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+  
+  /* Panel lateral de detalles */
+  .employee-detail-panel {
+    width: 380px;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #ede8f2;
+    position: sticky;
+    top: 80px;
+    height: fit-content;
+    transition: all 0.3s;
+  }
+  .panel-header {
+    padding: 20px;
+    background: #f8f5fa;
+    border-bottom: 1px solid #ede8f2;
+    text-align: center;
+  }
+  .panel-avatar {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #7b2d8b 0%, #5e2069 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    color: white;
+    font-size: 32px;
+    font-weight: 600;
+  }
+  .panel-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 4px;
+  }
+  .panel-role {
+    font-size: 12px;
+    color: #7b2d8b;
+    background: #f3e8f7;
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+  .panel-body {
+    padding: 20px;
+  }
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0eef2;
+  }
+  .info-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8b8b8b;
+    letter-spacing: 0.5px;
+  }
+  .info-value {
+    font-size: 13px;
+    color: #2c3e50;
+    font-weight: 500;
+    text-align: right;
+    max-width: 60%;
+  }
+  .panel-actions {
+    padding: 16px 20px 20px;
+    border-top: 1px solid #ede8f2;
+    display: flex;
+    gap: 10px;
+  }
+  .btn-edit {
+    flex: 1;
+    background: #7b2d8b;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-edit:hover {
+    background: #5e2069;
+    color: white;
+  }
+  .btn-delete {
+    flex: 1;
+    background: #f8f5fa;
+    color: #dc3545;
+    border: 1px solid #ffebee;
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+  }
+  .btn-delete:hover {
+    background: #ffebee;
+  }
+  .empty-panel {
+    text-align: center;
+    padding: 40px 20px;
+    color: #aaa;
+  }
+  .search-box {
+    padding: 6px 12px;
+    border: 1px solid #ede8f2;
+    border-radius: 8px;
+    width: 200px;
+    font-size: 13px;
+  }
+  .search-box:focus {
+    outline: none;
+    border-color: #7b2d8b;
+  }
+  
+  @media (max-width: 768px) {
+    .employees-container {
+      flex-direction: column;
+    }
+    .employee-detail-panel {
+      width: 100%;
+      position: static;
+    }
+    .info-value {
+      max-width: 50%;
+    }
+  }
+</style>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h4 class="mb-0"><i class="bi bi-person-badge me-2" style="color:#7b2d8b"></i>Empleados</h4>
   <a href="{% url 'empleados:create' %}" class="btn btn-primary btn-sm">
     <i class="bi bi-plus-lg me-1"></i>Nuevo empleado
   </a>
 </div>
-<div class="card shadow-sm">
-  <div class="card-body p-0">
-    <table class="table table-hover mb-0">
-      <thead class="table-light">
-        <tr><th>Nombre</th><th>Teléfono</th><th>Rol</th><th>Ingreso</th><th></th></tr>
-      </thead>
-      <tbody>
-        {% for e in empleados %}
-        <tr>
-          <td>{{ e.nombre }}</td>
-          <td>{{ e.telefono }}</td>
-          <td><span class="badge no-uppercase" style="background:#7b2d8b">{{ e.get_rol_display }}</span></td>
-          <td class="no-uppercase">{{ e.fecha_ingreso|date:"d/m/Y" }}</td>
-          <td class="text-end">
-            <a href="{% url 'empleados:detail' e.pk %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-eye"></i></a>
-            <a href="{% url 'empleados:update' e.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'empleados:delete' e.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="5" class="text-center text-muted py-4">Sin empleados registrados.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+
+<div class="employees-container">
+  <!-- Lista de empleados -->
+  <div class="employees-list">
+    <div class="employees-list-header">
+      <h5><i class="bi bi-people me-1"></i> Colaboradores</h5>
+      <input type="text" id="searchEmployee" class="search-box" placeholder="Buscar empleado...">
+    </div>
+    <div id="employeesList">
+      {% for empleado in empleados %}
+      <div class="employee-item" 
+           data-id="{{ empleado.id }}" 
+           data-nombre="{{ empleado.nombre }}" 
+           data-telefono="{{ empleado.telefono }}" 
+           data-rol="{{ empleado.rol }}" 
+           data-fecha-ingreso="{{ empleado.fecha_ingreso|date:'d/m/Y' }}"
+           data-email="{{ empleado.email|default:'' }}"
+           data-horario-entrada="{{ empleado.horario_entrada|default:'' }}"
+           data-horario-salida="{{ empleado.horario_salida|default:'' }}"
+           data-comision="{{ empleado.comision|default:0 }}"
+           data-especialidades="{{ empleado.especialidades|default:'' }}"
+           data-direccion="{{ empleado.direccion|default:'' }}"
+           data-fecha-nacimiento="{{ empleado.fecha_nacimiento|date:'d/m/Y'|default:'' }}">
+        <div>
+          <div class="employee-name">{{ empleado.nombre }}</div>
+        </div>
+        <div class="employee-role">{{ empleado.get_rol_display }}</div>
+      </div>
+      {% empty %}
+      <div class="employee-item" style="justify-content: center; color: #aaa;">
+        No hay empleados registrados
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  
+  <!-- Panel lateral de detalles -->
+  <div class="employee-detail-panel" id="detailPanel">
+    <div class="panel-header">
+      <div class="panel-avatar" id="panelAvatar">👤</div>
+      <div class="panel-name" id="panelName">Selecciona un empleado</div>
+      <div><span class="panel-role" id="panelRole">---</span></div>
+    </div>
+    <div class="panel-body" id="panelBody">
+      <div class="info-row">
+        <span class="info-label">Teléfono</span>
+        <span class="info-value" id="panelTelefono">---</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Correo</span>
+        <span class="info-value" id="panelEmail">---</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Fecha nacimiento</span>
+        <span class="info-value" id="panelFechaNacimiento">---</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Dirección</span>
+        <span class="info-value" id="panelDireccion">---</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Fecha ingreso</span>
+        <span class="info-value" id="panelFechaIngreso">---</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Horario</span>
+        <span class="info-value" id="panelHorario">---</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Comisión</span>
+        <span class="info-value" id="panelComision">---</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Especialidades</span>
+        <span class="info-value" id="panelEspecialidades">---</span>
+      </div>
+    </div>
+    <div class="panel-actions" id="panelActions" style="display: none;">
+      <a href="#" id="editLink" class="btn-edit">
+        <i class="bi bi-pencil me-1"></i> Editar
+      </a>
+      <a href="#" id="deleteLink" class="btn-delete">
+        <i class="bi bi-trash me-1"></i> Eliminar
+      </a>
+    </div>
+    <div class="empty-panel" id="emptyPanel">
+      <i class="bi bi-person-circle" style="font-size: 48px; opacity: 0.3;"></i>
+      <p class="mt-2 mb-0">Haz clic en un empleado<br>para ver sus detalles</p>
+    </div>
   </div>
 </div>
-{% if empleados.has_other_pages %}
-<nav class="mt-3">
-  <ul class="pagination pagination-sm justify-content-center">
-    {% if empleados.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ empleados.previous_page_number }}">«</a></li>{% endif %}
-    <li class="page-item disabled"><a class="page-link no-uppercase">Pág. {{ empleados.number }} / {{ empleados.paginator.num_pages }}</a></li>
-    {% if empleados.has_next %}<li class="page-item"><a class="page-link" href="?page={{ empleados.next_page_number }}">»</a></li>{% endif %}
-  </ul>
-</nav>
-{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const employeesList = document.querySelectorAll('.employee-item');
+  const panelAvatar = document.getElementById('panelAvatar');
+  const panelName = document.getElementById('panelName');
+  const panelRole = document.getElementById('panelRole');
+  const panelTelefono = document.getElementById('panelTelefono');
+  const panelEmail = document.getElementById('panelEmail');
+  const panelFechaNacimiento = document.getElementById('panelFechaNacimiento');
+  const panelDireccion = document.getElementById('panelDireccion');
+  const panelFechaIngreso = document.getElementById('panelFechaIngreso');
+  const panelHorario = document.getElementById('panelHorario');
+  const panelComision = document.getElementById('panelComision');
+  const panelEspecialidades = document.getElementById('panelEspecialidades');
+  const panelActions = document.getElementById('panelActions');
+  const emptyPanel = document.getElementById('emptyPanel');
+  const editLink = document.getElementById('editLink');
+  const deleteLink = document.getElementById('deleteLink');
+  const searchInput = document.getElementById('searchEmployee');
+  
+  // Función para obtener iniciales
+  function getInitials(nombre) {
+    if (!nombre) return '?';
+    const partes = nombre.split(' ');
+    if (partes.length >= 2) {
+      return (partes[0].charAt(0) + partes[1].charAt(0)).toUpperCase();
+    }
+    return nombre.charAt(0).toUpperCase();
+  }
+  
+  // Función para formatear horario con los valores correctos
+  function formatHorario(entrada, salida) {
+    const horasMap = {
+        '10:00': '10:00 AM',
+        '11:00': '11:00 AM',
+        '12:00': '12:00 PM',
+        '13:00': '01:00 PM',
+        '17:00': '05:00 PM',
+        '18:00': '06:00 PM',
+        '19:00': '07:00 PM',
+        '20:00': '08:00 PM'
+    };
+    
+    const entradaTexto = horasMap[entrada] || entrada || '?';
+    const salidaTexto = horasMap[salida] || salida || '?';
+    
+    if (entrada && salida) {
+        return `${entradaTexto} - ${salidaTexto}`;
+    }
+    if (entrada) return `${entradaTexto} - ?`;
+    if (salida) return `? - ${salidaTexto}`;
+    return 'No definido';
+  }
+  
+  // Mostrar detalles de un empleado
+  function showEmployeeDetail(employeeId, data) {
+    // Actualizar panel
+    panelAvatar.textContent = getInitials(data.nombre);
+    panelName.textContent = data.nombre;
+    
+    // Mostrar rol en español
+    const roles = {
+      'estilista': 'Estilista',
+      'colorista': 'Colorista',
+      'manicurista': 'Manicurista',
+      'recepcionista': 'Recepcionista',
+      'gerente': 'Gerente'
+    };
+    panelRole.textContent = roles[data.rol] || data.rol;
+    panelTelefono.textContent = data.telefono || 'No registrado';
+    panelEmail.textContent = data.email || 'No registrado';
+    panelFechaNacimiento.textContent = data.fechaNacimiento || 'No registrada';
+    panelDireccion.textContent = data.direccion || 'No registrada';
+    panelFechaIngreso.textContent = data.fechaIngreso || 'No registrada';
+    panelHorario.textContent = formatHorario(data.horarioEntrada, data.horarioSalida);
+    panelComision.textContent = data.comision ? data.comision + '%' : 'No definida';
+    panelEspecialidades.textContent = data.especialidades || 'Sin especialidades';
+    
+    // Configurar enlaces de acción
+    editLink.href = `/empleados/${employeeId}/editar/`;
+    deleteLink.href = `/empleados/${employeeId}/eliminar/`;
+    
+    // Mostrar acciones y ocultar mensaje vacío
+    panelActions.style.display = 'flex';
+    emptyPanel.style.display = 'none';
+    
+    // Marcar el empleado como activo en la lista
+    employeesList.forEach(item => {
+      item.classList.remove('active');
+      if (item.getAttribute('data-id') == employeeId) {
+        item.classList.add('active');
+      }
+    });
+  }
+  
+  // Limpiar panel (ningún empleado seleccionado)
+  function clearPanel() {
+    panelAvatar.textContent = '👤';
+    panelName.textContent = 'Selecciona un empleado';
+    panelRole.textContent = '---';
+    panelTelefono.textContent = '---';
+    panelEmail.textContent = '---';
+    panelFechaNacimiento.textContent = '---';
+    panelDireccion.textContent = '---';
+    panelFechaIngreso.textContent = '---';
+    panelHorario.textContent = '---';
+    panelComision.textContent = '---';
+    panelEspecialidades.textContent = '---';
+    panelActions.style.display = 'none';
+    emptyPanel.style.display = 'block';
+    
+    // Quitar clase active de todos
+    employeesList.forEach(item => {
+      item.classList.remove('active');
+    });
+  }
+  
+  // Evento click en cada empleado
+  employeesList.forEach(item => {
+    item.addEventListener('click', function(e) {
+      const data = {
+        nombre: this.getAttribute('data-nombre'),
+        telefono: this.getAttribute('data-telefono'),
+        rol: this.getAttribute('data-rol'),
+        fechaIngreso: this.getAttribute('data-fecha-ingreso'),
+        email: this.getAttribute('data-email'),
+        horarioEntrada: this.getAttribute('data-horario-entrada'),
+        horarioSalida: this.getAttribute('data-horario-salida'),
+        comision: this.getAttribute('data-comision'),
+        especialidades: this.getAttribute('data-especialidades'),
+        direccion: this.getAttribute('data-direccion'),
+        fechaNacimiento: this.getAttribute('data-fecha-nacimiento')
+      };
+      
+      showEmployeeDetail(this.getAttribute('data-id'), data);
+    });
+  });
+  
+  // Búsqueda de empleados
+  if (searchInput) {
+    searchInput.addEventListener('keyup', function() {
+      const searchTerm = this.value.toLowerCase();
+      employeesList.forEach(item => {
+        const nombre = item.getAttribute('data-nombre') || '';
+        if (nombre.toLowerCase().includes(searchTerm)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+  }
+  
+  // Si no hay empleados seleccionados, mostrar panel vacío
+  if (employeesList.length === 0) {
+    clearPanel();
+  }
+});
+</script>
 {% endblock %}

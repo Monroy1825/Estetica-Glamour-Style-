@@ -1,30 +1,226 @@
 {% extends "base.html" %}
 {% block title %}{{ titulo }} — Estética{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="mb-0"><i class="bi bi-person-badge me-2" style="color:#7b2d8b"></i>{{ titulo }}</h4>
-  <a href="{% url 'empleados:list' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Volver</a>
+
+<style>
+  .form-section {
+    background: #ffffff;
+    border: 1px solid #ede8f2;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .form-section-header {
+    padding: 12px 20px;
+    border-bottom: 1px solid #ede8f2;
+    font-size: 11px;
+    letter-spacing: 0.8px;
+    color: #aaa;
+    font-weight: 600;
+    background: #fefbff;
+  }
+  .form-section-body {
+    padding: 24px;
+  }
+  .form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .form-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+  }
+  .field-group {
+    margin-bottom: 20px;
+  }
+  .field-group label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #aaa;
+    margin-bottom: 6px;
+    display: block;
+    letter-spacing: 0.5px;
+  }
+  .field-group .form-control,
+  .field-group .form-select,
+  .field-group textarea {
+    border: 1px solid #e0d0e8;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #111;
+    background-color: #fff;
+    width: 100%;
+    padding: 8px 12px;
+  }
+  .field-group .form-control:focus,
+  .field-group .form-select:focus,
+  .field-group textarea:focus {
+    border-color: #7b2d8b;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(123,45,139,0.1);
+  }
+  .page-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #111;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .btn-cancelar {
+    background: #f3e8f7;
+    border: 1px solid #e0d0e8;
+    border-radius: 30px;
+    padding: 8px 24px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+    text-decoration: none;
+  }
+  .btn-guardar {
+    background: #7b2d8b;
+    border: none;
+    border-radius: 30px;
+    padding: 8px 28px;
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+  }
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+  }
+</style>
+
+<div class="page-title">
+  <i class="bi bi-person-badge" style="color:#7b2d8b; font-size: 24px;"></i>
+  {{ titulo }}
 </div>
-<div class="card shadow-sm" style="max-width:480px">
-  <div class="card-body">
-    <form method="post" novalidate>
-      {% csrf_token %}
-      {% for field in form %}
-        <div class="mb-3">
-          <label for="{{ field.id_for_label }}" class="form-label fw-semibold">{{ field.label }}</label>
-          {{ field }}
-          {% if field.errors %}
-            <div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>
-          {% endif %}
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  
+  <!-- Datos personales -->
+  <div class="form-section">
+    <div class="form-section-header">Datos personales</div>
+    <div class="form-section-body">
+      <div class="form-grid-2">
+        <div class="field-group">
+          <label>Nombre completo *</label>
+          {{ form.nombre }}
         </div>
-      {% endfor %}
-      <div class="d-flex gap-2 mt-4">
-        <button type="submit" class="btn btn-primary px-4">
-          <i class="bi bi-check-lg me-1"></i>Guardar
-        </button>
-        <a href="{% url 'empleados:list' %}" class="btn btn-outline-secondary">Cancelar</a>
+        <div class="field-group">
+          <label>Teléfono *</label>
+          {{ form.telefono }}
+        </div>
       </div>
-    </form>
+      <div class="form-grid-2">
+        <div class="field-group">
+          <label>Correo electrónico</label>
+          {{ form.email }}
+        </div>
+        <div class="field-group">
+          <label>Fecha de nacimiento</label>
+          {{ form.fecha_nacimiento }}
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Dirección</label>
+        {{ form.direccion }}
+      </div>
+    </div>
   </div>
-</div>
+  
+  <!-- Datos laborales -->
+  <div class="form-section">
+    <div class="form-section-header">Datos laborales</div>
+    <div class="form-section-body">
+      <div class="form-grid-2">
+        <div class="field-group">
+          <label>Rol *</label>
+          {{ form.rol }}
+        </div>
+        <div class="field-group">
+          <label>Fecha de ingreso *</label>
+          {{ form.fecha_ingreso }}
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="field-group">
+          <label>Horario entrada</label>
+          {{ form.horario_entrada }}
+        </div>
+        <div class="field-group">
+          <label>Horario salida</label>
+          {{ form.horario_salida }}
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Días de descanso</label>
+        {{ form.dias_descanso }}
+        <small class="text-muted">Ej: Domingo, Lunes</small>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Datos financieros -->
+  <div class="form-section">
+    <div class="form-section-header">Datos financieros</div>
+    <div class="form-section-body">
+      <div class="form-grid-2">
+        <div class="field-group">
+          <label>Comisión (%)</label>
+          {{ form.comision }}
+          <small class="text-muted">Porcentaje sobre ventas</small>
+        </div>
+        <div class="field-group">
+          <label>Sueldo base</label>
+          {{ form.sueldo_base }}
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Datos profesionales -->
+  <div class="form-section">
+    <div class="form-section-header">Datos profesionales</div>
+    <div class="form-section-body">
+      <div class="form-grid-2">
+        <div class="field-group">
+          <label>Especialidades</label>
+          {{ form.especialidades }}
+          <small class="text-muted">Servicios que domina</small>
+        </div>
+        <div class="field-group">
+          <label>Años de experiencia</label>
+          {{ form.años_experiencia }}
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Estado -->
+  <div class="form-section">
+    <div class="form-section-header">Estado</div>
+    <div class="form-section-body">
+      <div class="checkbox-group">
+        {{ form.activo }}
+        <label>Empleado activo</label>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Acciones -->
+  <div class="d-flex justify-content-end gap-2 mt-3">
+    <a href="{% url 'empleados:list' %}" class="btn-cancelar">Cancelar</a>
+    <button type="submit" class="btn-guardar">Guardar</button>
+  </div>
+</form>
+
 {% endblock %}
