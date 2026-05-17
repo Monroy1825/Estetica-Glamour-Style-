@@ -164,6 +164,44 @@
   .badge-servicio { background: #e3f2fd; color: #1565c0; }
   .badge-producto { background: #e8f5e9; color: #2e7d32; }
   .badge-mixto { background: #f3e5f5; color: #7b1fa2; }
+  
+  .tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+    border-bottom: 2px solid #ede8f2;
+    padding-bottom: 0;
+  }
+  .tab-btn {
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    color: #aaa;
+    cursor: pointer;
+    transition: all 0.3s;
+    border-radius: 8px 8px 0 0;
+  }
+  .tab-btn.active {
+    color: #7b2d8b;
+    background: #f3e8f7;
+    border-bottom: 2px solid #7b2d8b;
+    margin-bottom: -2px;
+  }
+  .tab-pane {
+    display: none;
+  }
+  .tab-pane.active {
+    display: block;
+  }
+  
+  .cliente-nuevo-fields {
+    background: #f8f5fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 10px;
+  }
 </style>
 
 <div class="page-header-title">
@@ -171,17 +209,24 @@
   {{ titulo }}
 </div>
 
-<form method="post" novalidate id="ventaForm">
-  {% csrf_token %}
+<!-- PESTAÑAS -->
+<div class="tabs">
+  <button class="tab-btn active" data-tab="cita">📅 Venta por Cita</button>
+  <button class="tab-btn" data-tab="directa">🛒 Venta Directa</button>
+</div>
 
-  <!-- SECCIÓN 1: POR CITA (SERVICIO) -->
-  <div class="form-section">
-    <div class="form-section-header">POR CITA (SERVICIO)</div>
-    <div class="form-section-body">
-      <div class="form-grid-2">
+<!-- ==================== PESTAÑA 1: VENTA POR CITA ==================== -->
+<div id="tab-cita" class="tab-pane active">
+  <form method="post" novalidate id="formCita">
+    {% csrf_token %}
+    <input type="hidden" name="tipo_venta" value="cita">
+    
+    <div class="form-section">
+      <div class="form-section-header">SELECCIONAR CITA</div>
+      <div class="form-section-body">
         <div class="field-group">
-          <label>SELECCIONAR CITA</label>
-          <select name="cita" id="id_cita" class="form-select">
+          <label>CITA</label>
+          <select name="cita" id="id_cita_select" class="form-select" required>
             <option value="">---------</option>
             {% for cita in citas_disponibles %}
             <option value="{{ cita.id }}" 
@@ -196,51 +241,130 @@
             {% endfor %}
           </select>
         </div>
-      </div>
-      <div class="form-grid-2" style="margin-top: 16px;">
-        <div class="field-group">
-          <label>CLIENTE </label>
-          <input type="text" id="cliente_auto" class="form-control" readonly>
-          <input type="hidden" name="cliente" id="id_cliente">
+        
+        <div class="form-grid-2" style="margin-top: 16px;">
+          <div class="field-group">
+            <label>CLIENTE</label>
+            <input type="text" id="cliente_cita" class="form-control" readonly>
+            <input type="hidden" name="cliente" id="cliente_cita_hidden">
+          </div>
+          <div class="field-group">
+            <label>EMPLEADO</label>
+            <input type="text" id="empleado_cita" class="form-control" readonly>
+            <input type="hidden" name="empleado" id="empleado_cita_hidden">
+          </div>
         </div>
-        <div class="field-group">
-          <label>EMPLEADO </label>
-          <input type="text" id="empleado_auto" class="form-control" readonly>
-          <input type="hidden" name="empleado" id="id_empleado">
-        </div>
-      </div>
-      <div class="form-grid-2">
-        <div class="field-group">
-          <label>SERVICIO </label>
-          <input type="text" id="servicio_auto" class="form-control" readonly>
-        </div>
-        <div class="field-group">
-          <label>PRECIO DEL SERVICIO</label>
-          <input type="text" id="precio_cita" class="form-control" readonly value="$0.00">
+        <div class="form-grid-2">
+          <div class="field-group">
+            <label>SERVICIO</label>
+            <input type="text" id="servicio_cita" class="form-control" readonly>
+          </div>
+          <div class="field-group">
+            <label>PRECIO SERVICIO</label>
+            <input type="text" id="precio_servicio_cita" class="form-control" readonly value="$0.00">
+          </div>
         </div>
       </div>
     </div>
-  </div>
-
-  <!-- SECCIÓN 2: SOLO PRODUCTO (VENTA DIRECTA) -->
-  <div class="form-section">
-    <div class="form-section-header">SOLO PRODUCTO (VENTA DIRECTA)</div>
-    <div class="form-section-body">
-      
-      <!-- Opción de tipo de cliente -->
-      <div class="form-grid-2" style="margin-bottom: 16px;">
-        <div class="field-group">
-          <label>TIPO DE CLIENTE</label>
-          <select id="tipo_cliente" name="tipo_cliente" class="form-select">
-            <option value="registrado">Cliente registrado</option>
-            <option value="nuevo">Cliente nuevo (venta directa)</option>
-          </select>
+    
+    <!-- PRODUCTOS ADICIONALES EN VENTA POR CITA -->
+    <div class="form-section">
+      <div class="form-section-header">PRODUCTOS ADICIONALES</div>
+      <div class="form-section-body">
+        <div class="form-grid-2">
+          <div class="field-group">
+            <label>PRODUCTO</label>
+            <select id="select_producto_cita" class="form-select">
+              <option value="">---------</option>
+              {% for producto in productos %}
+              <option value="{{ producto.id }}" data-precio="{{ producto.precio_venta }}" data-nombre="{{ producto.nombre }}" data-stock="{{ producto.stock_actual }}">
+                {{ producto.nombre }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field-group">
+            <label>CANTIDAD</label>
+            <input type="number" id="cantidad_producto_cita" class="form-control" value="1" min="1">
+          </div>
+        </div>
+        <button type="button" id="btnAgregarProductoCita" class="btn-agregar-producto">+ Agregar Producto</button>
+        
+        <table class="tabla-productos" id="tablaProductosCita">
+          <thead>
+            <tr><th>Producto</th><th>Cantidad</th><th>Precio Unit.</th><th>Subtotal</th><th></th></tr>
+          </thead>
+          <tbody id="productosAgregadosCita">
+            <tr><td colspan="5" style="text-align: center; color: #aaa;">No hay productos agregados</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <div class="form-section">
+      <div class="form-section-header">DATOS DE PAGO</div>
+      <div class="form-section-body">
+        <div class="form-grid-3">
+          <div class="field-group">
+            <label>MÉTODO DE PAGO</label>
+            <select name="metodo_pago" class="form-select" required>
+              <option value="efectivo">Efectivo</option>
+              <option value="tarjeta">Tarjeta</option>
+              <option value="transferencia">Transferencia</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>TIPO DE VENTA</label>
+            <div id="tipo_cita_display" class="tipo-venta-badge badge-servicio">SERVICIO</div>
+            <input type="hidden" name="tipo" id="tipo_cita_input" value="servicio">
+          </div>
+          <div class="field-group">
+            <label>ESTATUS</label>
+            <input type="text" class="form-control" value="Pendiente" readonly>
+            <input type="hidden" name="estatus" value="pendiente">
+          </div>
         </div>
       </div>
+    </div>
+    
+    <div class="form-section">
+      <div class="form-section-header">TOTAL</div>
+      <div class="form-section-body d-flex align-items-center justify-content-between">
+        <div>
+          <div class="total-amount" id="total_cita_display">$0.00</div>
+          <input type="hidden" name="total" id="total_cita_input" value="0">
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{% url 'operaciones:venta_list' %}" class="btn btn-cancelar">CANCELAR</a>
+          <button type="submit" class="btn btn-guardar">GUARDAR VENTA</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
 
-      <!-- Cliente registrado (visible por defecto) -->
-      <div id="cliente_registrado_div">
-        <div class="form-grid-2">
+<!-- ==================== PESTAÑA 2: VENTA DIRECTA ==================== -->
+<div id="tab-directa" class="tab-pane">
+  <form method="post" novalidate id="formDirecta">
+    {% csrf_token %}
+    <input type="hidden" name="tipo_venta" value="directa">
+    
+    <div class="form-section">
+      <div class="form-section-header">DATOS DEL CLIENTE</div>
+      <div class="form-section-body">
+        <!-- Tipo de cliente -->
+        <div class="form-grid-2" style="margin-bottom: 16px;">
+          <div class="field-group">
+            <label>TIPO DE CLIENTE</label>
+            <select id="tipo_cliente_directa" name="tipo_cliente" class="form-select">
+              <option value="registrado">Cliente registrado</option>
+              <option value="nuevo">Cliente nuevo (venta directa)</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Cliente registrado -->
+        <div id="cliente_registrado_div">
           <div class="field-group">
             <label>CLIENTE REGISTRADO</label>
             <select name="cliente_producto" id="id_cliente_producto" class="form-select">
@@ -250,9 +374,34 @@
               {% endfor %}
             </select>
           </div>
+        </div>
+        
+        <!-- Cliente nuevo (venta directa) -->
+        <div id="cliente_nuevo_div" style="display: none;">
+          <div class="cliente-nuevo-fields">
+            <div class="form-grid-2">
+              <div class="field-group">
+                <label>NOMBRE COMPLETO *</label>
+                <input type="text" name="cliente_nuevo_nombre" id="cliente_nuevo_nombre" class="form-control" placeholder="Ej: María Pérez">
+              </div>
+              <div class="field-group">
+                <label>TELÉFONO (opcional)</label>
+                <input type="text" name="cliente_nuevo_telefono" id="cliente_nuevo_telefono" class="form-control" placeholder="Ej: 5512345678">
+              </div>
+            </div>
+            <div class="form-grid-2">
+              <div class="field-group">
+                <label>EMAIL (opcional)</label>
+                <input type="email" name="cliente_nuevo_email" id="cliente_nuevo_email" class="form-control" placeholder="cliente@ejemplo.com">
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-grid-2" style="margin-top: 16px;">
           <div class="field-group">
             <label>EMPLEADO</label>
-            <select name="empleado_producto" id="id_empleado_producto" class="form-select">
+            <select name="empleado_producto" id="id_empleado_producto" class="form-select" required>
               <option value="">---------</option>
               {% for empleado in empleados %}
               <option value="{{ empleado.id }}">{{ empleado.nombre }} ({{ empleado.get_rol_display }})</option>
@@ -261,351 +410,387 @@
           </div>
         </div>
       </div>
-
-      <!-- Cliente nuevo (oculto por defecto) -->
-      <div id="cliente_nuevo_div" style="display: none;">
+    </div>
+    
+    <div class="form-section">
+      <div class="form-section-header">PRODUCTOS</div>
+      <div class="form-section-body">
         <div class="form-grid-2">
           <div class="field-group">
-            <label>NOMBRE DEL CLIENTE *</label>
-            <input type="text" name="cliente_nuevo_nombre" id="cliente_nuevo_nombre" class="form-control" placeholder="Ej: María Pérez">
-          </div>
-          <div class="field-group">
-            <label>TELÉFONO (opcional)</label>
-            <input type="text" name="cliente_nuevo_telefono" id="cliente_nuevo_telefono" class="form-control" placeholder="Ej: 5512345678">
-          </div>
-        </div>
-        <div class="form-grid-2">
-          <div class="field-group">
-            <label>EMAIL (opcional)</label>
-            <input type="email" name="cliente_nuevo_email" id="cliente_nuevo_email" class="form-control" placeholder="cliente@ejemplo.com">
-          </div>
-          <div class="field-group">
-            <label>EMPLEADO</label>
-            <select name="empleado_producto_nuevo" id="id_empleado_producto_nuevo" class="form-select">
+            <label>PRODUCTO</label>
+            <select id="select_producto_directa" class="form-select">
               <option value="">---------</option>
-              {% for empleado in empleados %}
-              <option value="{{ empleado.id }}">{{ empleado.nombre }} ({{ empleado.get_rol_display }})</option>
+              {% for producto in productos %}
+              <option value="{{ producto.id }}" data-precio="{{ producto.precio_venta }}" data-nombre="{{ producto.nombre }}" data-stock="{{ producto.stock_actual }}">
+                {{ producto.nombre }}
+              </option>
               {% endfor %}
             </select>
           </div>
+          <div class="field-group">
+            <label>CANTIDAD</label>
+            <input type="number" id="cantidad_producto_directa" class="form-control" value="1" min="1">
+          </div>
+        </div>
+        <button type="button" id="btnAgregarProductoDirecta" class="btn-agregar-producto">+ Agregar Producto</button>
+        
+        <table class="tabla-productos" id="tablaProductosDirecta">
+          <thead>
+            <tr><th>Producto</th><th>Cantidad</th><th>Precio Unit.</th><th>Subtotal</th><th></th></tr>
+          </thead>
+          <tbody id="productosAgregadosDirecta">
+            <tr><td colspan="5" style="text-align: center; color: #aaa;">No hay productos agregados</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <div class="form-section">
+      <div class="form-section-header">DATOS DE PAGO</div>
+      <div class="form-section-body">
+        <div class="form-grid-3">
+          <div class="field-group">
+            <label>MÉTODO DE PAGO</label>
+            <select name="metodo_pago" class="form-select" required>
+              <option value="efectivo">Efectivo</option>
+              <option value="tarjeta">Tarjeta</option>
+              <option value="transferencia">Transferencia</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>TIPO DE VENTA</label>
+            <div id="tipo_directa_display" class="tipo-venta-badge badge-producto">PRODUCTO</div>
+            <input type="hidden" name="tipo" value="producto">
+          </div>
+          <div class="field-group">
+            <label>ESTATUS</label>
+            <input type="text" class="form-control" value="Pendiente" readonly>
+            <input type="hidden" name="estatus" value="pendiente">
+          </div>
         </div>
       </div>
-      
-  <!-- Agregar productos -->
-<div style="margin-top: 16px;">
-  <div class="form-grid-2">
-    <div class="field-group">
-      <label>PRODUCTO</label>
-      <select id="select_producto" class="form-select">
-        <option value="">---------</option>
-        {% for producto in productos %}
-        <option value="{{ producto.id }}" data-precio="{{ producto.precio_venta }}" data-nombre="{{ producto.nombre }}" data-stock="{{ producto.stock_actual }}">
-          {{ producto.nombre }}
-        </option>
-        {% endfor %}
-      </select>
     </div>
-    <div class="field-group">
-      <label>CANTIDAD</label>
-      <input type="number" id="cantidad_producto" class="form-control" value="1" min="1">
+    
+    <div class="form-section">
+      <div class="form-section-header">TOTAL</div>
+      <div class="form-section-body d-flex align-items-center justify-content-between">
+        <div>
+          <div class="total-amount" id="total_directa_display">$0.00</div>
+          <input type="hidden" name="total" id="total_directa_input" value="0">
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{% url 'operaciones:venta_list' %}" class="btn btn-cancelar">CANCELAR</a>
+          <button type="submit" class="btn btn-guardar">GUARDAR VENTA</button>
+        </div>
+      </div>
     </div>
-  </div>
-  <button type="button" id="btnAgregarProducto" class="btn-agregar-producto">+ Agregar Producto</button>
+  </form>
 </div>
-      
-      <!-- Tabla de productos agregados -->
-      <table class="tabla-productos" id="tablaProductos">
-        <thead>
-          <tr><th>Producto</th><th>Cantidad</th><th>Precio Unit.</th><th>Subtotal</th><th></th></tr>
-        </thead>
-        <tbody id="productosAgregados">
-          <tr><td colspan="5" style="text-align: center; color: #aaa;">No hay productos agregados</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- DATOS DE PAGO -->
-  <div class="form-section">
-    <div class="form-section-header">DATOS DE PAGO</div>
-    <div class="form-section-body">
-      <div class="form-grid-3">
-        <div class="field-group">
-          <label>MÉTODO DE PAGO</label>
-          <select name="metodo_pago" id="id_metodo_pago" class="form-select" required>
-            <option value="efectivo">Efectivo</option>
-            <option value="tarjeta">Tarjeta</option>
-            <option value="transferencia">Transferencia</option>
-          </select>
-        </div>
-        <div class="field-group">
-          <label>TIPO DE VENTA</label>
-          <div id="tipo_venta_display" class="tipo-venta-badge badge-servicio">No seleccionado</div>
-          <input type="hidden" name="tipo" id="id_tipo" value="">
-        </div>
-        <div class="field-group">
-          <label>ESTATUS</label>
-          <input type="text" class="form-control" value="Pendiente" readonly style="background:#f8f5fa;">
-          <input type="hidden" name="estatus" value="pendiente">
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- TOTAL Y ACCIONES -->
-  <div class="form-section">
-    <div class="form-section-header">TOTAL Y ACCIONES</div>
-    <div class="form-section-body d-flex align-items-center justify-content-between">
-      <div>
-        <div style="font-size:11px;letter-spacing:0.6px;color:#aaa;margin-bottom:4px;">TOTAL VENTA</div>
-        <div class="total-amount" id="total_display">$0.00</div>
-        <div class="total-hint">Se calcula automáticamente</div>
-        <input type="hidden" name="total" id="id_total" value="0">
-      </div>
-      <div class="d-flex gap-2">
-        <a href="{% url 'operaciones:venta_list' %}" class="btn btn-cancelar">CANCELAR</a>
-        <button type="submit" class="btn btn-guardar">GUARDAR VENTA</button>
-      </div>
-    </div>
-  </div>
-
-</form>
 
 <script>
-  // Variables globales
-  let productos = [];
-  let precioServicio = 0;
-  let citaSeleccionada = false;
-
-  // Elementos DOM
-  const citaSelect = document.getElementById('id_cita');
-  const clienteAuto = document.getElementById('cliente_auto');
-  const empleadoAuto = document.getElementById('empleado_auto');
-  const servicioAuto = document.getElementById('servicio_auto');
-  const precioCitaSpan = document.getElementById('precio_cita');
-  const hiddenCliente = document.getElementById('id_cliente');
-  const hiddenEmpleado = document.getElementById('id_empleado');
-  const totalDisplay = document.getElementById('total_display');
-  const totalInput = document.getElementById('id_total');
-  const tipoDisplay = document.getElementById('tipo_venta_display');
-
-  // Toggle entre cliente registrado y nuevo
-  const tipoCliente = document.getElementById('tipo_cliente');
-  const clienteRegistradoDiv = document.getElementById('cliente_registrado_div');
-  const clienteNuevoDiv = document.getElementById('cliente_nuevo_div');
-
-  if (tipoCliente) {
-    tipoCliente.addEventListener('change', function() {
-      if (this.value === 'registrado') {
-        clienteRegistradoDiv.style.display = 'block';
-        clienteNuevoDiv.style.display = 'none';
-        document.getElementById('cliente_nuevo_nombre').value = '';
-        document.getElementById('cliente_nuevo_telefono').value = '';
-        document.getElementById('cliente_nuevo_email').value = '';
-      } else {
-        clienteRegistradoDiv.style.display = 'none';
-        clienteNuevoDiv.style.display = 'block';
-      }
-    });
-  }
-
-  // Auto-llenar al seleccionar cita
-  if (citaSelect) {
-    citaSelect.addEventListener('change', function() {
-      const selected = this.options[this.selectedIndex];
-      if (this.value) {
-        citaSeleccionada = true;
-        clienteAuto.value = selected.getAttribute('data-cliente-nombre') || '';
-        empleadoAuto.value = selected.getAttribute('data-empleado-nombre') || '';
-        servicioAuto.value = selected.getAttribute('data-servicio') || '';
-        precioServicio = parseFloat(selected.getAttribute('data-precio')) || 0;
-        precioCitaSpan.value = '$' + precioServicio.toFixed(2);
-        hiddenCliente.value = selected.getAttribute('data-cliente') || '';
-        hiddenEmpleado.value = selected.getAttribute('data-empleado') || '';
-      } else {
-        citaSeleccionada = false;
-        clienteAuto.value = '';
-        empleadoAuto.value = '';
-        servicioAuto.value = '';
-        precioServicio = 0;
-        precioCitaSpan.value = '$0.00';
-        hiddenCliente.value = '';
-        hiddenEmpleado.value = '';
-      }
-      actualizarTotalYTipo();
-    });
-  }
-
-  // Agregar producto
-  const btnAgregar = document.getElementById('btnAgregarProducto');
-  if (btnAgregar) {
-    btnAgregar.addEventListener('click', function() {
-      const select = document.getElementById('select_producto');
-      const cantidad = parseInt(document.getElementById('cantidad_producto').value) || 1;
-      
-      if (!select.value) {
-        alert('Seleccione un producto');
-        return;
-      }
-      
-      const selected = select.options[select.selectedIndex];
-      const producto = {
-        id: select.value,
-        nombre: selected.getAttribute('data-nombre'),
-        precio: parseFloat(selected.getAttribute('data-precio')),
-        cantidad: cantidad,
-        stock: parseInt(selected.getAttribute('data-stock'))
-      };
-      
-      if (producto.cantidad > producto.stock) {
-        alert(`Stock insuficiente. Solo hay ${producto.stock} unidades.`);
-        return;
-      }
-      
-      const existente = productos.find(p => p.id === producto.id);
-      if (existente) {
-        existente.cantidad += producto.cantidad;
-        if (existente.cantidad > existente.stock) {
-          alert(`Stock insuficiente. Solo hay ${existente.stock} unidades.`);
-          existente.cantidad -= producto.cantidad;
-          return;
-        }
-      } else {
-        productos.push(producto);
-      }
-      
-      renderizarTablaProductos();
-      actualizarTotalYTipo();
-      select.value = '';
-      document.getElementById('cantidad_producto').value = '1';
-    });
-  }
-
-  // Renderizar tabla de productos
-  function renderizarTablaProductos() {
-    const tbody = document.getElementById('productosAgregados');
-    tbody.innerHTML = '';
-    
-    if (productos.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #aaa;">No hay productos agregados</td></tr>';
-      return;
-    }
-    
-    productos.forEach((producto, index) => {
-      const subtotal = producto.precio * producto.cantidad;
-      const row = tbody.insertRow();
-      row.innerHTML = `
-        <td>${producto.nombre}</td>
-        <td><input type="number" value="${producto.cantidad}" min="1" max="${producto.stock}" style="width:60px" onchange="actualizarCantidad(${index}, this.value)"></td>
-        <td>$${producto.precio.toFixed(2)}</td>
-        <td>$${subtotal.toFixed(2)}</td>
-        <td><button type="button" class="btn-eliminar-producto" onclick="eliminarProducto(${index})">🗑️</button></td>
-      `;
-    });
-  }
-
-  // Actualizar cantidad
-  window.actualizarCantidad = function(index, nuevaCantidad) {
-    nuevaCantidad = parseInt(nuevaCantidad);
-    if (nuevaCantidad > productos[index].stock) {
-      alert(`Stock insuficiente. Solo hay ${productos[index].stock} unidades.`);
-      return;
-    }
-    productos[index].cantidad = nuevaCantidad;
-    renderizarTablaProductos();
-    actualizarTotalYTipo();
-  };
-
-  // Eliminar producto
-  window.eliminarProducto = function(index) {
-    productos.splice(index, 1);
-    renderizarTablaProductos();
-    actualizarTotalYTipo();
-  };
-
-  // Calcular total y tipo
-  function actualizarTotalYTipo() {
-    let totalProductos = productos.reduce((sum, p) => sum + (p.precio * p.cantidad), 0);
-    let total = totalProductos + precioServicio;
-    
-    totalDisplay.textContent = '$' + total.toFixed(2);
-    totalInput.value = total.toFixed(2);
-    
-    let tieneServicio = citaSeleccionada && precioServicio > 0;
-    let tieneProductos = productos.length > 0;
-    let tipo = '';
-    let tipoTexto = '';
-    let tipoClase = '';
-    
-    if (tieneServicio && tieneProductos) {
-      tipo = 'mixto';
-      tipoTexto = 'MIXTO (Servicio + Productos)';
-      tipoClase = 'badge-mixto';
-    } else if (tieneServicio) {
-      tipo = 'servicio';
-      tipoTexto = 'SERVICIO';
-      tipoClase = 'badge-servicio';
-    } else if (tieneProductos) {
-      tipo = 'producto';
-      tipoTexto = 'PRODUCTO';
-      tipoClase = 'badge-producto';
-    } else {
-      tipoTexto = 'No seleccionado';
-      tipoClase = '';
-    }
-    
-    document.getElementById('id_tipo').value = tipo;
-    tipoDisplay.textContent = tipoTexto;
-    tipoDisplay.className = 'tipo-venta-badge ' + tipoClase;
-  }
-
-  // Validar antes de enviar
-  document.getElementById('ventaForm').addEventListener('submit', function(e) {
-    const tieneServicio = citaSeleccionada && precioServicio > 0;
-    const tieneProductos = productos.length > 0;
-    const tipoCliente = document.getElementById('tipo_cliente')?.value || 'registrado';
-    
-    let clienteId = null;
-    let empleadoId = null;
-    
-    if (tipoCliente === 'registrado') {
-      clienteId = hiddenCliente.value || document.getElementById('id_cliente_producto')?.value;
-      empleadoId = hiddenEmpleado.value || document.getElementById('id_empleado_producto')?.value;
-    } else {
-      const nombreCliente = document.getElementById('cliente_nuevo_nombre')?.value.trim();
-      if (!nombreCliente) {
-        e.preventDefault();
-        alert('Debe ingresar el nombre del cliente');
-        return;
-      }
-      empleadoId = document.getElementById('id_empleado_producto_nuevo')?.value;
-    }
-    
-    if (!tieneServicio && !tieneProductos) {
-      e.preventDefault();
-      alert('Debe seleccionar al menos una cita o agregar un producto');
-      return;
-    }
-    
-    if (!clienteId && tipoCliente === 'registrado') {
-      e.preventDefault();
-      alert('Debe seleccionar un cliente');
-      return;
-    }
-    
-    if (!empleadoId) {
-      e.preventDefault();
-      alert('Debe seleccionar un empleado');
-      return;
-    }
-    
-    // Agregar productos como datos del formulario
-    const productosInput = document.createElement('input');
-    productosInput.type = 'hidden';
-    productosInput.name = 'productos_json';
-    productosInput.value = JSON.stringify(productos);
-    this.appendChild(productosInput);
+// Cambio de pestañas
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById(`tab-${this.dataset.tab}`).classList.add('active');
   });
+});
+
+// ========== PESTAÑA 1: VENTA POR CITA ==========
+let productosCita = [];
+let precioServicio = 0;
+
+const citaSelect = document.getElementById('id_cita_select');
+const clienteCita = document.getElementById('cliente_cita');
+const empleadoCita = document.getElementById('empleado_cita');
+const servicioCita = document.getElementById('servicio_cita');
+const precioServicioCita = document.getElementById('precio_servicio_cita');
+
+function actualizarTotalCita() {
+  let totalProductos = productosCita.reduce((sum, p) => sum + (p.precio * p.cantidad), 0);
+  let total = precioServicio + totalProductos;
+  
+  document.getElementById('total_cita_display').textContent = '$' + total.toFixed(2);
+  document.getElementById('total_cita_input').value = total.toFixed(2);
+  
+  const tipoDisplay = document.getElementById('tipo_cita_display');
+  const tipoInput = document.getElementById('tipo_cita_input');
+  
+  if (precioServicio > 0 && productosCita.length > 0) {
+    tipoDisplay.textContent = 'MIXTO (Servicio + Productos)';
+    tipoDisplay.className = 'tipo-venta-badge badge-mixto';
+    tipoInput.value = 'mixto';
+  } else if (precioServicio > 0) {
+    tipoDisplay.textContent = 'SERVICIO';
+    tipoDisplay.className = 'tipo-venta-badge badge-servicio';
+    tipoInput.value = 'servicio';
+  } else if (productosCita.length > 0) {
+    tipoDisplay.textContent = 'PRODUCTO';
+    tipoDisplay.className = 'tipo-venta-badge badge-producto';
+    tipoInput.value = 'producto';
+  }
+}
+
+function renderizarTablaProductosCita() {
+  const tbody = document.getElementById('productosAgregadosCita');
+  tbody.innerHTML = '';
+  
+  productosCita.forEach((producto, index) => {
+    const subtotal = producto.precio * producto.cantidad;
+    const row = tbody.insertRow();
+    row.innerHTML = `
+      <td>${producto.nombre}</td>
+      <td><input type="number" value="${producto.cantidad}" min="1" max="${producto.stock}" style="width:60px" onchange="actualizarCantidadCita(${index}, this.value)"></td>
+      <td>$${producto.precio.toFixed(2)}</td>
+      <td>$${subtotal.toFixed(2)}</td>
+      <td><button type="button" class="btn-eliminar-producto" onclick="eliminarProductoCita(${index})">🗑️</button></td>
+    `;
+  });
+  
+  if (productosCita.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #aaa;">No hay productos agregados</td></tr>';
+  }
+  actualizarTotalCita();
+}
+
+window.actualizarCantidadCita = function(index, nuevaCantidad) {
+  nuevaCantidad = parseInt(nuevaCantidad);
+  if (nuevaCantidad > productosCita[index].stock) {
+    alert(`Stock insuficiente. Solo hay ${productosCita[index].stock} unidades.`);
+    return;
+  }
+  productosCita[index].cantidad = nuevaCantidad;
+  renderizarTablaProductosCita();
+};
+
+window.eliminarProductoCita = function(index) {
+  productosCita.splice(index, 1);
+  renderizarTablaProductosCita();
+};
+
+if (citaSelect) {
+  citaSelect.addEventListener('change', function() {
+    const selected = this.options[this.selectedIndex];
+    if (this.value) {
+      clienteCita.value = selected.getAttribute('data-cliente-nombre') || '';
+      empleadoCita.value = selected.getAttribute('data-empleado-nombre') || '';
+      servicioCita.value = selected.getAttribute('data-servicio') || '';
+      precioServicio = parseFloat(selected.getAttribute('data-precio')) || 0;
+      precioServicioCita.value = '$' + precioServicio.toFixed(2);
+      document.getElementById('cliente_cita_hidden').value = selected.getAttribute('data-cliente') || '';
+      document.getElementById('empleado_cita_hidden').value = selected.getAttribute('data-empleado') || '';
+      actualizarTotalCita();
+    } else {
+      precioServicio = 0;
+      precioServicioCita.value = '$0.00';
+      actualizarTotalCita();
+    }
+  });
+}
+
+document.getElementById('btnAgregarProductoCita')?.addEventListener('click', function() {
+  const select = document.getElementById('select_producto_cita');
+  const cantidad = parseInt(document.getElementById('cantidad_producto_cita').value) || 1;
+  
+  if (!select.value) {
+    alert('Seleccione un producto');
+    return;
+  }
+  
+  const selected = select.options[select.selectedIndex];
+  const producto = {
+    id: select.value,
+    nombre: selected.getAttribute('data-nombre'),
+    precio: parseFloat(selected.getAttribute('data-precio')),
+    cantidad: cantidad,
+    stock: parseInt(selected.getAttribute('data-stock'))
+  };
+  
+  if (producto.cantidad > producto.stock) {
+    alert(`Stock insuficiente. Solo hay ${producto.stock} unidades.`);
+    return;
+  }
+  
+  const existente = productosCita.find(p => p.id === producto.id);
+  if (existente) {
+    existente.cantidad += producto.cantidad;
+    if (existente.cantidad > existente.stock) {
+      alert(`Stock insuficiente. Solo hay ${existente.stock} unidades.`);
+      existente.cantidad -= producto.cantidad;
+      return;
+    }
+  } else {
+    productosCita.push(producto);
+  }
+  
+  renderizarTablaProductosCita();
+  select.value = '';
+  document.getElementById('cantidad_producto_cita').value = '1';
+});
+
+// ========== PESTAÑA 2: VENTA DIRECTA ==========
+let productosDirecta = [];
+
+function actualizarTotalDirecta() {
+  let total = productosDirecta.reduce((sum, p) => sum + (p.precio * p.cantidad), 0);
+  document.getElementById('total_directa_display').textContent = '$' + total.toFixed(2);
+  document.getElementById('total_directa_input').value = total.toFixed(2);
+}
+
+function renderizarTablaProductosDirecta() {
+  const tbody = document.getElementById('productosAgregadosDirecta');
+  tbody.innerHTML = '';
+  
+  productosDirecta.forEach((producto, index) => {
+    const subtotal = producto.precio * producto.cantidad;
+    const row = tbody.insertRow();
+    row.innerHTML = `
+      <td>${producto.nombre}</td>
+      <td><input type="number" value="${producto.cantidad}" min="1" max="${producto.stock}" style="width:60px" onchange="actualizarCantidadDirecta(${index}, this.value)"></td>
+      <td>$${producto.precio.toFixed(2)}</td>
+      <td>$${subtotal.toFixed(2)}</td>
+      <td><button type="button" class="btn-eliminar-producto" onclick="eliminarProductoDirecta(${index})">🗑️</button></td>
+    `;
+  });
+  
+  if (productosDirecta.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #aaa;">No hay productos agregados</td></tr>';
+  }
+  actualizarTotalDirecta();
+}
+
+window.actualizarCantidadDirecta = function(index, nuevaCantidad) {
+  nuevaCantidad = parseInt(nuevaCantidad);
+  if (nuevaCantidad > productosDirecta[index].stock) {
+    alert(`Stock insuficiente. Solo hay ${productosDirecta[index].stock} unidades.`);
+    return;
+  }
+  productosDirecta[index].cantidad = nuevaCantidad;
+  renderizarTablaProductosDirecta();
+};
+
+window.eliminarProductoDirecta = function(index) {
+  productosDirecta.splice(index, 1);
+  renderizarTablaProductosDirecta();
+};
+
+document.getElementById('btnAgregarProductoDirecta')?.addEventListener('click', function() {
+  const select = document.getElementById('select_producto_directa');
+  const cantidad = parseInt(document.getElementById('cantidad_producto_directa').value) || 1;
+  
+  if (!select.value) {
+    alert('Seleccione un producto');
+    return;
+  }
+  
+  const selected = select.options[select.selectedIndex];
+  const producto = {
+    id: select.value,
+    nombre: selected.getAttribute('data-nombre'),
+    precio: parseFloat(selected.getAttribute('data-precio')),
+    cantidad: cantidad,
+    stock: parseInt(selected.getAttribute('data-stock'))
+  };
+  
+  if (producto.cantidad > producto.stock) {
+    alert(`Stock insuficiente. Solo hay ${producto.stock} unidades.`);
+    return;
+  }
+  
+  const existente = productosDirecta.find(p => p.id === producto.id);
+  if (existente) {
+    existente.cantidad += producto.cantidad;
+    if (existente.cantidad > existente.stock) {
+      alert(`Stock insuficiente. Solo hay ${existente.stock} unidades.`);
+      existente.cantidad -= producto.cantidad;
+      return;
+    }
+  } else {
+    productosDirecta.push(producto);
+  }
+  
+  renderizarTablaProductosDirecta();
+  select.value = '';
+  document.getElementById('cantidad_producto_directa').value = '1';
+});
+
+// Toggle cliente registrado/nuevo en venta directa
+const tipoCliente = document.getElementById('tipo_cliente_directa');
+const clienteRegistradoDiv = document.getElementById('cliente_registrado_div');
+const clienteNuevoDiv = document.getElementById('cliente_nuevo_div');
+
+if (tipoCliente) {
+  tipoCliente.addEventListener('change', function() {
+    if (this.value === 'registrado') {
+      clienteRegistradoDiv.style.display = 'block';
+      clienteNuevoDiv.style.display = 'none';
+    } else {
+      clienteRegistradoDiv.style.display = 'none';
+      clienteNuevoDiv.style.display = 'block';
+    }
+  });
+}
+
+// Validar formulario directa antes de enviar
+document.getElementById('formDirecta')?.addEventListener('submit', function(e) {
+  const tipoClienteVal = document.getElementById('tipo_cliente_directa').value;
+  let clienteValido = false;
+  
+  if (tipoClienteVal === 'registrado') {
+    const cliente = document.getElementById('id_cliente_producto').value;
+    if (!cliente) {
+      e.preventDefault();
+      alert('Seleccione un cliente registrado');
+      return;
+    }
+    clienteValido = true;
+  } else {
+    const nombreCliente = document.getElementById('cliente_nuevo_nombre').value.trim();
+    if (!nombreCliente) {
+      e.preventDefault();
+      alert('Ingrese el nombre del cliente');
+      return;
+    }
+    clienteValido = true;
+  }
+  
+  const empleado = document.getElementById('id_empleado_producto').value;
+  if (!empleado) {
+    e.preventDefault();
+    alert('Seleccione un empleado');
+    return;
+  }
+  
+  if (productosDirecta.length === 0) {
+    e.preventDefault();
+    alert('Agregue al menos un producto');
+    return;
+  }
+  
+  const productosInput = document.createElement('input');
+  productosInput.type = 'hidden';
+  productosInput.name = 'productos_json';
+  productosInput.value = JSON.stringify(productosDirecta);
+  this.appendChild(productosInput);
+});
+
+// Validar formulario cita antes de enviar
+document.getElementById('formCita')?.addEventListener('submit', function(e) {
+  const cita = document.getElementById('id_cita_select').value;
+  if (!cita) {
+    e.preventDefault();
+    alert('Seleccione una cita');
+    return;
+  }
+  
+  const productosInput = document.createElement('input');
+  productosInput.type = 'hidden';
+  productosInput.name = 'productos_json';
+  productosInput.value = JSON.stringify(productosCita);
+  this.appendChild(productosInput);
+});
 </script>
 
 {% endblock %}
