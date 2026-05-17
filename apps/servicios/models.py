@@ -35,6 +35,7 @@ class Producto(models.Model):
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField(blank=True, default='')
     marca = models.CharField(max_length=100, blank=True)
+    precio_compra = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='Precio de compra')
     tamano = models.CharField(
         max_length=100,
         blank=True,

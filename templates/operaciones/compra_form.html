@@ -5,205 +5,370 @@
 <style>
   .form-section {
     background: #ffffff;
-    border: 1px solid #ede8f2;
-    border-radius: 12px;
-    margin-bottom: 16px;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    margin-bottom: 24px;
     overflow: hidden;
   }
   .form-section-header {
-    padding: 12px 20px;
-    border-bottom: 1px solid #ede8f2;
-    font-size: 11px;
-    letter-spacing: 0.8px;
-    color: #aaa;
+    padding: 14px 20px;
+    border-bottom: 1px solid #e8e8e8;
+    font-size: 12px;
     font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #5e2069;
+    background: #faf8fc;
+    text-transform: uppercase;
   }
   .form-section-body {
-    padding: 20px;
+    padding: 24px;
   }
   .form-grid-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: 20px;
   }
-  .form-grid-3 {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
-    gap: 16px;
+  .field-group {
+    margin-bottom: 20px;
   }
   .field-group label {
     font-size: 11px;
-    letter-spacing: 0.6px;
-    color: #aaa;
+    font-weight: 600;
+    color: #6c757d;
     margin-bottom: 6px;
     display: block;
+    letter-spacing: 0.3px;
   }
   .field-group .form-control,
   .field-group .form-select {
-    border: 1px solid #e0d0e8;
-    border-radius: 8px;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d4d4d4;
+    border-radius: 6px;
     font-size: 14px;
-    color: #111;
-    background-color: #fff;
-    height: 40px;
+    color: #2c3e50;
+    background: #ffffff;
+    transition: all 0.2s;
   }
   .field-group .form-control:focus,
   .field-group .form-select:focus {
     border-color: #7b2d8b;
-    box-shadow: 0 0 0 3px rgba(123,45,139,0.1);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(123,45,139,0.1);
   }
-  .total-amount {
-    font-size: 32px;
-    font-weight: 600;
-    color: #7b2d8b;
-    line-height: 1;
+  .info-panel {
+    background: #f5f5f5;
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-top: 8px;
+    border-left: 3px solid #7b2d8b;
   }
-  .total-hint {
-    font-size: 11px;
-    color: #aaa;
-    margin-top: 4px;
-  }
-  .btn-guardar {
-    background-color: #7b2d8b;
-    border: none;
-    border-radius: 99px;
-    padding: 0 28px;
-    height: 40px;
+  .info-panel-row {
+    display: flex;
+    gap: 24px;
     font-size: 13px;
-    font-weight: 600;
-    color: #fff;
   }
-  .btn-guardar:hover {
-    background-color: #5e2069;
-    color: #fff;
-  }
-  .btn-cancelar {
-    background-color: #f3e8f7;
-    border: 1px solid #e0d0e8;
-    border-radius: 99px;
-    padding: 0 24px;
-    height: 40px;
-    font-size: 13px;
+  .info-panel-label {
+    color: #6c757d;
     font-weight: 500;
-    color: #111;
-    display: inline-flex;
-    align-items: center;
   }
-  .btn-cancelar:hover {
-    background-color: #ede8f2;
-    color: #111;
-  }
-  .page-header-title {
-    font-size: 20px;
+  .info-panel-value {
+    color: #2c3e50;
     font-weight: 600;
-    color: #111;
+  }
+  .checkbox-wrapper {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 20px;
+    margin: 16px 0;
   }
-  .page-header-icon {
-    width: 32px;
-    height: 32px;
-    background: #f3e8f7;
-    border-radius: 8px;
+  .checkbox-wrapper input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+  }
+  .checkbox-wrapper label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #2c3e50;
+    margin: 0;
+  }
+  .margen-container {
+    background: #faf8fc;
+    border-radius: 6px;
+    padding: 16px;
+    margin-top: 16px;
+    border: 1px solid #e8e8e8;
+  }
+  .price-suggestion {
+    background: #eef2f5;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-top: 12px;
+    text-align: center;
+  }
+  .price-suggestion-label {
+    font-size: 11px;
+    color: #6c757d;
+    letter-spacing: 0.5px;
+  }
+  .price-suggestion-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2c3e50;
+  }
+  .total-section {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    font-size: 15px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .total-amount {
+    font-size: 28px;
+    font-weight: 700;
+    color: #5e2069;
+  }
+  .total-hint {
+    font-size: 11px;
+    color: #9e9e9e;
+    margin-top: 4px;
+  }
+  .btn-cancelar {
+    background: #ffffff;
+    border: 1px solid #d4d4d4;
+    border-radius: 6px;
+    padding: 8px 24px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #6c757d;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.2s;
+  }
+  .btn-cancelar:hover {
+    background: #f5f5f5;
+    border-color: #b0b0b0;
+    color: #4a4a4a;
+  }
+  .btn-guardar {
+    background: #7b2d8b;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 28px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #ffffff;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-guardar:hover {
+    background: #5e2069;
+  }
+  .page-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e8e8e8;
+  }
+  .text-muted-small {
+    font-size: 11px;
+    color: #9e9e9e;
+  }
+  .mt-2 {
+    margin-top: 8px;
+  }
+  .d-flex {
+    display: flex;
+  }
+  .gap-2 {
+    gap: 12px;
+  }
+  .align-items-center {
+    align-items: center;
+  }
+  .justify-content-between {
+    justify-content: space-between;
   }
 </style>
 
-<div class="page-header-title">
-  <div class="page-header-icon">🧾</div>
+<div class="page-title">
   {{ titulo }}
 </div>
 
-<form method="post" novalidate>
+<form method="post" novalidate id="compraForm">
   {% csrf_token %}
 
-  <!-- DATOS GENERALES -->
+  <!-- Sección 1: Producto -->
   <div class="form-section">
-    <div class="form-section-header">DATOS GENERALES</div>
+    <div class="form-section-header">Información del producto</div>
     <div class="form-section-body">
       <div class="form-grid-2">
         <div class="field-group">
-          <label>EMPLEADO</label>
-          {{ form.empleado }}
-          {% if form.empleado.errors %}
-            <div class="text-danger small mt-1">{{ form.empleado.errors|join:", " }}</div>
-          {% endif %}
-        </div>
-        <div class="field-group">
-          <label>PROVEEDOR</label>
-          {{ form.proveedor }}
-          {% if form.proveedor.errors %}
-            <div class="text-danger small mt-1">{{ form.proveedor.errors|join:", " }}</div>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- DETALLES DEL PRODUCTO -->
-  <div class="form-section">
-    <div class="form-section-header">DETALLES DEL PRODUCTO</div>
-    <div class="form-section-body">
-      <div class="form-grid-3">
-        <div class="field-group">
           <label>PRODUCTO</label>
           {{ form.producto }}
-          {% if form.producto.errors %}
-            <div class="text-danger small mt-1">{{ form.producto.errors|join:", " }}</div>
-          {% endif %}
-        </div>
-        <div class="field-group">
-          <label>PRECIO UNITARIO</label>
-          {{ form.precio_unitario }}
-          {% if form.precio_unitario.errors %}
-            <div class="text-danger small mt-1">{{ form.precio_unitario.errors|join:", " }}</div>
-          {% endif %}
         </div>
         <div class="field-group">
           <label>CANTIDAD</label>
           {{ form.cantidad }}
-          {% if form.cantidad.errors %}
-            <div class="text-danger small mt-1">{{ form.cantidad.errors|join:", " }}</div>
-          {% endif %}
+        </div>
+      </div>
+
+      <div id="infoProducto" class="info-panel" style="display: none;">
+        <div class="info-panel-row">
+          <div><span class="info-panel-label">Stock actual:</span> <span class="info-panel-value" id="stockActual">0</span> unidades</div>
+          <div><span class="info-panel-label">Precio venta:</span> <span class="info-panel-value">$<span id="precioVentaActual">0</span></span></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- TOTAL Y ACCIONES -->
+  <!-- Sección 2: Compra -->
   <div class="form-section">
-    <div class="form-section-header">TOTAL Y ACCIONES</div>
-    <div class="form-section-body d-flex align-items-center justify-content-between">
-      <div>
-        <div style="font-size:11px;letter-spacing:0.6px;color:#aaa;margin-bottom:4px;">TOTAL COMPRA</div>
-        <div class="total-amount" id="total_display">$0.00</div>
-        <div class="total-hint">Se calcula automáticamente</div>
+    <div class="form-section-header">Registro de compra</div>
+    <div class="form-section-body">
+      <div class="form-grid-2">
+        <div class="field-group">
+          <label>PRECIO UNITARIO</label>
+          {{ form.precio_unitario }}
+        </div>
+        <div class="field-group">
+          <label>PROVEEDOR</label>
+          {{ form.proveedor }}
+        </div>
       </div>
-      <div class="d-flex gap-2">
-        <a href="{% url 'operaciones:compra_list' %}" class="btn btn-cancelar">CANCELAR</a>
-        <button type="submit" class="btn btn-guardar">GUARDAR</button>
+
+      <div class="field-group">
+        <label>EMPLEADO RESPONSABLE</label>
+        {{ form.empleado }}
+      </div>
+
+      <div class="checkbox-wrapper">
+        <input type="checkbox" id="actualizarPrecio" name="actualizar_precio">
+        <label for="actualizarPrecio">Actualizar precio de venta con margen de ganancia</label>
+      </div>
+
+      <div id="margenDiv" style="display: none;">
+        <div class="margen-container">
+          <div class="form-grid-2">
+            <div class="field-group">
+              <label>MARGEN DE GANANCIA (%)</label>
+              <input type="number" id="margenGanancia" class="form-control" value="40" step="5">
+            </div>
+            <div class="field-group">
+              <label>PRECIO DE VENTA SUGERIDO</label>
+              <input type="text" id="precioVentaSugerido" class="form-control" readonly>
+            </div>
+          </div>
+          <div class="price-suggestion">
+            <div class="price-suggestion-label">PRECIO RECOMENDADO</div>
+            <div class="price-suggestion-value">$<span id="precioRecomendado">0.00</span></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- Sección 3: Total -->
+  <div class="form-section">
+    <div class="form-section-header">Resumen</div>
+    <div class="form-section-body">
+      <div class="total-section">
+        <div>
+          <div class="total-amount" id="totalCompra">$0.00</div>
+          <div class="total-hint">Cantidad × Precio unitario</div>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+          <a href="{% url 'operaciones:compra_list' %}" class="btn-cancelar">Cancelar</a>
+          <button type="submit" class="btn-guardar">Guardar compra</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </form>
 
 <script>
-function calcularTotal() {
-  const precio = parseFloat(document.querySelector('[name="precio_unitario"]').value) || 0;
-  const cantidad = parseFloat(document.querySelector('[name="cantidad"]').value) || 0;
-  document.getElementById('total_display').textContent = '$' + (precio * cantidad).toFixed(2);
-}
-document.querySelector('[name="precio_unitario"]').addEventListener('input', calcularTotal);
-document.querySelector('[name="cantidad"]').addEventListener('input', calcularTotal);
+document.addEventListener('DOMContentLoaded', function() {
+  const productoSelect = document.getElementById('id_producto');
+  const precioUnitario = document.getElementById('id_precio_unitario');
+  const cantidad = document.getElementById('id_cantidad');
+  const totalSpan = document.getElementById('totalCompra');
+  const infoDiv = document.getElementById('infoProducto');
+  const check = document.getElementById('actualizarPrecio');
+  const margenDiv = document.getElementById('margenDiv');
+  const margenInput = document.getElementById('margenGanancia');
+  const precioSugerido = document.getElementById('precioVentaSugerido');
+  const precioRec = document.getElementById('precioRecomendado');
 
-// Inicializar con valores existentes (modo edición)
-calcularTotal();
+  let productos = {};
+
+  {% for p in form.fields.producto.queryset %}
+  productos[{{ p.id }}] = {
+    stock: {{ p.stock_actual }},
+    venta: {{ p.precio_venta|default:0 }}
+  };
+  {% endfor %}
+
+  function actualizarTotal() {
+    let cant = parseFloat(cantidad.value) || 0;
+    let precio = parseFloat(precioUnitario.value) || 0;
+    let total = cant * precio;
+    totalSpan.textContent = '$' + total.toFixed(2);
+  }
+
+  function mostrarInfo() {
+    let id = productoSelect.value;
+    if (id && productos[id]) {
+      infoDiv.style.display = 'block';
+      document.getElementById('stockActual').innerText = productos[id].stock;
+      document.getElementById('precioVentaActual').innerText = productos[id].venta.toFixed(2);
+    } else {
+      infoDiv.style.display = 'none';
+    }
+  }
+
+  function calcularSugerido() {
+    let compra = parseFloat(precioUnitario.value) || 0;
+    let margen = parseFloat(margenInput.value) || 0;
+    let nuevo = compra * (1 + margen / 100);
+    precioSugerido.value = '$' + nuevo.toFixed(2);
+    precioRec.innerText = nuevo.toFixed(2);
+  }
+
+  check.addEventListener('change', function() {
+    margenDiv.style.display = this.checked ? 'block' : 'none';
+    if (this.checked) calcularSugerido();
+  });
+
+  precioUnitario.addEventListener('input', function() {
+    actualizarTotal();
+    if (check.checked) calcularSugerido();
+  });
+
+  cantidad.addEventListener('input', actualizarTotal);
+  margenInput.addEventListener('input', function() {
+    if (check.checked) calcularSugerido();
+  });
+
+  productoSelect.addEventListener('change', mostrarInfo);
+
+  mostrarInfo();
+  actualizarTotal();
+
+  document.getElementById('compraForm').addEventListener('submit', function(e) {
+    if (check.checked) {
+      let nuevo = parseFloat(precioSugerido.value.replace('$', ''));
+      if (nuevo > 0) {
+        let input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'nuevo_precio_venta';
+        input.value = nuevo;
+        this.appendChild(input);
+      }
+    }
+  });
+});
 </script>
-
 {% endblock %}

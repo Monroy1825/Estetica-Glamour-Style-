@@ -484,15 +484,29 @@ def compra_create(request):
         if form.is_valid():
             producto = form.cleaned_data['producto']
             cantidad = form.cleaned_data['cantidad']
+            precio_unitario = form.cleaned_data['precio_unitario']
             compra = form.save()
+            
+            # Actualizar stock
             producto.stock_actual += cantidad
+            
+            # Actualizar precio de compra (promedio)
+            nuevo_total_compra = (producto.precio_compra * (producto.stock_actual - cantidad) + precio_unitario * cantidad) / producto.stock_actual
+            producto.precio_compra = round(nuevo_total_compra, 2)
+            
+            # Actualizar precio de venta si se solicitó
+            nuevo_precio_venta = request.POST.get('nuevo_precio_venta')
+            if nuevo_precio_venta:
+                producto.precio_venta = float(nuevo_precio_venta)
+            
             producto.save()
-            messages.success(request, '¡Compra registrada!')
+            
+            messages.success(request, f'¡Compra registrada! Stock actual: {producto.stock_actual} unidades')
             return redirect('operaciones:compra_list')
     else:
         form = CompraForm()
+    
     return render(request, 'operaciones/compra_form.html', {'titulo': 'Nueva Compra', 'form': form})
-
 @login_required
 def compra_detail(request, pk):
     compra = get_object_or_404(Compra.objects.select_related('empleado', 'producto'), pk=pk)
