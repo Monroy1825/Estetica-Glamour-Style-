@@ -2,36 +2,60 @@
 {% block title %}Cita Confirmada — Glamour Style{% endblock %}
 {% block content %}
 
-<div style="max-width:480px;margin:0 auto;">
+<div style="max-width:500px;margin:0 auto;">
   <div class="card-portal p-4 text-center">
     <div style="width:64px;height:64px;border-radius:50%;background:#d1e7dd;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
       <i class="bi bi-check-lg" style="font-size:2rem;color:#0f5132;"></i>
     </div>
-    <h4 class="fw-bold mb-1" style="color:#2d2d2d;">Cita Registrada</h4>
+    <h4 class="fw-bold mb-1" style="color:#2d2d2d;">
+      {% if todas_citas.count > 1 %}Citas Registradas{% else %}Cita Registrada{% endif %}
+    </h4>
     <p class="text-muted mb-4" style="font-size:0.88rem;">
-      Tu cita ha sido agendada con exito. Te esperamos puntualmente.
+      Tu{% if todas_citas.count > 1 %}s citas han{% else %} cita ha{% endif %} sido agendada{% if todas_citas.count > 1 %}s{% endif %} con exito. Te esperamos puntualmente.
     </p>
 
+    {% if cita.codigo_confirmacion %}
+    <div style="background:#f3e8f7;border:2px dashed #7b2d8b;border-radius:12px;padding:16px;text-align:center;margin-bottom:20px;">
+      <div style="font-size:0.78rem;color:#7b2d8b;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">
+        Tu codigo de confirmacion
+      </div>
+      <div style="font-size:2rem;font-weight:800;color:#7b2d8b;letter-spacing:4px;">
+        {{ cita.codigo_confirmacion }}
+      </div>
+      <div style="font-size:0.75rem;color:#9b59b6;margin-top:6px;">
+        Guarda este codigo para consultar tus citas
+      </div>
+    </div>
+    {% endif %}
+
     <div style="background:#f9f6fb;border-radius:12px;padding:16px;text-align:left;margin-bottom:20px;">
-      <div class="d-flex justify-content-between mb-2" style="font-size:0.85rem;">
+      <div class="d-flex justify-content-between mb-3" style="font-size:0.85rem;">
         <span class="text-muted">Cliente</span>
         <span class="fw-semibold">{{ cita.cliente.nombre }}</span>
       </div>
-      <div class="d-flex justify-content-between mb-2" style="font-size:0.85rem;">
-        <span class="text-muted">Servicio</span>
-        <span class="fw-semibold">{{ cita.servicio.nombre }}</span>
-      </div>
-      <div class="d-flex justify-content-between mb-2" style="font-size:0.85rem;">
+      <div class="d-flex justify-content-between mb-3" style="font-size:0.85rem;">
         <span class="text-muted">Estilista</span>
         <span class="fw-semibold">{{ cita.empleado.nombre }}</span>
       </div>
-      <div class="d-flex justify-content-between mb-2" style="font-size:0.85rem;">
-        <span class="text-muted">Fecha</span>
-        <span class="fw-semibold">{{ cita.fecha_inicio|date:"d/m/Y" }}</span>
-      </div>
-      <div class="d-flex justify-content-between" style="font-size:0.85rem;">
-        <span class="text-muted">Hora</span>
-        <span class="fw-semibold">{{ cita.fecha_inicio|date:"H:i" }}</span>
+
+      <div style="border-top:1px solid #e8e0ed;padding-top:12px;margin-top:4px;">
+        <div style="font-size:0.72rem;color:#7b2d8b;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">
+          {% if todas_citas.count > 1 %}Servicios agendados{% else %}Servicio agendado{% endif %}
+        </div>
+        {% for c in todas_citas %}
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;padding-bottom:10px;{% if not forloop.last %}border-bottom:1px dashed #e8e0ed;{% endif %}">
+          <div>
+            <div style="font-size:0.85rem;font-weight:700;color:#2d2d2d;">{{ c.servicio.nombre }}</div>
+            <div style="font-size:0.78rem;color:#888;margin-top:2px;">
+              <i class="bi bi-calendar3 me-1"></i>{{ c.fecha_inicio|date:"d/m/Y" }}
+              <i class="bi bi-clock ms-2 me-1"></i>{{ c.fecha_inicio|date:"H:i" }}
+            </div>
+          </div>
+          <span style="font-size:0.72rem;background:#f3e8f7;color:#7b2d8b;padding:3px 8px;border-radius:6px;font-weight:600;white-space:nowrap;margin-left:8px;">
+            {{ c.duracion_horas|floatformat:0 }}h {{ c.duracion_horas|floatformat:2|slice:"-2:" }}min
+          </span>
+        </div>
+        {% endfor %}
       </div>
     </div>
 

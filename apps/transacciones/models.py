@@ -32,6 +32,7 @@ class Cita(models.Model):
         verbose_name='Permitir horario compartido',
         help_text='Marcar si el cliente necesita más de un servicio en este bloque'
     )
+    codigo_confirmacion = models.CharField(max_length=20, blank=True, null=True)
 
     class Meta:
         verbose_name = 'Cita'

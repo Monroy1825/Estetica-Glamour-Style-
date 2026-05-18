@@ -15,6 +15,7 @@ class Servicio(models.Model):
     precio_base = models.DecimalField(max_digits=8, decimal_places=2)
     precio_costo = models.DecimalField(max_digits=8, decimal_places=2, default=0)
     duracion_minutos = models.PositiveIntegerField(default=60, verbose_name='Duración (minutos)')
+    imagen = models.CharField(max_length=100, blank=True, default='')
     activo = models.BooleanField(default=True)
 
     class Meta:

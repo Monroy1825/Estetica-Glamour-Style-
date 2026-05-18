@@ -1,11 +1,10 @@
 {% extends "portal/base_portal.html" %}
+{% load static %}
 {% block title %}Portal de Clientes — Glamour Style{% endblock %}
 {% block content %}
 
 <div class="text-center py-4 mb-4">
-  <div style="width:70px;height:70px;border-radius:50%;background:#7b2d8b;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
-    <i class="bi bi-scissors" style="font-size:2rem;color:#fff;"></i>
-  </div>
+  <img src="{% static 'img/logo.png' %}" alt="Glamour Style" style="width:140px;height:140px;object-fit:contain;margin:0 auto 16px;display:block;">
   <h1 style="font-size:1.8rem;font-weight:700;color:#2d2d2d;">Bienvenida a Glamour Style</h1>
   <p class="text-muted" style="font-size:0.95rem;max-width:420px;margin:8px auto 0;">
     Agenda tu cita en linea o consulta el estado de tus proximas visitas.

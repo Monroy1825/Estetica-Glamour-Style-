@@ -172,39 +172,31 @@ class CitaPublicaForm(forms.Form):
         required=False,
         widget=forms.EmailInput(attrs={"class": "form-control", "placeholder": "Tu email (opcional)"})
     )
-    servicio = forms.ModelChoiceField(
-        queryset=Servicio.objects.filter(activo=True),
-        widget=forms.Select(attrs={"class": "form-select"}),
-        label="Servicio"
-    )
     empleado = forms.ModelChoiceField(
         queryset=Empleado.objects.filter(activo=True),
         widget=forms.Select(attrs={"class": "form-select"}),
         label="Estilista"
     )
-    fecha = forms.DateField(
-        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
-        label="Fecha"
-    )
-    horario = forms.ChoiceField(
-        choices=[
-            ("10:00", "10:00 AM"),
-            ("11:00", "11:00 AM"),
-            ("12:00", "12:00 PM"),
-            ("13:00", "1:00 PM"),
-            ("17:00", "5:00 PM"),
-            ("18:00", "6:00 PM"),
-            ("19:00", "7:00 PM"),
-            ("20:00", "8:00 PM"),
-        ],
-        widget=forms.Select(attrs={"class": "form-select"}),
-        label="Horario"
-    )
 
 
-class ConsultaForm(forms.Form):
-    """Formulario para consultar citas por teléfono."""
+class ConsultaCodigoForm(forms.Form):
+    codigo = forms.CharField(
+        max_length=20,
+        widget=forms.TextInput(attrs={
+            "class": "form-control",
+            "placeholder": "GLM-1234",
+            "style": "text-transform:uppercase;letter-spacing:2px;font-weight:600;",
+        })
+    )
+
+class ConsultaTelefonoForm(forms.Form):
     telefono = forms.CharField(
         max_length=20,
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Tu teléfono"})
+        widget=forms.TextInput(attrs={
+            "class": "form-control",
+            "placeholder": "Tu número de teléfono",
+        })
     )
+
+# Alias para compatibilidad
+ConsultaForm = ConsultaCodigoForm

@@ -8,57 +8,155 @@
       <i class="bi bi-arrow-left me-1"></i>Regresar
     </a>
     <h4 class="fw-bold mt-2 mb-1" style="color:#2d2d2d;">Consultar Mis Citas</h4>
-    <p class="text-muted" style="font-size:0.85rem;margin:0;">Ingresa tu numero de telefono para ver tus citas.</p>
+    <p class="text-muted" style="font-size:0.85rem;margin:0;">Busca por codigo de confirmacion o recupera tu codigo con tu numero de telefono.</p>
   </div>
 
-  <div class="card-portal p-4 mb-4">
+  <!-- Pestañas -->
+  <div style="display:flex;gap:0;background:#f3e8f7;border-radius:12px;padding:4px;margin-bottom:20px;">
+    <button onclick="cambiarTab('codigo')" id="tab-codigo"
+      style="flex:1;border:none;border-radius:9px;padding:9px;font-size:0.83rem;font-weight:600;cursor:pointer;transition:all 0.15s;
+             background:#7b2d8b;color:#fff;">
+      <i class="bi bi-upc-scan me-1"></i>Tengo mi codigo
+    </button>
+    <button onclick="cambiarTab('telefono')" id="tab-telefono"
+      style="flex:1;border:none;border-radius:9px;padding:9px;font-size:0.83rem;font-weight:600;cursor:pointer;transition:all 0.15s;
+             background:transparent;color:#7b2d8b;">
+      <i class="bi bi-telephone me-1"></i>Recuperar con telefono
+    </button>
+  </div>
+
+  <!-- Formulario por codigo -->
+  <div id="panel-codigo" class="card-portal p-4 mb-4">
     <form method="post" novalidate>
       {% csrf_token %}
+      <input type="hidden" name="modo" value="codigo">
       <div class="mb-3">
-        <label class="form-label fw-semibold" style="font-size:0.85rem;">{{ form.telefono.label }}</label>
-        {{ form.telefono }}
-        {% if form.telefono.errors %}
-          <div class="text-danger" style="font-size:0.78rem;">{{ form.telefono.errors.0 }}</div>
+        <label class="form-label fw-semibold" style="font-size:0.85rem;">Codigo de confirmacion</label>
+        {{ form_codigo.codigo }}
+        {% if form_codigo.codigo.errors %}
+          <div class="text-danger" style="font-size:0.78rem;">{{ form_codigo.codigo.errors.0 }}</div>
         {% endif %}
       </div>
       <button type="submit" class="btn btn-primary-portal w-100">
-        <i class="bi bi-search me-2"></i>Buscar Citas
+        <i class="bi bi-search me-2"></i>Buscar Cita
       </button>
     </form>
   </div>
 
-  {% if citas is not None %}
-    {% if citas %}
-      <h6 class="fw-bold mb-3" style="color:#2d2d2d;font-size:0.9rem;">Tus citas:</h6>
-      {% for cita in citas %}
-      <div class="card-portal p-3 mb-2">
-        <div class="d-flex justify-content-between align-items-start">
+  <!-- Formulario por telefono -->
+  <div id="panel-telefono" class="card-portal p-4 mb-4" style="display:none;">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="modo" value="telefono">
+      <div class="mb-3">
+        <label class="form-label fw-semibold" style="font-size:0.85rem;">Numero de telefono registrado</label>
+        {{ form_telefono.telefono }}
+        {% if form_telefono.telefono.errors %}
+          <div class="text-danger" style="font-size:0.78rem;">{{ form_telefono.telefono.errors.0 }}</div>
+        {% endif %}
+      </div>
+      <button type="submit" class="btn btn-primary-portal w-100">
+        <i class="bi bi-search me-2"></i>Recuperar mis citas
+      </button>
+    </form>
+  </div>
+
+  <!-- Resultado: busqueda por codigo -->
+  {% if cita and modo == 'codigo' %}
+    <div style="background:#f3e8f7;border:2px dashed #7b2d8b;border-radius:12px;padding:14px;text-align:center;margin-bottom:16px;">
+      <div style="font-size:0.72rem;color:#7b2d8b;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Codigo de confirmacion</div>
+      <div style="font-size:1.6rem;font-weight:800;color:#7b2d8b;letter-spacing:4px;">{{ cita.codigo_confirmacion }}</div>
+    </div>
+
+    <div style="font-size:0.8rem;color:#7b2d8b;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">
+      Servicios agendados
+    </div>
+    {% for c in citas_por_telefono %}
+    <div class="card-portal p-3 mb-2">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="fw-semibold" style="font-size:0.9rem;">{{ c.servicio.nombre }}</div>
+          <div class="text-muted" style="font-size:0.8rem;">
+            <i class="bi bi-person me-1"></i>{{ c.empleado.nombre }}
+          </div>
+          <div class="text-muted" style="font-size:0.8rem;">
+            <i class="bi bi-calendar3 me-1"></i>{{ c.fecha_inicio|date:"d/m/Y" }}
+            <i class="bi bi-clock ms-2 me-1"></i>{{ c.fecha_inicio|date:"H:i" }}
+          </div>
+        </div>
+        <span class="badge badge-{{ c.estado }}" style="font-size:0.72rem;padding:4px 8px;border-radius:6px;">
+          {{ c.get_estado_display }}
+        </span>
+      </div>
+    </div>
+    {% endfor %}
+
+  <!-- Resultado: recuperacion por telefono -->
+  {% elif citas_por_telefono and modo == 'telefono' %}
+    <div style="font-size:0.8rem;color:#7b2d8b;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">
+      Tus citas registradas
+    </div>
+    {% regroup citas_por_telefono by codigo_confirmacion as grupos %}
+    {% for grupo in grupos %}
+      <div class="card-portal p-3 mb-3">
+        {% if grupo.grouper %}
+        <div style="background:#f3e8f7;border-radius:8px;padding:8px 12px;text-align:center;margin-bottom:12px;">
+          <div style="font-size:0.68rem;color:#7b2d8b;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Codigo de confirmacion</div>
+          <div style="font-size:1.2rem;font-weight:800;color:#7b2d8b;letter-spacing:3px;">{{ grupo.grouper }}</div>
+        </div>
+        {% else %}
+        <div style="background:#f5f5f5;border-radius:8px;padding:8px 12px;text-align:center;margin-bottom:12px;">
+          <div style="font-size:0.75rem;color:#999;">Cita registrada sin codigo (agendada por el salon)</div>
+        </div>
+        {% endif %}
+        {% for c in grupo.list %}
+        <div class="d-flex justify-content-between align-items-start {% if not forloop.last %}mb-2 pb-2{% endif %}"
+             style="{% if not forloop.last %}border-bottom:1px dashed #e8e0ed;{% endif %}">
           <div>
-            <div class="fw-semibold" style="font-size:0.9rem;">{{ cita.servicio.nombre }}</div>
-            <div class="text-muted" style="font-size:0.8rem;">
-              <i class="bi bi-person me-1"></i>{{ cita.empleado.nombre }}
-            </div>
-            <div class="text-muted" style="font-size:0.8rem;">
-              <i class="bi bi-calendar3 me-1"></i>{{ cita.fecha_inicio|date:"d/m/Y" }}
-              <i class="bi bi-clock ms-2 me-1"></i>{{ cita.fecha_inicio|date:"H:i" }}
+            <div class="fw-semibold" style="font-size:0.85rem;">{{ c.servicio.nombre }}</div>
+            <div class="text-muted" style="font-size:0.78rem;">
+              <i class="bi bi-calendar3 me-1"></i>{{ c.fecha_inicio|date:"d/m/Y" }}
+              <i class="bi bi-clock ms-2 me-1"></i>{{ c.fecha_inicio|date:"H:i" }}
             </div>
           </div>
-          <span class="badge badge-{{ cita.estado }}" style="font-size:0.72rem;padding:4px 8px;border-radius:6px;">
-            {{ cita.get_estado_display }}
+          <span class="badge badge-{{ c.estado }}" style="font-size:0.70rem;padding:3px 7px;border-radius:6px;">
+            {{ c.get_estado_display }}
           </span>
         </div>
+        {% endfor %}
       </div>
-      {% endfor %}
-    {% else %}
-      <div class="card-portal p-4 text-center">
-        <i class="bi bi-calendar-x" style="font-size:2rem;color:#ccc;display:block;margin-bottom:8px;"></i>
-        <div class="text-muted" style="font-size:0.88rem;">No encontramos citas con ese numero de telefono.</div>
-        <a href="{% url 'portal:agendar' %}" class="btn btn-primary-portal mt-3" style="font-size:0.85rem;">
-          Agendar ahora
-        </a>
+    {% endfor %}
+
+  {% elif not_found %}
+    <div class="card-portal p-4 text-center">
+      <i class="bi bi-calendar-x" style="font-size:2rem;color:#ccc;display:block;margin-bottom:8px;"></i>
+      <div class="text-muted" style="font-size:0.88rem;">
+        {% if modo == 'telefono' %}No encontramos citas con ese numero de telefono.
+        {% else %}No encontramos ninguna cita con ese codigo.{% endif %}
       </div>
-    {% endif %}
+      <a href="{% url 'portal:agendar' %}" class="btn btn-primary-portal mt-3" style="font-size:0.85rem;">
+        Agendar ahora
+      </a>
+    </div>
   {% endif %}
 </div>
+
+<script>
+  function cambiarTab(tab) {
+    const esCodigo = tab === 'codigo';
+    document.getElementById('panel-codigo').style.display = esCodigo ? 'block' : 'none';
+    document.getElementById('panel-telefono').style.display = esCodigo ? 'none' : 'block';
+    document.getElementById('tab-codigo').style.background = esCodigo ? '#7b2d8b' : 'transparent';
+    document.getElementById('tab-codigo').style.color = esCodigo ? '#fff' : '#7b2d8b';
+    document.getElementById('tab-telefono').style.background = esCodigo ? 'transparent' : '#7b2d8b';
+    document.getElementById('tab-telefono').style.color = esCodigo ? '#7b2d8b' : '#fff';
+  }
+
+  // Restaurar pestaña activa tras POST
+  document.addEventListener('DOMContentLoaded', function() {
+    const modo = "{{ modo }}";
+    if (modo === 'telefono') cambiarTab('telefono');
+  });
+</script>
 
 {% endblock %}
