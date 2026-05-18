@@ -404,7 +404,7 @@
       <i class="bi bi-calculator"></i>
     </div>
     <div class="stat-value-modern">
-      ${% if total_ventas > 0 %}{{ total_ingresos|floatformat:2 }}{% else %}0{% endif %}
+      ${% if total_ventas > 0 %}{% widthratio total_ingresos total_ventas 1 %}{% else %}0{% endif %}
     </div>
     <div class="stat-label-modern">Promedio por Venta</div>
   </div>

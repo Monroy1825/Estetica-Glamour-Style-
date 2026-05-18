@@ -12,4 +12,5 @@ urlpatterns = [
     path('ventas/pdf/', views_reportes.reporte_ventas_pdf, name='reporte_ventas_pdf'),
     path('citas/pdf/', views_reportes.reporte_citas_pdf, name='reporte_citas_pdf'),
     path('compras/pdf/', views_reportes.reporte_compras_pdf, name='reporte_compras_pdf'),
+    path('stock/pdf/', views_reportes.reporte_stock_pdf, name='reporte_stock_pdf'),
 ]
