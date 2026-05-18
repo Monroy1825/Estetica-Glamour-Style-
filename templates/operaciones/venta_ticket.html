@@ -216,10 +216,9 @@
 
     <div class="ticket">
 
-      <!-- Mensaje de comprobante de pago -->
-      {% if not hay_pendientes and ventas %}
+      {% if es_comprobante %}
       <div class="alert-success">
-        <i class="bi bi-check-circle-fill"></i> 
+        <i class="bi bi-check-circle-fill"></i>
         <strong>¡PAGO CONFIRMADO!</strong><br>
         Este es tu comprobante de pago.
       </div>
@@ -232,60 +231,38 @@
 
       <div class="ticket-row">
         <span class="label">Fecha</span>
-        <span class="value">{{ venta.fecha|date:"d/m/Y H:i" }}</span>
+        <span class="value">{{ cabecera.fecha|date:"d/m/Y H:i" }}</span>
       </div>
 
       <hr class="divider">
 
       <div class="ticket-row">
         <span class="label">Cliente</span>
-        <span class="value">{{ venta.cliente.nombre }}</span>
+        <span class="value">{{ cabecera.cliente.nombre }}</span>
       </div>
       <div class="ticket-row">
         <span class="label">Empleado</span>
-        <span class="value">{{ venta.empleado.nombre }}</span>
+        <span class="value">{{ cabecera.empleado.nombre }}</span>
       </div>
-
-      <!-- Folio y número de ticket -->
       <div class="ticket-row">
         <span class="label">Folio</span>
-        <span class="value">#{{ folio|default:"N/A" }}</span>
-      </div>
-      <div class="ticket-row">
-        <span class="label">Ticket</span>
-        <span class="value">#{% if forloop %}{{ forloop.counter }}{% else %}1{% endif %}</span>
+        <span class="value">{{ cabecera.folio }}</span>
       </div>
 
       <hr class="divider">
 
-      <div class="items-header">Detalle de servicios:</div>
+      <div class="items-header">Detalle:</div>
 
-      {% for v in ventas %}
+      {% for d in detalles %}
       <div class="ticket-row">
         <span class="label">
-          {% if v.producto %}
-            {{ v.producto.nombre }}
-          {% elif v.cita and v.cita.servicio %}
-            {{ v.cita.servicio.nombre }}
-          {% else %}
-            Venta
-          {% endif %}
+          {% if d.cantidad > 1 %}{{ d.cantidad }}x {% endif %}{{ d.descripcion }}
         </span>
-        <span class="value">${{ v.total|floatformat:2 }}</span>
+        <span class="value">${{ d.subtotal|floatformat:2 }}</span>
       </div>
-
-      {# Servicios adicionales de la cita #}
-      {% if v.cita and v.cita.servicios_adicionales.all %}
-        {% for extra in v.cita.servicios_adicionales.all %}
-        <div class="ticket-row">
-          <span class="label" style="margin-left: 15px;">+ {{ extra.servicio.nombre }}</span>
-          <span class="value">Incluido</span>
-        </div>
-        {% endfor %}
-      {% endif %}
       {% empty %}
       <div class="ticket-row">
-        <span class="label">No hay servicios pendientes</span>
+        <span class="label">Sin articulos</span>
         <span class="value">$0</span>
       </div>
       {% endfor %}
@@ -294,16 +271,12 @@
 
       <div class="ticket-row">
         <span class="label">Metodo de pago</span>
-        <span class="value">{{ venta.get_metodo_pago_display|capfirst }}</span>
+        <span class="value">{{ cabecera.get_metodo_pago_display|capfirst }}</span>
       </div>
       <div class="ticket-row">
         <span class="label">Estatus</span>
         <span class="value">
-          {% if venta.estatus == 'pendiente' %}
-            Pendiente
-          {% else %}
-            Pagada
-          {% endif %}
+          {% if cabecera.estatus == 'pendiente' %}Pendiente{% else %}Pagada{% endif %}
         </span>
       </div>
 
@@ -317,7 +290,7 @@
 
     <div class="btn-actions">
       {% if hay_pendientes %}
-      <form method="POST" action="{% url 'operaciones:confirmar_pago' cliente.id %}" style="flex:1">
+      <form method="POST" action="{% url 'operaciones:confirmar_pago_venta' cabecera.pk %}" style="flex:1">
         {% csrf_token %}
         <button type="submit" class="btn btn-pagar">Pagado</button>
       </form>
@@ -326,9 +299,9 @@
       <button onclick="window.print()" class="btn btn-print">Imprimir</button>
     </div>
 
-    {% if not hay_pendientes and ventas %}
+    {% if not hay_pendientes %}
     <div class="alert-info">
-      No hay ventas pendientes para este cliente.
+      Venta pagada.
     </div>
     {% endif %}
 

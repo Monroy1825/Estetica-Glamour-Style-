@@ -16,7 +16,6 @@ urlpatterns = [
     # VENTAS
     path('ventas/', views.venta_list, name='venta_list'),
     path('ventas/nueva/', views.venta_create, name='venta_create'),
-    path('ventas/<int:pk>/', views.venta_detail, name='venta_detail'),
     path('ventas/<int:pk>/editar/', views.venta_update, name='venta_update'),
     path('ventas/<int:pk>/eliminar/', views.venta_delete, name='venta_delete'),
     path('ventas/<int:pk>/ticket/', views.venta_ticket, name='venta_ticket'),
@@ -41,6 +40,7 @@ urlpatterns = [
     
     # PAGOS
     path('confirmar-pago/<int:cliente_id>/', views.confirmar_pago, name='confirmar_pago'),
+    path('ventas/<int:pk>/confirmar-pago/', views.confirmar_pago, name='confirmar_pago_venta'),
     
     # REPORTES
     path('reportes/margenes/', views.reporte_margenes, name='reporte_margenes'),
@@ -58,9 +58,6 @@ urlpatterns = [
     path('servicios/<int:pk>/editar/', views.ServicioUpdateView.as_view(), name='servicio_update'),
     path('servicios/<int:pk>/eliminar/', views.ServicioDeleteView.as_view(), name='servicio_delete'),
     
-    # VENTA DESDE CITA (NUEVO)
-    path('citas/<int:cita_id>/crear-venta/', views.VentaFromCitaView.as_view(), name='venta_from_cita'),
-
     # Agrega al final del archivo
     path('citas/<int:pk>/cambiar-estado/', views.cita_cambiar_estado, name='cita_cambiar_estado'),
     path('citas/<int:pk>/reagendar/', views.cita_reagendar, name='cita_reagendar'),

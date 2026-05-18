@@ -13,7 +13,7 @@ import json
 
 from .models import Cita, Venta, Compra, Cotizacion, VentaCabecera, VentaDetalle
 from apps.servicios.models import Producto, Servicio
-from .forms import CitaForm, VentaForm, CompraForm, CotizacionForm, VentaCombinadaForm
+from .forms import CitaForm, CompraForm, CotizacionForm
 
 
 def _paginate(queryset, request):
@@ -73,9 +73,11 @@ def cita_list(request):
     
     for empleado in empleados:
         citas_empleado = Cita.objects.filter(
-            activo=True, 
+            activo=True,
             empleado=empleado
-        ).select_related('cliente', 'servicio').order_by('-fecha_inicio')
+        ).select_related('cliente', 'servicio').prefetch_related(
+            'servicios_adicionales__servicio'
+        ).order_by('-fecha_inicio')
         
         if citas_empleado.exists():
             clientes = Cliente.objects.filter(
@@ -97,6 +99,10 @@ def cita_list(request):
 
 @login_required
 def cita_create(request):
+    from apps.servicios.models import Servicio as ServicioModel
+    from .models import CitaServicioAdicional
+    servicios = ServicioModel.objects.filter(activo=True)
+
     if request.method == 'POST':
         form = CitaForm(request.POST)
         if form.is_valid():
@@ -115,7 +121,8 @@ def cita_create(request):
                 messages.error(request, 'El empleado ya tiene una cita en ese horario.')
                 return render(request, 'operaciones/cita_form.html', {
                     'titulo': 'Nueva Cita',
-                    'form': form
+                    'form': form,
+                    'servicios': servicios,
                 })
 
             cita = form.save(commit=False)
@@ -123,13 +130,25 @@ def cita_create(request):
             cita.fecha_fin = fecha_fin
             cita.save()
 
-            agregar_otra = request.POST.get('agregar_otra', 'no')
-            if agregar_otra == 'si':
-                messages.success(request, '¡Cita guardada! Ahora registra la siguiente cita del cliente.')
-                return redirect(
-                    f"{request.path}?cliente={form.cleaned_data['cliente'].id}"
-                    f"&empleado={empleado_id}"
-                )
+            servicios_json = request.POST.get('servicios_adicionales_json', '[]')
+            try:
+                servicios_data = json.loads(servicios_json)
+                for s in servicios_data:
+                    CitaServicioAdicional.objects.create(
+                        cita=cita,
+                        servicio_id=s['id'],
+                    )
+            except (json.JSONDecodeError, KeyError):
+                pass
+
+            # Recalcular duracion y fecha_fin sumando todos los servicios
+            from datetime import timedelta
+            total_minutos = cita.servicio.duracion_minutos
+            for sa in cita.servicios_adicionales.all():
+                total_minutos += sa.servicio.duracion_minutos
+            cita.duracion_horas = round(total_minutos / 60, 1)
+            cita.fecha_fin = cita.fecha_inicio + timedelta(minutes=total_minutos)
+            cita.save()
 
             messages.success(request, '¡La cita se ha creado exitosamente!')
             return redirect('operaciones:cita_list')
@@ -148,6 +167,7 @@ def cita_create(request):
         'form': form,
         'horarios_ocupados': _get_horarios_ocupados(),
         'cliente_id': request.GET.get('cliente'),
+        'servicios': servicios,
     })
 
 def _get_horarios_ocupados():
@@ -165,55 +185,76 @@ def _get_horarios_ocupados():
 
 @login_required
 def cita_detail(request, pk):
-    cita = get_object_or_404(Cita.objects.select_related('cliente', 'empleado', 'servicio'), pk=pk)
+    cita = get_object_or_404(
+        Cita.objects.select_related('cliente', 'empleado', 'servicio').prefetch_related('servicios_adicionales__servicio'),
+        pk=pk
+    )
     return render(request, 'operaciones/cita_detail.html', {'cita': cita})
 
 @login_required
 def cita_update(request, pk):
+    from apps.servicios.models import Servicio as ServicioModel
+    from .models import CitaServicioAdicional
     cita = get_object_or_404(Cita, pk=pk)
     estado_anterior = cita.estado
-    tiene_venta = Venta.objects.filter(cita=cita, activo=True).exists()
-    
+    tiene_venta = VentaCabecera.objects.filter(detalles__cita=cita, activo=True).exists()
+    servicios = ServicioModel.objects.filter(activo=True)
+
+    servicios_actuales = list(cita.servicios_adicionales.filter(activo=True).values('servicio_id', 'servicio__nombre', 'servicio__precio_base'))
+    servicios_actuales_json = json.dumps([
+        {'id': str(s['servicio_id']), 'nombre': s['servicio__nombre'], 'precio': str(s['servicio__precio_base'])}
+        for s in servicios_actuales
+    ])
+
     if request.method == 'POST':
         form = CitaForm(request.POST, instance=cita)
         if form.is_valid():
             cita = form.save(commit=False)
             nuevo_estado = form.cleaned_data.get('estado')
-            
+
             if nuevo_estado == 'completada' and estado_anterior != 'completada':
-                venta_existente = Venta.objects.filter(cita=cita, activo=True).first()
+                venta_existente = VentaCabecera.objects.filter(detalles__cita=cita, activo=True).exists()
                 if not venta_existente:
-                    precio_base = float(cita.servicio.precio_base)
-                    precio_adicionales = 0
-                    for extra in cita.servicios_adicionales.all():
-                        precio_adicionales += float(extra.servicio.precio_base)
-                    
-                    total = precio_base + precio_adicionales
-                    
-                    Venta.objects.create(
-                        cliente=cita.cliente,
-                        empleado=cita.empleado,
-                        cita=cita,
-                        metodo_pago='efectivo',
-                        tipo='servicio',
-                        estatus='pagada',
-                        total=total,
-                        activo=True,
-                        origen='cita'
-                    )
+                    _crear_venta_desde_cita(cita)
                     messages.success(request, '¡Cita actualizada y venta generada automáticamente!')
             
             cita.save()
+
+            # Actualizar servicios adicionales
+            servicios_json = request.POST.get('servicios_adicionales_json', '[]')
+            try:
+                servicios_data = json.loads(servicios_json)
+                cita.servicios_adicionales.all().delete()
+                for s in servicios_data:
+                    CitaServicioAdicional.objects.create(
+                        cita=cita,
+                        servicio_id=s['id'],
+                    )
+            except (json.JSONDecodeError, KeyError):
+                pass
+
+            # Recalcular duracion y fecha_fin sumando todos los servicios
+            from datetime import timedelta
+            total_minutos = cita.servicio.duracion_minutos
+            for sa in cita.servicios_adicionales.all():
+                total_minutos += sa.servicio.duracion_minutos
+            cita.duracion_horas = round(total_minutos / 60, 1)
+            cita.fecha_fin = cita.fecha_inicio + timedelta(minutes=total_minutos)
+            cita.save()
+
             messages.success(request, '¡Cita actualizada correctamente!')
             return redirect('operaciones:cita_list')
     else:
         form = CitaForm(instance=cita)
-    
+
     return render(request, 'operaciones/cita_form.html', {
-        'titulo': 'Editar Cita', 
-        'form': form, 
+        'titulo': 'Editar Cita',
+        'form': form,
         'cita_id': cita.pk,
-        'tiene_venta': tiene_venta
+        'tiene_venta': tiene_venta,
+        'servicios': servicios,
+        'servicios_actuales': servicios_actuales,
+        'servicios_actuales_json': servicios_actuales_json,
     })
 
 @login_required
@@ -227,24 +268,62 @@ def cita_delete(request, pk):
     return render(request, 'operaciones/cita_confirm_delete.html', {'cita': cita})
 
 
+def _crear_venta_desde_cita(cita, metodo_pago='efectivo'):
+    precio_base = float(cita.servicio.precio_base)
+    total = precio_base
+
+    cabecera = VentaCabecera.objects.create(
+        cliente=cita.cliente,
+        empleado=cita.empleado,
+        metodo_pago=metodo_pago,
+        estatus='pagada',
+        subtotal=0,
+        total=0,
+        activo=True,
+    )
+    VentaDetalle.objects.create(
+        venta=cabecera,
+        tipo='servicio',
+        servicio=cita.servicio,
+        cita=cita,
+        descripcion=cita.servicio.nombre,
+        cantidad=1,
+        precio_unitario=precio_base,
+        subtotal=precio_base,
+        activo=True,
+    )
+    for extra in cita.servicios_adicionales.filter(activo=True):
+        precio_extra = float(extra.servicio.precio_base)
+        VentaDetalle.objects.create(
+            venta=cabecera,
+            tipo='servicio',
+            servicio=extra.servicio,
+            cita=cita,
+            descripcion=f'+ {extra.servicio.nombre}',
+            cantidad=1,
+            precio_unitario=precio_extra,
+            subtotal=precio_extra,
+            activo=True,
+        )
+        total += precio_extra
+
+    cabecera.subtotal = total
+    cabecera.total = total
+    cabecera.save()
+    return cabecera
+
+
 # ========== VENTAS ==========
 
 @login_required
 def venta_list(request):
-    qs = Venta.objects.filter(activo=True).select_related('cliente', 'empleado', 'producto', 'cita__servicio')
-    
-    for venta in qs:
-        venta.origen_display = '📅 Cita' if venta.origen == 'cita' else '🛒 Directa'
-        if venta.cita and venta.cita.servicio:
-            venta.servicio_nombre = venta.cita.servicio.nombre
-    
+    qs = VentaCabecera.objects.filter(activo=True).select_related('cliente', 'empleado').prefetch_related('detalles')
+
     total_ventas = qs.count()
     total_ingresos = qs.aggregate(total=Sum('total'))['total'] or 0
     ventas_pagadas = qs.filter(estatus='pagada').count()
     ventas_pendientes = qs.filter(estatus='pendiente').count()
-    ventas_cita = qs.filter(origen='cita').count()
-    ventas_directa = qs.filter(origen='venta_directa').count()
-    
+
     paginator = Paginator(qs, 10)
     page = request.GET.get('page')
     try:
@@ -253,15 +332,13 @@ def venta_list(request):
         ventas = paginator.page(1)
     except EmptyPage:
         ventas = paginator.page(paginator.num_pages)
-    
+
     return render(request, 'operaciones/venta_list.html', {
         'ventas': ventas,
         'total_ventas': total_ventas,
         'total_ingresos': total_ingresos,
         'ventas_pagadas': ventas_pagadas,
         'ventas_pendientes': ventas_pendientes,
-        'ventas_cita': ventas_cita,
-        'ventas_directa': ventas_directa,
     })
 
 @login_required
@@ -333,53 +410,75 @@ def venta_create(request):
         if cita_id:
             cita = get_object_or_404(Cita, pk=cita_id)
         
-        session_key = f'ticket_ventas_{cliente.id}'
-        ids_sesion = request.session.get(session_key, [])
-        
-        # Crear venta del servicio (si hay cita)
+        cabecera = VentaCabecera.objects.create(
+            cliente=cliente,
+            empleado=empleado,
+            metodo_pago=metodo_pago,
+            estatus='pendiente',
+            subtotal=0,
+            total=0,
+            activo=True,
+        )
+        total = 0
+
+        # Detalle del servicio de cita
         if cita:
-            venta_servicio = Venta(
-                cliente=cliente,
-                empleado=empleado,
-                cita=cita,
-                producto=None,
-                metodo_pago=metodo_pago,
+            precio_servicio = float(cita.servicio.precio_base)
+            VentaDetalle.objects.create(
+                venta=cabecera,
                 tipo='servicio',
-                estatus='pendiente',
-                total=float(cita.servicio.precio_base),
-                activo=True,  # <-- IMPORTANTE
-                origen='cita'
+                servicio=cita.servicio,
+                cita=cita,
+                descripcion=cita.servicio.nombre,
+                cantidad=1,
+                precio_unitario=precio_servicio,
+                subtotal=precio_servicio,
+                activo=True,
             )
-            venta_servicio.save()
-            ids_sesion.append(venta_servicio.pk)
-            print(f"✅ Venta servicio creada: ID {venta_servicio.id} - Cliente: {cliente.nombre}")
-        
-        # Crear ventas de los productos
+            total += precio_servicio
+
+            for extra in cita.servicios_adicionales.filter(activo=True):
+                precio_extra = float(extra.servicio.precio_base)
+                VentaDetalle.objects.create(
+                    venta=cabecera,
+                    tipo='servicio',
+                    servicio=extra.servicio,
+                    cita=cita,
+                    descripcion=f'+ {extra.servicio.nombre}',
+                    cantidad=1,
+                    precio_unitario=precio_extra,
+                    subtotal=precio_extra,
+                    activo=True,
+                )
+                total += precio_extra
+
+        # Detalle de cada producto
         for prod_data in productos_data:
             producto = get_object_or_404(Producto, pk=prod_data['id'])
             cantidad = prod_data['cantidad']
             if producto.stock_actual >= cantidad:
-                venta_producto = Venta(
-                    cliente=cliente,
-                    empleado=empleado,
-                    cita=None,
-                    producto=producto,
-                    metodo_pago=metodo_pago,
+                precio_prod = float(producto.precio_venta)
+                VentaDetalle.objects.create(
+                    venta=cabecera,
                     tipo='producto',
-                    estatus='pendiente',
-                    total=float(producto.precio_venta) * cantidad,
-                    activo=True,  # <-- IMPORTANTE
-                    origen='venta_directa'
+                    producto=producto,
+                    descripcion=producto.nombre,
+                    cantidad=cantidad,
+                    precio_unitario=precio_prod,
+                    precio_costo_unitario=float(producto.costo),
+                    subtotal=precio_prod * cantidad,
+                    activo=True,
                 )
-                venta_producto.save()
-                ids_sesion.append(venta_producto.pk)
+                total += precio_prod * cantidad
                 producto.stock_actual -= cantidad
                 producto.save()
-                print(f"✅ Venta producto creada: ID {venta_producto.id} - Producto: {producto.nombre}")
-        
-        request.session[session_key] = ids_sesion
-        messages.success(request, '¡Venta(s) registrada(s) con éxito!')
-        return redirect('operaciones:venta_list')
+
+        cabecera.subtotal = total
+        cabecera.total = total
+        cabecera.save()
+
+        messages.success(request, '¡Venta registrada con exito!')
+        return redirect('operaciones:venta_ticket', pk=cabecera.pk)
     
     return render(request, 'operaciones/venta_form.html', {
         'titulo': 'Nueva Venta',
@@ -390,79 +489,52 @@ def venta_create(request):
     })
 
 @login_required
-def venta_detail(request, pk):
-    venta = get_object_or_404(Venta.objects.select_related('cliente', 'empleado', 'producto'), pk=pk)
-    return render(request, 'operaciones/venta_detail.html', {'venta': venta})
-
-@login_required
 def venta_ticket(request, pk):
-    venta = get_object_or_404(Venta.objects.select_related('cliente', 'empleado', 'producto', 'cita__servicio'), pk=pk)
-    cliente = venta.cliente
-    
+    cabecera = get_object_or_404(
+        VentaCabecera.objects.select_related('cliente', 'empleado').prefetch_related(
+            'detalles__servicio', 'detalles__producto', 'detalles__cita'
+        ),
+        pk=pk
+    )
+    detalles = cabecera.detalles.filter(activo=True)
     es_comprobante = request.GET.get('pagado') == '1'
-    
-    session_key = f'ticket_ventas_{cliente.id}'
-    ids_sesion = request.session.get(session_key, [])
-    
-    if es_comprobante:
-        ventas = Venta.objects.filter(
-            id__in=ids_sesion,
-            activo=True
-        ).select_related('producto', 'cita__servicio').prefetch_related('cita__servicios_adicionales')
-        
-        request.session[session_key] = []
-        hay_pendientes = False
-    else:
-        if ids_sesion:
-            ventas = Venta.objects.filter(
-                id__in=ids_sesion,
-                activo=True,
-                estatus='pendiente'
-            ).select_related('producto', 'cita__servicio').prefetch_related('cita__servicios_adicionales')
-        else:
-            ventas = Venta.objects.filter(
-                cliente=cliente,
-                activo=True,
-                estatus='pendiente'
-            ).select_related('producto', 'cita__servicio').prefetch_related('cita__servicios_adicionales')
-        
-        hay_pendientes = ventas.exists()
-    
-    total = sum(v.total for v in ventas)
-    folio = f"{cliente.id}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
-    
+    hay_pendientes = cabecera.estatus == 'pendiente'
+
     return render(request, 'operaciones/venta_ticket.html', {
-        'venta': venta,
-        'ventas': ventas,
-        'total': total,
-        'cliente': cliente,
+        'cabecera': cabecera,
+        'detalles': detalles,
+        'total': cabecera.total,
+        'cliente': cabecera.cliente,
         'hay_pendientes': hay_pendientes,
         'es_comprobante': es_comprobante,
-        'folio': folio,
     })
 
 @login_required
 def venta_update(request, pk):
-    venta = get_object_or_404(Venta, pk=pk)
+    cabecera = get_object_or_404(VentaCabecera, pk=pk)
     if request.method == 'POST':
-        form = VentaForm(request.POST, instance=venta)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Venta actualizada.')
-            return redirect('operaciones:venta_list')
-    else:
-        form = VentaForm(instance=venta)
-    return render(request, 'operaciones/venta_form.html', {'titulo': 'Editar Venta', 'form': form})
+        metodo_pago = request.POST.get('metodo_pago', cabecera.metodo_pago)
+        estatus = request.POST.get('estatus', cabecera.estatus)
+        cabecera.metodo_pago = metodo_pago
+        cabecera.estatus = estatus
+        cabecera.save()
+        messages.success(request, 'Venta actualizada.')
+        return redirect('operaciones:venta_list')
+    return render(request, 'operaciones/venta_update.html', {
+        'cabecera': cabecera,
+        'metodo_opciones': VentaCabecera.METODO_PAGO_CHOICES,
+        'estatus_opciones': VentaCabecera.ESTATUS_CHOICES,
+    })
 
 @login_required
 def venta_delete(request, pk):
-    venta = get_object_or_404(Venta, pk=pk)
+    cabecera = get_object_or_404(VentaCabecera, pk=pk)
     if request.method == 'POST':
-        venta.activo = False
-        venta.save()
+        cabecera.activo = False
+        cabecera.save()
         messages.success(request, 'Venta eliminada.')
         return redirect('operaciones:venta_list')
-    return render(request, 'operaciones/venta_confirm_delete.html', {'venta': venta})
+    return render(request, 'operaciones/venta_confirm_delete.html', {'venta': cabecera})
 
 
 # ========== COMPRAS ==========
@@ -620,114 +692,21 @@ def proveedor_list(request):
 # ========== CONFIRMAR PAGO ==========
 
 @login_required
-def confirmar_pago(request, cliente_id):
+def confirmar_pago(request, cliente_id=None, pk=None):
+    venta_pk = pk or cliente_id
     if request.method == 'POST':
-        from django.db.models import Sum
-        
-        ventas = Venta.objects.filter(
-            cliente_id=cliente_id,
-            estatus='pendiente',
-            activo=True
-        )
-        
-        if ventas.exists():
-            cantidad = ventas.count()
-            total = ventas.aggregate(total=Sum('total'))['total']
-            ventas.update(estatus='pagada')
-            
-            primera_venta = ventas.first()
-            
-            if not primera_venta:
-                primera_venta = Venta.objects.filter(cliente_id=cliente_id, activo=True).first()
-            
-            messages.success(request, f'Pago confirmado correctamente. {cantidad} venta(s) pagada(s). Total: ${total}')
-            
-            if primera_venta:
-                return redirect(f'/operaciones/ventas/{primera_venta.pk}/ticket/?imprimir=1&pagado=1')
-            else:
-                return redirect('operaciones:venta_list')
-        else:
-            messages.warning(request, 'No hay ventas pendientes para este cliente.')
-    
+        cabecera = get_object_or_404(VentaCabecera, pk=venta_pk, activo=True)
+        cabecera.estatus = 'pagada'
+        cabecera.save()
+        messages.success(request, f'Pago confirmado. Total: ${cabecera.total}')
+        return redirect(f'/operaciones/ventas/{cabecera.pk}/ticket/?pagado=1')
+
     return redirect('operaciones:venta_list')
 
-
-# ========== VENTAS COMBINADAS ==========
-
-@login_required
-def venta_combinada_create(request):
-    if request.method == 'POST':
-        form = VentaCombinadaForm(request.POST)
-        if form.is_valid():
-            venta = VentaCabecera.objects.create(
-                cliente=form.cleaned_data['cliente'],
-                empleado=form.cleaned_data['empleado'],
-                metodo_pago=form.cleaned_data['metodo_pago'],
-                estatus='pendiente'
-            )
-            
-            total = 0
-            
-            if form.cleaned_data['cita']:
-                cita = form.cleaned_data['cita']
-                precio = float(cita.servicio.precio_base)
-                VentaDetalle.objects.create(
-                    venta=venta,
-                    tipo='servicio',
-                    servicio=cita.servicio,
-                    cita=cita,
-                    descripcion=cita.servicio.nombre,
-                    cantidad=1,
-                    precio_unitario=precio,
-                    subtotal=precio
-                )
-                total += precio
-                
-                for extra in cita.servicios_adicionales.all():
-                    precio_extra = float(extra.servicio.precio_base)
-                    VentaDetalle.objects.create(
-                        venta=venta,
-                        tipo='servicio',
-                        servicio=extra.servicio,
-                        cita=cita,
-                        descripcion=f'+ {extra.servicio.nombre}',
-                        cantidad=1,
-                        precio_unitario=precio_extra,
-                        subtotal=precio_extra
-                    )
-                    total += precio_extra
-            
-            if form.cleaned_data['producto']:
-                producto = form.cleaned_data['producto']
-                precio = float(producto.precio_venta)
-                VentaDetalle.objects.create(
-                    venta=venta,
-                    tipo='producto',
-                    producto=producto,
-                    descripcion=producto.nombre,
-                    cantidad=1,
-                    precio_unitario=precio,
-                    subtotal=precio
-                )
-                total += precio
-                producto.stock_actual -= 1
-                producto.save()
-            
-            venta.subtotal = total
-            venta.total = total
-            venta.save()
-            
-            messages.success(request, f'Venta {venta.folio} creada exitosamente. Total: ${total}')
-            return redirect('operaciones:venta_list')
-    else:
-        form = VentaCombinadaForm()
-    
-    return render(request, 'operaciones/venta_combinada_form.html', {'form': form})
 
 
 # ========== ELIMINACIÓN MASIVA ==========
 
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 @login_required
@@ -756,16 +735,16 @@ def venta_batch_delete(request):
     try:
         data = json.loads(request.body)
         ids = data.get('ids', [])
-        
+
         if not ids:
             return JsonResponse({'success': False, 'error': 'No se seleccionaron ventas'})
-        
-        ventas_eliminadas = Venta.objects.filter(pk__in=ids, activo=True).update(activo=False)
-        
+
+        eliminadas = VentaCabecera.objects.filter(pk__in=ids, activo=True).update(activo=False)
+
         return JsonResponse({
             'success': True,
-            'eliminadas': ventas_eliminadas,
-            'mensaje': f'Se eliminaron {ventas_eliminadas} venta(s) correctamente'
+            'eliminadas': eliminadas,
+            'mensaje': f'Se eliminaron {eliminadas} venta(s) correctamente'
         })
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
@@ -909,36 +888,6 @@ class ServicioDeleteView(DeleteView):
         return redirect(self.success_url)
 
 
-# ========== VENTA DESDE CITA ==========
-
-class VentaFromCitaView(CreateView):
-    model = Venta
-    template_name = 'operaciones/venta_from_cita.html'
-    fields = ['cliente', 'empleado', 'cita', 'metodo_pago', 'total']
-    
-    def dispatch(self, request, *args, **kwargs):
-        self.cita = get_object_or_404(Cita, pk=kwargs['cita_id'])
-        return super().dispatch(request, *args, **kwargs)
-    
-    def get_initial(self):
-        initial = super().get_initial()
-        initial['cliente'] = self.cita.cliente
-        initial['empleado'] = self.cita.empleado
-        initial['cita'] = self.cita
-        initial['total'] = self.cita.servicio.precio_base if self.cita.servicio else 0
-        initial['tipo'] = 'servicio'
-        initial['origen'] = 'cita'
-        return initial
-    
-    def form_valid(self, form):
-        form.instance.cita = self.cita
-        form.instance.origen = 'cita'
-        messages.success(self.request, 'Venta creada desde la cita exitosamente')
-        return super().form_valid(form)
-    
-    def get_success_url(self):
-        return reverse_lazy('operaciones:venta_detail', kwargs={'pk': self.object.pk})
-
 
 # ========== REPORTE DE MÁRGENES MEJORADO ==========
 
@@ -1040,22 +989,10 @@ def cita_cambiar_estado(request, pk):
             cita.estado = nuevo_estado
             cita.save()
             
-            # Si se completa la cita, generar venta automática
             if nuevo_estado == 'completada':
-                venta_existente = Venta.objects.filter(cita=cita, activo=True).first()
+                venta_existente = VentaCabecera.objects.filter(detalles__cita=cita, activo=True).exists()
                 if not venta_existente:
-                    precio_base = float(cita.servicio.precio_base)
-                    Venta.objects.create(
-                        cliente=cita.cliente,
-                        empleado=cita.empleado,
-                        cita=cita,
-                        metodo_pago='efectivo',
-                        tipo='servicio',
-                        estatus='pagada',
-                        total=precio_base,
-                        activo=True,
-                        origen='cita'
-                    )
+                    _crear_venta_desde_cita(cita)
             
             return JsonResponse({
                 'success': True,

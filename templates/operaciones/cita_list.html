@@ -148,8 +148,22 @@
   }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="mb-0"><i class="bi bi-calendar-check me-2" style="color:#7b2d8b"></i>Citas por Empleado</h4>
+<style>
+  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+  .page-header-title { display: flex; align-items: center; gap: 12px; }
+  .page-header-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #7b2d8b 0%, #5e2069 100%); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; }
+  .page-header-title h4 { font-size: 22px; font-weight: 700; margin: 0; color: #343a40; }
+  .page-header-title p { margin: 0; font-size: 13px; color: #6c757d; }
+</style>
+
+<div class="page-header">
+  <div class="page-header-title">
+    <div class="page-header-icon"><i class="bi bi-calendar-check"></i></div>
+    <div>
+      <h4>Citas por Empleado</h4>
+      <p>Gestión y seguimiento de citas</p>
+    </div>
+  </div>
   <a href="{% url 'operaciones:cita_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Nueva cita</a>
 </div>
 
@@ -242,7 +256,12 @@
             <strong>{{ cita.cliente.nombre }}</strong><br>
             <small class="text-muted">{{ cita.cliente.telefono }}</small>
           </td>
-          <td>{{ cita.servicio.nombre }}</td>
+          <td>
+            {{ cita.servicio.nombre }}
+            {% for extra in cita.servicios_adicionales.all %}
+            <br><small class="text-muted">+ {{ extra.servicio.nombre }}</small>
+            {% endfor %}
+          </td>
           <td class="no-uppercase">{{ cita.fecha_inicio|date:"d/m/Y H:i" }}</td>
           <td class="no-uppercase">{{ cita.duracion_horas }} hr</td>
           <td>

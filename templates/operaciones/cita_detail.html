@@ -13,10 +13,16 @@
     <dl class="row mb-0">
       <dt class="col-sm-5">Cliente</dt><dd class="col-sm-7">{{ cita.cliente }}</dd>
       <dt class="col-sm-5">Empleado</dt><dd class="col-sm-7">{{ cita.empleado.nombre }}</dd>
-      <dt class="col-sm-5">Servicio</dt><dd class="col-sm-7">{{ cita.servicio.nombre }}</dd>
+      <dt class="col-sm-5">Servicios</dt>
+      <dd class="col-sm-7">
+        {{ cita.servicio.nombre }}
+        {% for extra in cita.servicios_adicionales.all %}
+        <br><span class="text-muted">+ {{ extra.servicio.nombre }}</span>
+        {% endfor %}
+      </dd>
       <dt class="col-sm-5">Inicio</dt><dd class="col-sm-7">{{ cita.fecha_inicio|date:"d/m/Y H:i" }}</dd>
       <dt class="col-sm-5">Fin</dt><dd class="col-sm-7">{{ cita.fecha_fin|date:"d/m/Y H:i" }}</dd>
-      <dt class="col-sm-5">Duración estimada</dt><dd class="col-sm-7">{{ cita.duracion_horas }} hr</dd>
+      <dt class="col-sm-5">Duración total</dt><dd class="col-sm-7">{{ cita.duracion_horas }} hr</dd>
       <dt class="col-sm-5">Estado</dt><dd class="col-sm-7"><span class="badge badge-{{ cita.estado }}">{{ cita.get_estado_display }}</span></dd>
     </dl>
   </div>

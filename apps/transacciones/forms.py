@@ -1,6 +1,6 @@
 ﻿from django import forms
 from datetime import datetime, timedelta
-from .models import Cita, Venta, Compra, Cotizacion, VentaCabecera
+from .models import Cita, Compra, Cotizacion, VentaCabecera
 from apps.servicios.models import Producto, Servicio
 from apps.clientes.models import Cliente
 from apps.empleados.models import Empleado
@@ -22,6 +22,10 @@ class CitaForm(forms.ModelForm):
         choices=HORARIOS,
         widget=forms.Select(attrs={"class": "form-select"})
     )
+    servicio = forms.ModelChoiceField(
+        queryset=Servicio.objects.filter(activo=True),
+        widget=forms.Select(attrs={"class": "form-select"})
+    )
 
     class Meta:
         model = Cita
@@ -29,7 +33,6 @@ class CitaForm(forms.ModelForm):
         widgets = {
             "cliente": forms.Select(attrs={"class": "form-select"}),
             "empleado": forms.Select(attrs={"class": "form-select"}),
-            "servicio": forms.Select(attrs={"class": "form-select"}),
             "fecha_inicio": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
             "estado": forms.Select(attrs={"class": "form-select"}),
         }
@@ -66,20 +69,6 @@ class CitaForm(forms.ModelForm):
         return cleaned_data
 
 
-class VentaForm(forms.ModelForm):
-    class Meta:
-        model = Venta
-        fields = ["cliente", "empleado", "producto", "metodo_pago", "tipo", "estatus", "total"]
-        widgets = {
-            "cliente": forms.Select(attrs={"class": "form-select"}),
-            "empleado": forms.Select(attrs={"class": "form-select"}),
-            "producto": forms.Select(attrs={"class": "form-select"}),
-            "metodo_pago": forms.Select(attrs={"class": "form-select"}),
-            "tipo": forms.Select(attrs={"class": "form-select"}),
-            "estatus": forms.Select(attrs={"class": "form-select"}),
-            "total": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
-        }
-
 
 class CompraForm(forms.ModelForm):
     producto = forms.ModelChoiceField(
@@ -115,42 +104,3 @@ class CotizacionForm(forms.ModelForm):
         }
 
 
-class VentaCombinadaForm(forms.Form):
-    """Formulario unificado para capturar ventas de servicios y/o productos."""
-
-    cliente = forms.ModelChoiceField(
-        queryset=Cliente.objects.filter(activo=True),
-        widget=forms.Select(attrs={"class": "form-select"}),
-        label="Cliente",
-    )
-    empleado = forms.ModelChoiceField(
-        queryset=Empleado.objects.filter(activo=True),
-        widget=forms.Select(attrs={"class": "form-select"}),
-        label="Empleado",
-    )
-    metodo_pago = forms.ChoiceField(
-        choices=VentaCabecera.METODO_PAGO_CHOICES,
-        widget=forms.Select(attrs={"class": "form-select"}),
-        label="Método de pago",
-    )
-    cita = forms.ModelChoiceField(
-        queryset=Cita.objects.filter(activo=True, estado__in=["pendiente", "confirmada"]),
-        required=False,
-        widget=forms.Select(attrs={"class": "form-select"}),
-        label="Cita (opcional)",
-    )
-    producto = forms.ModelChoiceField(
-        queryset=Producto.objects.filter(activo=True, stock_actual__gt=0),
-        required=False,
-        widget=forms.Select(attrs={"class": "form-select"}),
-        label="Producto (opcional)",
-    )
-
-    def clean(self):
-        cleaned_data = super().clean()
-        cita = cleaned_data.get("cita")
-        producto = cleaned_data.get("producto")
-
-        if not cita and not producto:
-            raise forms.ValidationError("Debe seleccionar al menos una cita o un producto.")
-        return cleaned_data

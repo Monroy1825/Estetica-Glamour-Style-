@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Editar Venta — Estética{% endblock %}
+{% block content %}
+
+<div style="max-width:480px">
+  <div style="font-size:20px;font-weight:600;color:#111;margin-bottom:20px;">
+    Editar Venta — {{ cabecera.folio }}
+  </div>
+
+  <div style="background:#fff;border:1px solid #ede8f2;border-radius:12px;padding:20px;margin-bottom:16px;">
+    <div style="font-size:11px;letter-spacing:0.8px;color:#aaa;font-weight:600;margin-bottom:16px;">DATOS DE LA VENTA</div>
+    <div style="font-size:13px;margin-bottom:8px;"><strong>Cliente:</strong> {{ cabecera.cliente.nombre }}</div>
+    <div style="font-size:13px;margin-bottom:8px;"><strong>Empleado:</strong> {{ cabecera.empleado.nombre }}</div>
+    <div style="font-size:13px;margin-bottom:8px;"><strong>Total:</strong> ${{ cabecera.total|floatformat:2 }}</div>
+    <div style="font-size:13px;margin-bottom:8px;"><strong>Fecha:</strong> {{ cabecera.fecha|date:"d/m/Y H:i" }}</div>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <div style="background:#fff;border:1px solid #ede8f2;border-radius:12px;padding:20px;margin-bottom:16px;">
+      <div style="font-size:11px;letter-spacing:0.8px;color:#aaa;font-weight:600;margin-bottom:16px;">EDITAR</div>
+
+      <div style="margin-bottom:16px;">
+        <label style="font-size:11px;color:#aaa;display:block;margin-bottom:6px;">METODO DE PAGO</label>
+        <select name="metodo_pago" class="form-select" style="border:1px solid #e0d0e8;border-radius:8px;">
+          {% for value, label in metodo_opciones %}
+          <option value="{{ value }}" {% if value == cabecera.metodo_pago %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="font-size:11px;color:#aaa;display:block;margin-bottom:6px;">ESTATUS</label>
+        <select name="estatus" class="form-select" style="border:1px solid #e0d0e8;border-radius:8px;">
+          {% for value, label in estatus_opciones %}
+          <option value="{{ value }}" {% if value == cabecera.estatus %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:12px;">
+      <a href="{% url 'operaciones:venta_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+      <button type="submit" style="background:#7b2d8b;color:#fff;border:none;border-radius:99px;padding:0 28px;height:40px;font-size:13px;font-weight:600;">Guardar</button>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

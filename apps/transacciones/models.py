@@ -42,25 +42,6 @@ class Cita(models.Model):
     def __str__(self):
         return f'{self.cliente} - {self.servicio} ({self.fecha_inicio:%d/%m/%Y})'
     
-    def generar_venta_automatica(self, empleado, metodo_pago='efectivo'):
-        from .models import Venta
-        precio_base = float(self.servicio.precio_base)
-        precio_adicionales = 0
-        for extra in self.servicios_adicionales.all():
-            precio_adicionales += float(extra.servicio.precio_base)
-        total = precio_base + precio_adicionales
-        venta = Venta.objects.create(
-            cliente=self.cliente,
-            empleado=empleado,
-            cita=self,
-            metodo_pago=metodo_pago,
-            tipo='servicio',
-            estatus='pagada',
-            total=total,
-            activo=True,
-            origen='cita'
-        )
-        return venta
 
 
 class CitaServicioAdicional(models.Model):

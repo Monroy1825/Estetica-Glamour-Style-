@@ -1,33 +1,153 @@
 {% extends "base.html" %}
 {% block title %}Servicios — Estética{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="mb-0"><i class="bi bi-stars me-2" style="color:#7b2d8b"></i>Servicios</h4>
-  <a href="{% url 'servicios:servicio_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Nuevo servicio</a>
-</div>
-<div class="card shadow-sm">
-  <div class="card-body p-0">
-    <table class="table table-hover mb-0">
-      <thead class="table-light">
-        <tr><th>Nombre</th><th>Categoría</th><th>Precio base</th><th></th></tr>
-      </thead>
-      <tbody>
-        {% for s in servicios %}
-        <tr>
-          <td>{{ s.nombre }}</td>
-          <td>{{ s.get_categoria_display }}</td>
-          <td>${{ s.precio_base }}</td>
-          <td class="text-end">
-            <a href="{% url 'servicios:servicio_detail' s.pk %}" class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-eye"></i></a>
-            <a href="{% url 'servicios:servicio_update' s.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
-            <a href="{% url 'servicios:servicio_delete' s.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="4" class="text-center text-muted py-4">Sin servicios registrados.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<style>
+  :root {
+    --primary: #7b2d8b;
+    --primary-dark: #5e2069;
+    --primary-light: #f3e8f7;
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-600: #6c757d;
+    --gray-800: #343a40;
+  }
+  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+  .page-header-title { display: flex; align-items: center; gap: 12px; }
+  .page-header-icon { width: 48px; height: 48px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; }
+  .page-header-title h4 { font-size: 22px; font-weight: 700; margin: 0; color: var(--gray-800); }
+  .page-header-title p { margin: 0; font-size: 13px; color: var(--gray-600); }
+
+  .btn-new {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+  .btn-new:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(123,45,139,0.3);
+    color: white;
+  }
+
+  .table-container {
+    background: white;
+    border-radius: 20px;
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  }
+  .servicios-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .servicios-table th {
+    background: var(--gray-100);
+    padding: 15px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--gray-600);
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .servicios-table td {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--gray-800);
+    border-bottom: 1px solid var(--gray-200);
+    vertical-align: middle;
+  }
+  .servicios-table tbody tr:last-child td { border-bottom: none; }
+  .servicios-table tbody tr:hover { background: var(--primary-light); }
+
+  .badge-categoria {
+    background: var(--primary-light);
+    color: var(--primary);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .precio {
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  .action-buttons { display: flex; gap: 6px; }
+  .btn-action {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .btn-view { background: var(--gray-100); color: var(--gray-600); }
+  .btn-view:hover { background: var(--primary); color: white; }
+  .btn-edit { background: #e3f2fd; color: #1565c0; }
+  .btn-edit:hover { background: #1565c0; color: white; }
+  .btn-delete { background: #ffebee; color: #c62828; }
+  .btn-delete:hover { background: #c62828; color: white; }
+</style>
+
+<div class="page-header">
+  <div class="page-header-title">
+    <div class="page-header-icon"><i class="bi bi-stars"></i></div>
+    <div>
+      <h4>Servicios</h4>
+      <p>Catálogo de servicios del salón</p>
+    </div>
   </div>
+  <a href="{% url 'servicios:servicio_create' %}" class="btn-new">
+    <i class="bi bi-plus-lg"></i> Nuevo servicio
+  </a>
+</div>
+
+<div class="table-container">
+  <table class="servicios-table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Categoría</th>
+        <th>Duración</th>
+        <th>Precio base</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in servicios %}
+      <tr>
+        <td><strong>{{ s.nombre }}</strong></td>
+        <td><span class="badge-categoria">{{ s.get_categoria_display }}</span></td>
+        <td>{{ s.duracion_minutos }} min</td>
+        <td class="precio">${{ s.precio_base }}</td>
+        <td>
+          <div class="action-buttons">
+            <a href="{% url 'servicios:servicio_detail' s.pk %}" class="btn-action btn-view" title="Ver"><i class="bi bi-eye"></i></a>
+            <a href="{% url 'servicios:servicio_update' s.pk %}" class="btn-action btn-edit" title="Editar"><i class="bi bi-pencil"></i></a>
+            <a href="{% url 'servicios:servicio_delete' s.pk %}" class="btn-action btn-delete" title="Eliminar"><i class="bi bi-trash"></i></a>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5" class="text-center py-5" style="color: var(--gray-600);">
+          <i class="bi bi-stars" style="font-size: 48px;"></i>
+          <p class="mt-2 mb-0">Sin servicios registrados</p>
+          <a href="{% url 'servicios:servicio_create' %}" class="btn btn-sm btn-primary mt-2">Agregar primer servicio</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 {% endblock %}

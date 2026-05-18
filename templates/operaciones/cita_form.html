@@ -96,14 +96,38 @@
     justify-content: center;
     font-size: 15px;
   }
-  .otra-cita-section {
-    background: #f3e8f7;
-    border-color: #d8b4fe;
+  .btn-agregar-servicio {
+    background-color: #7b2d8b;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 12px;
+    margin-top: 8px;
+    cursor: pointer;
   }
-  .otra-cita-section .form-section-header {
-    background: #ede8f2;
-    border-bottom-color: #d8b4fe;
-    color: #7b2d8b;
+  .btn-agregar-servicio:hover { background-color: #5e2069; }
+  .tabla-servicios {
+    width: 100%;
+    margin-top: 16px;
+    border-collapse: collapse;
+  }
+  .tabla-servicios th, .tabla-servicios td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ede8f2;
+  }
+  .tabla-servicios th {
+    background: #f8f5fa;
+    font-size: 11px;
+    color: #666;
+  }
+  .btn-eliminar-servicio {
+    color: #dc3545;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
   }
 </style>
 
@@ -187,50 +211,55 @@
           {% endif %}
         </div>
       </div>
-      <div class="field-group" style="max-width:calc(50% - 8px)">
-        <label>DURACIÓN (HORAS)</label>
-        {{ form.duracion_horas }}
-        {% if form.duracion_horas.errors %}
-          <div class="text-danger small mt-1">{{ form.duracion_horas.errors|join:", " }}</div>
-        {% endif %}
-      </div>
+      {{ form.duracion_horas.as_hidden }}
     </div>
   </div>
 
-  {% if titulo == 'Nueva Cita' %}
-  <div style="display:flex;align-items:flex-end;gap:16px;margin-bottom:16px">
-    <div class="form-section otra-cita-section mb-0" style="height:100%;flex-shrink:0;width:50%">
-      <div class="form-section-header">AGREGAR OTRA CITA</div>
-      <div class="form-section-body">
-        <p style="color:#7b2d8b;font-size:12px;font-weight:600;margin:0 0 10px 0;">
-          ¿DESEA AGREGAR OTRA CITA PARA EL MISMO CLIENTE?
-        </p>
-        <div class="d-flex" style="gap:60px">
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="agregar_otra" id="otra_si" value="si">
-            <label class="form-check-label" for="otra_si">Sí, en el siguiente horario</label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="agregar_otra" id="otra_no" value="no" checked>
-            <label class="form-check-label" for="otra_no">No, solo esta cita</label>
-          </div>
+  <!-- SERVICIOS ADICIONALES -->
+  <div class="form-section">
+    <div class="form-section-header">SERVICIOS ADICIONALES</div>
+    <div class="form-section-body">
+      <p style="font-size:12px;color:#666;margin-bottom:12px;">
+        Agrega todos los servicios que se realizaran en esta cita. El primer servicio se selecciona arriba.
+      </p>
+      <div class="form-grid-2">
+        <div class="field-group">
+          <label>SERVICIO A AGREGAR</label>
+          <select id="select_servicio_adicional" class="form-select">
+            <option value="">---------</option>
+            {% for s in servicios %}
+            <option value="{{ s.id }}" data-nombre="{{ s.nombre }}" data-precio="{{ s.precio_base }}">
+              {{ s.nombre }} — ${{ s.precio_base }}
+            </option>
+            {% endfor %}
+          </select>
         </div>
       </div>
-    </div>
-    <div class="form-section mb-0" style="height:100%;flex:0 0 25%;margin-left:auto">
-      <div class="form-section-body d-flex align-items-center justify-content-center" style="gap:40px;height:100%">
-        <a href="{% url 'operaciones:cita_list' %}" class="btn btn-cancelar">CANCELAR</a>
-        <button type="submit" class="btn btn-guardar">GUARDAR</button>
-      </div>
+      <button type="button" id="btnAgregarServicio" class="btn-agregar-servicio">+ Agregar Servicio</button>
+      <input type="hidden" name="servicios_adicionales_json" id="servicios_adicionales_json" value="[]">
+
+      <table class="tabla-servicios" id="tablaServicios">
+        <thead>
+          <tr><th>Servicio</th><th>Precio</th><th></th></tr>
+        </thead>
+        <tbody id="serviciosAgregados">
+          <tr id="fila-vacia"><td colspan="3" style="text-align:center;color:#aaa;">No hay servicios adicionales</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
-  {% else %}
+
   <div class="form-section" style="width:25%;margin-left:auto">
     <div class="form-section-body d-flex justify-content-center" style="gap:40px">
       <a href="{% url 'operaciones:cita_list' %}" class="btn btn-cancelar">CANCELAR</a>
       <button type="submit" class="btn btn-guardar">GUARDAR</button>
     </div>
   </div>
+
+  {% if servicios_actuales %}
+  <script>
+  const serviciosIniciales = {{ servicios_actuales_json|safe }};
+  </script>
   {% endif %}
 
 </form>
@@ -239,9 +268,44 @@
 document.addEventListener("DOMContentLoaded", () => {
   const inputFecha = document.querySelector('input[type="date"]');
   const hoy = new Date().toISOString().split("T")[0];
-  if (inputFecha) {
-    inputFecha.min = hoy;
+  if (inputFecha) inputFecha.min = hoy;
+
+  let serviciosAdicionales = typeof serviciosIniciales !== 'undefined' ? serviciosIniciales : [];
+
+  function renderTabla() {
+    const tbody = document.getElementById('serviciosAgregados');
+    const filaVacia = document.getElementById('fila-vacia');
+    tbody.querySelectorAll('.fila-servicio').forEach(f => f.remove());
+
+    serviciosAdicionales.forEach((s, i) => {
+      const tr = document.createElement('tr');
+      tr.className = 'fila-servicio';
+      tr.innerHTML = `<td>${s.nombre}</td><td>$${parseFloat(s.precio).toFixed(2)}</td><td><button type="button" class="btn-eliminar-servicio" onclick="eliminarServicio(${i})">X</button></td>`;
+      tbody.insertBefore(tr, filaVacia);
+    });
+
+    filaVacia.style.display = serviciosAdicionales.length === 0 ? '' : 'none';
+    document.getElementById('servicios_adicionales_json').value = JSON.stringify(serviciosAdicionales);
   }
+
+  window.eliminarServicio = function(index) {
+    serviciosAdicionales.splice(index, 1);
+    renderTabla();
+  };
+
+  document.getElementById('btnAgregarServicio')?.addEventListener('click', function() {
+    const select = document.getElementById('select_servicio_adicional');
+    if (!select.value) { alert('Selecciona un servicio'); return; }
+    const opt = select.options[select.selectedIndex];
+    if (serviciosAdicionales.find(s => s.id === select.value)) {
+      alert('Ese servicio ya fue agregado'); return;
+    }
+    serviciosAdicionales.push({ id: select.value, nombre: opt.getAttribute('data-nombre'), precio: opt.getAttribute('data-precio') });
+    select.value = '';
+    renderTabla();
+  });
+
+  renderTabla();
 });
 </script>
 
